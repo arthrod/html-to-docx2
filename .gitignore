@@ -2,7 +2,9 @@
 
 # Output Example.docx
 *.docx
-
+!old_1_new_1_ideal_redline.docx
+!new_1.docx
+!old_1.docx
 # Logs
 logs
 *.log
