@@ -1,6 +1,4 @@
-"""
-Validator for Word document XML files against XSD schemas.
-"""
+"""Validator for Word document XML files against XSD schemas."""
 
 import re
 import tempfile
@@ -15,7 +13,7 @@ class DOCXSchemaValidator(BaseSchemaValidator):
     """Validator for Word document XML files against XSD schemas."""
 
     # Word-specific namespace
-    WORD_2006_NAMESPACE = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+    WORD_2006_NAMESPACE = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
     # Word-specific element to relationship type mappings
     # Start with empty mapping - add specific cases as we discover them
@@ -69,106 +67,84 @@ class DOCXSchemaValidator(BaseSchemaValidator):
 
         return all_valid
 
-    def validate_whitespace_preservation(self):
-        """
-        Validate that w:t elements with whitespace have xml:space='preserve'.
-        """
+    def validate_whitespace_preservation(self) -> bool:
+        """Validate that w:t elements with whitespace have xml:space='preserve'."""
         errors = []
 
         for xml_file in self.xml_files:
             # Only check document.xml files
-            if xml_file.name != "document.xml":
+            if xml_file.name != 'document.xml':
                 continue
 
             try:
                 root = lxml.etree.parse(str(xml_file)).getroot()
 
                 # Find all w:t elements
-                for elem in root.iter(f"{{{self.WORD_2006_NAMESPACE}}}t"):
+                for elem in root.iter(f'{{{self.WORD_2006_NAMESPACE}}}t'):
                     if elem.text:
                         text = elem.text
                         # Check if text starts or ends with whitespace
-                        if re.match(r"^\s.*", text) or re.match(r".*\s$", text):
+                        if re.match(r'^\s.*', text) or re.match(r'.*\s$', text):
                             # Check if xml:space="preserve" attribute exists
-                            xml_space_attr = f"{{{self.XML_NAMESPACE}}}space"
-                            if (
-                                xml_space_attr not in elem.attrib
-                                or elem.attrib[xml_space_attr] != "preserve"
-                            ):
+                            xml_space_attr = f'{{{self.XML_NAMESPACE}}}space'
+                            if xml_space_attr not in elem.attrib or elem.attrib[xml_space_attr] != 'preserve':
                                 # Show a preview of the text
-                                text_preview = (
-                                    repr(text)[:50] + "..."
-                                    if len(repr(text)) > 50
-                                    else repr(text)
-                                )
+                                text_preview = repr(text)[:50] + '...' if len(repr(text)) > 50 else repr(text)
                                 errors.append(
-                                    f"  {xml_file.relative_to(self.unpacked_dir)}: "
+                                    f'  {xml_file.relative_to(self.unpacked_dir)}: '
                                     f"Line {elem.sourceline}: w:t element with whitespace missing xml:space='preserve': {text_preview}"
                                 )
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
-                errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
-                )
+                errors.append(f'  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}')
 
         if errors:
-            print(f"FAILED - Found {len(errors)} whitespace preservation violations:")
-            for error in errors:
-                print(error)
+            for _error in errors:
+                pass
             return False
-        else:
-            if self.verbose:
-                print("PASSED - All whitespace is properly preserved")
-            return True
+        if self.verbose:
+            pass
+        return True
 
-    def validate_deletions(self):
-        """
-        Validate that w:t elements are not within w:del elements.
+    def validate_deletions(self) -> bool:
+        """Validate that w:t elements are not within w:del elements.
         For some reason, XSD validation does not catch this, so we do it manually.
         """
         errors = []
 
         for xml_file in self.xml_files:
             # Only check document.xml files
-            if xml_file.name != "document.xml":
+            if xml_file.name != 'document.xml':
                 continue
 
             try:
                 root = lxml.etree.parse(str(xml_file)).getroot()
 
                 # Find all w:t elements that are descendants of w:del elements
-                namespaces = {"w": self.WORD_2006_NAMESPACE}
-                xpath_expression = ".//w:del//w:t"
-                problematic_t_elements = root.xpath(
-                    xpath_expression, namespaces=namespaces
-                )
+                namespaces = {'w': self.WORD_2006_NAMESPACE}
+                xpath_expression = './/w:del//w:t'
+                problematic_t_elements = root.xpath(xpath_expression, namespaces=namespaces)
                 for t_elem in problematic_t_elements:
                     if t_elem.text:
                         # Show a preview of the text
                         text_preview = (
-                            repr(t_elem.text)[:50] + "..."
-                            if len(repr(t_elem.text)) > 50
-                            else repr(t_elem.text)
+                            repr(t_elem.text)[:50] + '...' if len(repr(t_elem.text)) > 50 else repr(t_elem.text)
                         )
                         errors.append(
-                            f"  {xml_file.relative_to(self.unpacked_dir)}: "
-                            f"Line {t_elem.sourceline}: <w:t> found within <w:del>: {text_preview}"
+                            f'  {xml_file.relative_to(self.unpacked_dir)}: '
+                            f'Line {t_elem.sourceline}: <w:t> found within <w:del>: {text_preview}'
                         )
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
-                errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
-                )
+                errors.append(f'  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}')
 
         if errors:
-            print(f"FAILED - Found {len(errors)} deletion validation violations:")
-            for error in errors:
-                print(error)
+            for _error in errors:
+                pass
             return False
-        else:
-            if self.verbose:
-                print("PASSED - No w:t elements found within w:del elements")
-            return True
+        if self.verbose:
+            pass
+        return True
 
     def count_paragraphs_in_unpacked(self):
         """Count the number of paragraphs in the unpacked document."""
@@ -176,16 +152,16 @@ class DOCXSchemaValidator(BaseSchemaValidator):
 
         for xml_file in self.xml_files:
             # Only check document.xml files
-            if xml_file.name != "document.xml":
+            if xml_file.name != 'document.xml':
                 continue
 
             try:
                 root = lxml.etree.parse(str(xml_file)).getroot()
                 # Count all w:p elements
-                paragraphs = root.findall(f".//{{{self.WORD_2006_NAMESPACE}}}p")
+                paragraphs = root.findall(f'.//{{{self.WORD_2006_NAMESPACE}}}p')
                 count = len(paragraphs)
-            except Exception as e:
-                print(f"Error counting paragraphs in unpacked document: {e}")
+            except Exception:
+                pass
 
         return count
 
@@ -197,78 +173,70 @@ class DOCXSchemaValidator(BaseSchemaValidator):
             # Create temporary directory to unpack original
             with tempfile.TemporaryDirectory() as temp_dir:
                 # Unpack original docx
-                with zipfile.ZipFile(self.original_file, "r") as zip_ref:
+                with zipfile.ZipFile(self.original_file, 'r') as zip_ref:
                     zip_ref.extractall(temp_dir)
 
                 # Parse document.xml
-                doc_xml_path = temp_dir + "/word/document.xml"
+                doc_xml_path = temp_dir + '/word/document.xml'
                 root = lxml.etree.parse(doc_xml_path).getroot()
 
                 # Count all w:p elements
-                paragraphs = root.findall(f".//{{{self.WORD_2006_NAMESPACE}}}p")
+                paragraphs = root.findall(f'.//{{{self.WORD_2006_NAMESPACE}}}p')
                 count = len(paragraphs)
 
-        except Exception as e:
-            print(f"Error counting paragraphs in original document: {e}")
+        except Exception:
+            pass
 
         return count
 
-    def validate_insertions(self):
-        """
-        Validate that w:delText elements are not within w:ins elements.
+    def validate_insertions(self) -> bool:
+        """Validate that w:delText elements are not within w:ins elements.
         w:delText is only allowed in w:ins if nested within a w:del.
         """
         errors = []
 
         for xml_file in self.xml_files:
-            if xml_file.name != "document.xml":
+            if xml_file.name != 'document.xml':
                 continue
 
             try:
                 root = lxml.etree.parse(str(xml_file)).getroot()
-                namespaces = {"w": self.WORD_2006_NAMESPACE}
+                namespaces = {'w': self.WORD_2006_NAMESPACE}
 
                 # Find w:delText in w:ins that are NOT within w:del
-                invalid_elements = root.xpath(
-                    ".//w:ins//w:delText[not(ancestor::w:del)]",
-                    namespaces=namespaces
-                )
+                invalid_elements = root.xpath('.//w:ins//w:delText[not(ancestor::w:del)]', namespaces=namespaces)
 
                 for elem in invalid_elements:
                     text_preview = (
-                        repr(elem.text or "")[:50] + "..."
-                        if len(repr(elem.text or "")) > 50
-                        else repr(elem.text or "")
+                        repr(elem.text or '')[:50] + '...'
+                        if len(repr(elem.text or '')) > 50
+                        else repr(elem.text or '')
                     )
                     errors.append(
-                        f"  {xml_file.relative_to(self.unpacked_dir)}: "
-                        f"Line {elem.sourceline}: <w:delText> within <w:ins>: {text_preview}"
+                        f'  {xml_file.relative_to(self.unpacked_dir)}: '
+                        f'Line {elem.sourceline}: <w:delText> within <w:ins>: {text_preview}'
                     )
 
             except (lxml.etree.XMLSyntaxError, Exception) as e:
-                errors.append(
-                    f"  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}"
-                )
+                errors.append(f'  {xml_file.relative_to(self.unpacked_dir)}: Error: {e}')
 
         if errors:
-            print(f"FAILED - Found {len(errors)} insertion validation violations:")
-            for error in errors:
-                print(error)
+            for _error in errors:
+                pass
             return False
-        else:
-            if self.verbose:
-                print("PASSED - No w:delText elements within w:ins elements")
-            return True
+        if self.verbose:
+            pass
+        return True
 
-    def compare_paragraph_counts(self):
+    def compare_paragraph_counts(self) -> None:
         """Compare paragraph counts between original and new document."""
         original_count = self.count_paragraphs_in_original()
         new_count = self.count_paragraphs_in_unpacked()
 
         diff = new_count - original_count
-        diff_str = f"+{diff}" if diff > 0 else str(diff)
-        print(f"\nParagraphs: {original_count} → {new_count} ({diff_str})")
+        f'+{diff}' if diff > 0 else str(diff)
 
 
-if __name__ == "__main__":
-    raise RuntimeError("This module should not be run directly.")
+if __name__ == '__main__':
+    msg = 'This module should not be run directly.'
+    raise RuntimeError(msg)

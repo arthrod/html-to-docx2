@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Extract structured text content from PowerPoint presentations.
+"""Extract structured text content from PowerPoint presentations.
 
 This module provides functionality to:
 - Extract all text content from PowerPoint shapes
@@ -28,7 +27,7 @@ import platform
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 from PIL import Image, ImageDraw, ImageFont
 from pptx import Presentation
@@ -37,20 +36,16 @@ from pptx.shapes.base import BaseShape
 
 # Type aliases for cleaner signatures
 JsonValue = Union[str, int, float, bool, None]
-ParagraphDict = Dict[str, JsonValue]
-ShapeDict = Dict[
-    str, Union[str, float, bool, List[ParagraphDict], List[str], Dict[str, Any], None]
-]
-InventoryData = Dict[
-    str, Dict[str, "ShapeData"]
-]  # Dict of slide_id -> {shape_id -> ShapeData}
-InventoryDict = Dict[str, Dict[str, ShapeDict]]  # JSON-serializable inventory
+ParagraphDict = dict[str, JsonValue]
+ShapeDict = dict[str, Union[str, float, bool, list[ParagraphDict], list[str], dict[str, Any], None]]
+InventoryData = dict[str, dict[str, 'ShapeData']]  # Dict of slide_id -> {shape_id -> ShapeData}
+InventoryDict = dict[str, dict[str, ShapeDict]]  # JSON-serializable inventory
 
 
-def main():
+def main() -> None:
     """Main entry point for command-line usage."""
     parser = argparse.ArgumentParser(
-        description="Extract text inventory from PowerPoint with proper GroupShape support.",
+        description='Extract text inventory from PowerPoint with proper GroupShape support.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -69,56 +64,37 @@ The output JSON includes:
         """,
     )
 
-    parser.add_argument("input", help="Input PowerPoint file (.pptx)")
-    parser.add_argument("output", help="Output JSON file for inventory")
+    parser.add_argument('input', help='Input PowerPoint file (.pptx)')
+    parser.add_argument('output', help='Output JSON file for inventory')
     parser.add_argument(
-        "--issues-only",
-        action="store_true",
-        help="Include only text shapes that have overflow or overlap issues",
+        '--issues-only', action='store_true', help='Include only text shapes that have overflow or overlap issues'
     )
 
     args = parser.parse_args()
 
     input_path = Path(args.input)
     if not input_path.exists():
-        print(f"Error: Input file not found: {args.input}")
         sys.exit(1)
 
-    if not input_path.suffix.lower() == ".pptx":
-        print("Error: Input must be a PowerPoint file (.pptx)")
+    if input_path.suffix.lower() != '.pptx':
         sys.exit(1)
 
     try:
-        print(f"Extracting text inventory from: {args.input}")
         if args.issues_only:
-            print(
-                "Filtering to include only text shapes with issues (overflow/overlap)"
-            )
+            pass
         inventory = extract_text_inventory(input_path, issues_only=args.issues_only)
 
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         save_inventory(inventory, output_path)
 
-        print(f"Output saved to: {args.output}")
-
         # Report statistics
-        total_slides = len(inventory)
+        len(inventory)
         total_shapes = sum(len(shapes) for shapes in inventory.values())
-        if args.issues_only:
-            if total_shapes > 0:
-                print(
-                    f"Found {total_shapes} text elements with issues in {total_slides} slides"
-                )
-            else:
-                print("No issues discovered")
-        else:
-            print(
-                f"Found text in {total_slides} slides with {total_shapes} text elements"
-            )
+        if args.issues_only and total_shapes > 0:
+            pass
 
-    except Exception as e:
-        print(f"Error processing presentation: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
@@ -137,7 +113,7 @@ class ShapeWithPosition:
 class ParagraphData:
     """Data structure for paragraph properties extracted from a PowerPoint paragraph."""
 
-    def __init__(self, paragraph: Any):
+    def __init__(self, paragraph: Any) -> None:
         """Initialize from a PowerPoint paragraph object.
 
         Args:
@@ -159,41 +135,30 @@ class ParagraphData:
         self.line_spacing: Optional[float] = None
 
         # Check for bullet formatting
-        if (
-            hasattr(paragraph, "_p")
-            and paragraph._p is not None
-            and paragraph._p.pPr is not None
-        ):
+        if hasattr(paragraph, '_p') and paragraph._p is not None and paragraph._p.pPr is not None:
             pPr = paragraph._p.pPr
-            ns = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
-            if (
-                pPr.find(f"{ns}buChar") is not None
-                or pPr.find(f"{ns}buAutoNum") is not None
-            ):
+            ns = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
+            if pPr.find(f'{ns}buChar') is not None or pPr.find(f'{ns}buAutoNum') is not None:
                 self.bullet = True
-                if hasattr(paragraph, "level"):
+                if hasattr(paragraph, 'level'):
                     self.level = paragraph.level
 
         # Add alignment if not LEFT (default)
-        if hasattr(paragraph, "alignment") and paragraph.alignment is not None:
-            alignment_map = {
-                PP_ALIGN.CENTER: "CENTER",
-                PP_ALIGN.RIGHT: "RIGHT",
-                PP_ALIGN.JUSTIFY: "JUSTIFY",
-            }
+        if hasattr(paragraph, 'alignment') and paragraph.alignment is not None:
+            alignment_map = {PP_ALIGN.CENTER: 'CENTER', PP_ALIGN.RIGHT: 'RIGHT', PP_ALIGN.JUSTIFY: 'JUSTIFY'}
             if paragraph.alignment in alignment_map:
                 self.alignment = alignment_map[paragraph.alignment]
 
         # Add spacing properties if set
-        if hasattr(paragraph, "space_before") and paragraph.space_before:
+        if hasattr(paragraph, 'space_before') and paragraph.space_before:
             self.space_before = paragraph.space_before.pt
-        if hasattr(paragraph, "space_after") and paragraph.space_after:
+        if hasattr(paragraph, 'space_after') and paragraph.space_after:
             self.space_after = paragraph.space_after.pt
 
         # Extract font properties from first run
         if paragraph.runs:
             first_run = paragraph.runs[0]
-            if hasattr(first_run, "font"):
+            if hasattr(first_run, 'font'):
                 font = first_run.font
                 if font.name:
                     self.font_name = font.name
@@ -220,45 +185,45 @@ class ParagraphData:
                         pass
 
         # Add line spacing if set
-        if hasattr(paragraph, "line_spacing") and paragraph.line_spacing is not None:
-            if hasattr(paragraph.line_spacing, "pt"):
+        if hasattr(paragraph, 'line_spacing') and paragraph.line_spacing is not None:
+            if hasattr(paragraph.line_spacing, 'pt'):
                 self.line_spacing = round(paragraph.line_spacing.pt, 2)
             else:
                 # Multiplier - convert to points
-                font_size = self.font_size if self.font_size else 12.0
+                font_size = self.font_size or 12.0
                 self.line_spacing = round(paragraph.line_spacing * font_size, 2)
 
     def to_dict(self) -> ParagraphDict:
         """Convert to dictionary for JSON serialization, excluding None values."""
-        result: ParagraphDict = {"text": self.text}
+        result: ParagraphDict = {'text': self.text}
 
         # Add optional fields only if they have values
         if self.bullet:
-            result["bullet"] = self.bullet
+            result['bullet'] = self.bullet
         if self.level is not None:
-            result["level"] = self.level
+            result['level'] = self.level
         if self.alignment:
-            result["alignment"] = self.alignment
+            result['alignment'] = self.alignment
         if self.space_before is not None:
-            result["space_before"] = self.space_before
+            result['space_before'] = self.space_before
         if self.space_after is not None:
-            result["space_after"] = self.space_after
+            result['space_after'] = self.space_after
         if self.font_name:
-            result["font_name"] = self.font_name
+            result['font_name'] = self.font_name
         if self.font_size is not None:
-            result["font_size"] = self.font_size
+            result['font_size'] = self.font_size
         if self.bold is not None:
-            result["bold"] = self.bold
+            result['bold'] = self.bold
         if self.italic is not None:
-            result["italic"] = self.italic
+            result['italic'] = self.italic
         if self.underline is not None:
-            result["underline"] = self.underline
+            result['underline'] = self.underline
         if self.color:
-            result["color"] = self.color
+            result['color'] = self.color
         if self.theme_color:
-            result["theme_color"] = self.theme_color
+            result['theme_color'] = self.theme_color
         if self.line_spacing is not None:
-            result["line_spacing"] = self.line_spacing
+            result['line_spacing'] = self.line_spacing
 
         return result
 
@@ -289,28 +254,15 @@ class ShapeData:
         system = platform.system()
 
         # Common font file variations to try
-        font_variations = [
-            font_name,
-            font_name.lower(),
-            font_name.replace(" ", ""),
-            font_name.replace(" ", "-"),
-        ]
+        font_variations = [font_name, font_name.lower(), font_name.replace(' ', ''), font_name.replace(' ', '-')]
 
         # Define font directories and extensions by platform
-        if system == "Darwin":  # macOS
-            font_dirs = [
-                "/System/Library/Fonts/",
-                "/Library/Fonts/",
-                "~/Library/Fonts/",
-            ]
-            extensions = [".ttf", ".otf", ".ttc", ".dfont"]
+        if system == 'Darwin':  # macOS
+            font_dirs = ['/System/Library/Fonts/', '/Library/Fonts/', '~/Library/Fonts/']
+            extensions = ['.ttf', '.otf', '.ttc', '.dfont']
         else:  # Linux
-            font_dirs = [
-                "/usr/share/fonts/truetype/",
-                "/usr/local/share/fonts/",
-                "~/.fonts/",
-            ]
-            extensions = [".ttf", ".otf"]
+            font_dirs = ['/usr/share/fonts/truetype/', '/usr/local/share/fonts/', '~/.fonts/']
+            extensions = ['.ttf', '.otf']
 
         # Try to find the font file
         from pathlib import Path
@@ -323,7 +275,7 @@ class ShapeData:
             # First try exact matches
             for variant in font_variations:
                 for ext in extensions:
-                    font_path = font_dir_path / f"{variant}{ext}"
+                    font_path = font_dir_path / f'{variant}{ext}'
                     if font_path.exists():
                         return str(font_path)
 
@@ -332,7 +284,7 @@ class ShapeData:
                 for file_path in font_dir_path.iterdir():
                     if file_path.is_file():
                         file_name_lower = file_path.name.lower()
-                        font_name_lower = font_name.lower().replace(" ", "")
+                        font_name_lower = font_name.lower().replace(' ', '')
                         if font_name_lower in file_name_lower and any(
                             file_name_lower.endswith(ext) for ext in extensions
                         ):
@@ -370,7 +322,7 @@ class ShapeData:
             Default font size in points, or None if not found
         """
         try:
-            if not hasattr(shape, "placeholder_format"):
+            if not hasattr(shape, 'placeholder_format'):
                 return None
 
             shape_type = shape.placeholder_format.type  # type: ignore
@@ -378,7 +330,7 @@ class ShapeData:
                 if layout_placeholder.placeholder_format.type == shape_type:
                     # Find first defRPr element with sz (size) attribute
                     for elem in layout_placeholder.element.iter():
-                        if "defRPr" in elem.tag and (sz := elem.get("sz")):
+                        if 'defRPr' in elem.tag and (sz := elem.get('sz')):
                             return float(sz) / 100.0  # Convert EMUs to points
                     break
         except Exception:
@@ -391,7 +343,7 @@ class ShapeData:
         absolute_left: Optional[int] = None,
         absolute_top: Optional[int] = None,
         slide: Optional[Any] = None,
-    ):
+    ) -> None:
         """Initialize from a PowerPoint shape object.
 
         Args:
@@ -401,140 +353,118 @@ class ShapeData:
             slide: Optional slide object to get dimensions and layout information
         """
         self.shape = shape  # Store reference to original shape
-        self.shape_id: str = ""  # Will be set after sorting
+        self.shape_id: str = ''  # Will be set after sorting
 
         # Get slide dimensions from slide object
-        self.slide_width_emu, self.slide_height_emu = (
-            self.get_slide_dimensions(slide) if slide else (None, None)
-        )
+        self.slide_width_emu, self.slide_height_emu = self.get_slide_dimensions(slide) if slide else (None, None)
 
         # Get placeholder type if applicable
         self.placeholder_type: Optional[str] = None
         self.default_font_size: Optional[float] = None
-        if hasattr(shape, "is_placeholder") and shape.is_placeholder:  # type: ignore
+        if hasattr(shape, 'is_placeholder') and shape.is_placeholder:  # type: ignore
             if shape.placeholder_format and shape.placeholder_format.type:  # type: ignore
                 self.placeholder_type = (
-                    str(shape.placeholder_format.type).split(".")[-1].split(" ")[0]  # type: ignore
+                    str(shape.placeholder_format.type).split('.')[-1].split(' ')[0]  # type: ignore
                 )
 
                 # Get default font size from layout
-                if slide and hasattr(slide, "slide_layout"):
-                    self.default_font_size = self.get_default_font_size(
-                        shape, slide.slide_layout
-                    )
+                if slide and hasattr(slide, 'slide_layout'):
+                    self.default_font_size = self.get_default_font_size(shape, slide.slide_layout)
 
         # Get position information
         # Use absolute positions if provided (for shapes in groups), otherwise use shape's position
-        left_emu = (
-            absolute_left
-            if absolute_left is not None
-            else (shape.left if hasattr(shape, "left") else 0)
-        )
-        top_emu = (
-            absolute_top
-            if absolute_top is not None
-            else (shape.top if hasattr(shape, "top") else 0)
-        )
+        left_emu = absolute_left if absolute_left is not None else (shape.left if hasattr(shape, 'left') else 0)
+        top_emu = absolute_top if absolute_top is not None else (shape.top if hasattr(shape, 'top') else 0)
 
         self.left: float = round(self.emu_to_inches(left_emu), 2)  # type: ignore
         self.top: float = round(self.emu_to_inches(top_emu), 2)  # type: ignore
         self.width: float = round(
-            self.emu_to_inches(shape.width if hasattr(shape, "width") else 0),
+            self.emu_to_inches(shape.width if hasattr(shape, 'width') else 0),
             2,  # type: ignore
         )
         self.height: float = round(
-            self.emu_to_inches(shape.height if hasattr(shape, "height") else 0),
+            self.emu_to_inches(shape.height if hasattr(shape, 'height') else 0),
             2,  # type: ignore
         )
 
         # Store EMU positions for overflow calculations
         self.left_emu = left_emu
         self.top_emu = top_emu
-        self.width_emu = shape.width if hasattr(shape, "width") else 0
-        self.height_emu = shape.height if hasattr(shape, "height") else 0
+        self.width_emu = shape.width if hasattr(shape, 'width') else 0
+        self.height_emu = shape.height if hasattr(shape, 'height') else 0
 
         # Calculate overflow status
         self.frame_overflow_bottom: Optional[float] = None
         self.slide_overflow_right: Optional[float] = None
         self.slide_overflow_bottom: Optional[float] = None
-        self.overlapping_shapes: Dict[
-            str, float
-        ] = {}  # Dict of shape_id -> overlap area in sq inches
-        self.warnings: List[str] = []
+        self.overlapping_shapes: dict[str, float] = {}  # Dict of shape_id -> overlap area in sq inches
+        self.warnings: list[str] = []
         self._estimate_frame_overflow()
         self._calculate_slide_overflow()
         self._detect_bullet_issues()
 
     @property
-    def paragraphs(self) -> List[ParagraphData]:
+    def paragraphs(self) -> list[ParagraphData]:
         """Calculate paragraphs from the shape's text frame."""
-        if not self.shape or not hasattr(self.shape, "text_frame"):
+        if not self.shape or not hasattr(self.shape, 'text_frame'):
             return []
 
-        paragraphs = []
-        for paragraph in self.shape.text_frame.paragraphs:  # type: ignore
-            if paragraph.text.strip():
-                paragraphs.append(ParagraphData(paragraph))
-        return paragraphs
+        # type: ignore
+        return [ParagraphData(paragraph) for paragraph in self.shape.text_frame.paragraphs if paragraph.text.strip()]
 
     def _get_default_font_size(self) -> int:
         """Get default font size from theme text styles or use conservative default."""
         try:
-            if not (
-                hasattr(self.shape, "part") and hasattr(self.shape.part, "slide_layout")
-            ):
+            if not (hasattr(self.shape, 'part') and hasattr(self.shape.part, 'slide_layout')):
                 return 14
 
             slide_master = self.shape.part.slide_layout.slide_master  # type: ignore
-            if not hasattr(slide_master, "element"):
+            if not hasattr(slide_master, 'element'):
                 return 14
 
             # Determine theme style based on placeholder type
-            style_name = "bodyStyle"  # Default
-            if self.placeholder_type and "TITLE" in self.placeholder_type:
-                style_name = "titleStyle"
+            style_name = 'bodyStyle'  # Default
+            if self.placeholder_type and 'TITLE' in self.placeholder_type:
+                style_name = 'titleStyle'
 
             # Find font size in theme styles
             for child in slide_master.element.iter():
-                tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+                tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
                 if tag == style_name:
                     for elem in child.iter():
-                        if "sz" in elem.attrib:
-                            return int(elem.attrib["sz"]) // 100
+                        if 'sz' in elem.attrib:
+                            return int(elem.attrib['sz']) // 100
         except Exception:
             pass
 
         return 14  # Conservative default for body text
 
-    def _get_usable_dimensions(self, text_frame) -> Tuple[int, int]:
+    def _get_usable_dimensions(self, text_frame) -> tuple[int, int]:
         """Get usable width and height in pixels after accounting for margins."""
         # Default PowerPoint margins in inches
-        margins = {"top": 0.05, "bottom": 0.05, "left": 0.1, "right": 0.1}
+        margins = {'top': 0.05, 'bottom': 0.05, 'left': 0.1, 'right': 0.1}
 
         # Override with actual margins if set
-        if hasattr(text_frame, "margin_top") and text_frame.margin_top:
-            margins["top"] = self.emu_to_inches(text_frame.margin_top)
-        if hasattr(text_frame, "margin_bottom") and text_frame.margin_bottom:
-            margins["bottom"] = self.emu_to_inches(text_frame.margin_bottom)
-        if hasattr(text_frame, "margin_left") and text_frame.margin_left:
-            margins["left"] = self.emu_to_inches(text_frame.margin_left)
-        if hasattr(text_frame, "margin_right") and text_frame.margin_right:
-            margins["right"] = self.emu_to_inches(text_frame.margin_right)
+        if hasattr(text_frame, 'margin_top') and text_frame.margin_top:
+            margins['top'] = self.emu_to_inches(text_frame.margin_top)
+        if hasattr(text_frame, 'margin_bottom') and text_frame.margin_bottom:
+            margins['bottom'] = self.emu_to_inches(text_frame.margin_bottom)
+        if hasattr(text_frame, 'margin_left') and text_frame.margin_left:
+            margins['left'] = self.emu_to_inches(text_frame.margin_left)
+        if hasattr(text_frame, 'margin_right') and text_frame.margin_right:
+            margins['right'] = self.emu_to_inches(text_frame.margin_right)
 
         # Calculate usable area
-        usable_width = self.width - margins["left"] - margins["right"]
-        usable_height = self.height - margins["top"] - margins["bottom"]
+        usable_width = self.width - margins['left'] - margins['right']
+        usable_height = self.height - margins['top'] - margins['bottom']
 
         # Convert to pixels
-        return (
-            self.inches_to_pixels(usable_width),
-            self.inches_to_pixels(usable_height),
-        )
+        return (self.inches_to_pixels(usable_width), self.inches_to_pixels(usable_height))
 
-    def _wrap_text_line(self, line: str, max_width_px: int, draw, font) -> List[str]:
+    def _wrap_text_line(self, line: str, max_width_px: int, draw, font) -> list[str]:
         """Wrap a single line of text to fit within max_width_px."""
         if not line:
-            return [""]
+            return ['']
 
         # Use textlength for efficient width calculation
         if draw.textlength(line, font=font) <= max_width_px:
@@ -542,11 +472,11 @@ class ShapeData:
 
         # Need to wrap - split into words
         wrapped = []
-        words = line.split(" ")
-        current_line = ""
+        words = line.split(' ')
+        current_line = ''
 
         for word in words:
-            test_line = current_line + (" " if current_line else "") + word
+            test_line = current_line + (' ' if current_line else '') + word
             if draw.textlength(test_line, font=font) <= max_width_px:
                 current_line = test_line
             else:
@@ -561,7 +491,7 @@ class ShapeData:
 
     def _estimate_frame_overflow(self) -> None:
         """Estimate if text overflows the shape bounds using PIL text measurement."""
-        if not self.shape or not hasattr(self.shape, "text_frame"):
+        if not self.shape or not hasattr(self.shape, 'text_frame'):
             return
 
         text_frame = self.shape.text_frame  # type: ignore
@@ -574,7 +504,7 @@ class ShapeData:
             return
 
         # Set up PIL for text measurement
-        dummy_img = Image.new("RGB", (1, 1))
+        dummy_img = Image.new('RGB', (1, 1))
         draw = ImageDraw.Draw(dummy_img)
 
         # Get default font size from placeholder or use conservative estimate
@@ -590,7 +520,7 @@ class ShapeData:
             para_data = ParagraphData(paragraph)
 
             # Load font for this paragraph
-            font_name = para_data.font_name or "Arial"
+            font_name = para_data.font_name or 'Arial'
             font_size = int(para_data.font_size or default_font_size)
 
             font = None
@@ -605,7 +535,7 @@ class ShapeData:
 
             # Wrap all lines in this paragraph
             all_wrapped_lines = []
-            for line in paragraph.text.split("\n"):
+            for line in paragraph.text.split('\n'):
                 wrapped = self._wrap_text_line(line, usable_width_px, draw, font)
                 all_wrapped_lines.extend(wrapped)
 
@@ -659,7 +589,7 @@ class ShapeData:
 
     def _detect_bullet_issues(self) -> None:
         """Detect bullet point formatting issues in paragraphs."""
-        if not self.shape or not hasattr(self.shape, "text_frame"):
+        if not self.shape or not hasattr(self.shape, 'text_frame'):
             return
 
         text_frame = self.shape.text_frame  # type: ignore
@@ -667,15 +597,13 @@ class ShapeData:
             return
 
         # Common bullet symbols that indicate manual bullets
-        bullet_symbols = ["•", "●", "○"]
+        bullet_symbols = ['•', '●', '○']
 
         for paragraph in text_frame.paragraphs:
             text = paragraph.text.strip()
             # Check for manual bullet symbols
-            if text and any(text.startswith(symbol + " ") for symbol in bullet_symbols):
-                self.warnings.append(
-                    "manual_bullet_symbol: use proper bullet formatting"
-                )
+            if text and any(text.startswith(symbol + ' ') for symbol in bullet_symbols):
+                self.warnings.append('manual_bullet_symbol: use proper bullet formatting')
                 break
 
     @property
@@ -691,50 +619,45 @@ class ShapeData:
 
     def to_dict(self) -> ShapeDict:
         """Convert to dictionary for JSON serialization."""
-        result: ShapeDict = {
-            "left": self.left,
-            "top": self.top,
-            "width": self.width,
-            "height": self.height,
-        }
+        result: ShapeDict = {'left': self.left, 'top': self.top, 'width': self.width, 'height': self.height}
 
         # Add optional fields if present
         if self.placeholder_type:
-            result["placeholder_type"] = self.placeholder_type
+            result['placeholder_type'] = self.placeholder_type
 
         if self.default_font_size:
-            result["default_font_size"] = self.default_font_size
+            result['default_font_size'] = self.default_font_size
 
         # Add overflow information only if there is overflow
         overflow_data = {}
 
         # Add frame overflow if present
         if self.frame_overflow_bottom is not None:
-            overflow_data["frame"] = {"overflow_bottom": self.frame_overflow_bottom}
+            overflow_data['frame'] = {'overflow_bottom': self.frame_overflow_bottom}
 
         # Add slide overflow if present
         slide_overflow = {}
         if self.slide_overflow_right is not None:
-            slide_overflow["overflow_right"] = self.slide_overflow_right
+            slide_overflow['overflow_right'] = self.slide_overflow_right
         if self.slide_overflow_bottom is not None:
-            slide_overflow["overflow_bottom"] = self.slide_overflow_bottom
+            slide_overflow['overflow_bottom'] = self.slide_overflow_bottom
         if slide_overflow:
-            overflow_data["slide"] = slide_overflow
+            overflow_data['slide'] = slide_overflow
 
         # Only add overflow field if there is overflow
         if overflow_data:
-            result["overflow"] = overflow_data
+            result['overflow'] = overflow_data
 
         # Add overlap field if there are overlapping shapes
         if self.overlapping_shapes:
-            result["overlap"] = {"overlapping_shapes": self.overlapping_shapes}
+            result['overlap'] = {'overlapping_shapes': self.overlapping_shapes}
 
         # Add warnings field if there are warnings
         if self.warnings:
-            result["warnings"] = self.warnings
+            result['warnings'] = self.warnings
 
         # Add paragraphs after placeholder_type
-        result["paragraphs"] = [para.to_dict() for para in self.paragraphs]
+        result['paragraphs'] = [para.to_dict() for para in self.paragraphs]
 
         return result
 
@@ -742,7 +665,7 @@ class ShapeData:
 def is_valid_shape(shape: BaseShape) -> bool:
     """Check if a shape contains meaningful text content."""
     # Must have a text frame with content
-    if not hasattr(shape, "text_frame") or not shape.text_frame:  # type: ignore
+    if not hasattr(shape, 'text_frame') or not shape.text_frame:  # type: ignore
         return False
 
     text = shape.text_frame.text.strip()  # type: ignore
@@ -750,14 +673,14 @@ def is_valid_shape(shape: BaseShape) -> bool:
         return False
 
     # Skip slide numbers and numeric footers
-    if hasattr(shape, "is_placeholder") and shape.is_placeholder:  # type: ignore
+    if hasattr(shape, 'is_placeholder') and shape.is_placeholder:  # type: ignore
         if shape.placeholder_format and shape.placeholder_format.type:  # type: ignore
             placeholder_type = (
-                str(shape.placeholder_format.type).split(".")[-1].split(" ")[0]  # type: ignore
+                str(shape.placeholder_format.type).split('.')[-1].split(' ')[0]  # type: ignore
             )
-            if placeholder_type == "SLIDE_NUMBER":
+            if placeholder_type == 'SLIDE_NUMBER':
                 return False
-            if placeholder_type == "FOOTER" and text.isdigit():
+            if placeholder_type == 'FOOTER' and text.isdigit():
                 return False
 
     return True
@@ -765,7 +688,7 @@ def is_valid_shape(shape: BaseShape) -> bool:
 
 def collect_shapes_with_absolute_positions(
     shape: BaseShape, parent_left: int = 0, parent_top: int = 0
-) -> List[ShapeWithPosition]:
+) -> list[ShapeWithPosition]:
     """Recursively collect all shapes with valid text, calculating absolute positions.
 
     For shapes within groups, their positions are relative to the group.
@@ -780,11 +703,11 @@ def collect_shapes_with_absolute_positions(
     Returns:
         List of ShapeWithPosition objects with absolute positions
     """
-    if hasattr(shape, "shapes"):  # GroupShape
+    if hasattr(shape, 'shapes'):  # GroupShape
         result = []
         # Get this group's position
-        group_left = shape.left if hasattr(shape, "left") else 0
-        group_top = shape.top if hasattr(shape, "top") else 0
+        group_left = shape.left if hasattr(shape, 'left') else 0
+        group_top = shape.top if hasattr(shape, 'top') else 0
 
         # Calculate absolute position for this group
         abs_group_left = parent_left + group_left
@@ -792,31 +715,23 @@ def collect_shapes_with_absolute_positions(
 
         # Process children with accumulated offsets
         for child in shape.shapes:  # type: ignore
-            result.extend(
-                collect_shapes_with_absolute_positions(
-                    child, abs_group_left, abs_group_top
-                )
-            )
+            result.extend(collect_shapes_with_absolute_positions(child, abs_group_left, abs_group_top))
         return result
 
     # Regular shape - check if it has valid text
     if is_valid_shape(shape):
         # Calculate absolute position
-        shape_left = shape.left if hasattr(shape, "left") else 0
-        shape_top = shape.top if hasattr(shape, "top") else 0
+        shape_left = shape.left if hasattr(shape, 'left') else 0
+        shape_top = shape.top if hasattr(shape, 'top') else 0
 
         return [
-            ShapeWithPosition(
-                shape=shape,
-                absolute_left=parent_left + shape_left,
-                absolute_top=parent_top + shape_top,
-            )
+            ShapeWithPosition(shape=shape, absolute_left=parent_left + shape_left, absolute_top=parent_top + shape_top)
         ]
 
     return []
 
 
-def sort_shapes_by_position(shapes: List[ShapeData]) -> List[ShapeData]:
+def sort_shapes_by_position(shapes: list[ShapeData]) -> list[ShapeData]:
     """Sort shapes by visual position (top-to-bottom, left-to-right).
 
     Shapes within 0.5 inches vertically are considered on the same row.
@@ -847,10 +762,8 @@ def sort_shapes_by_position(shapes: List[ShapeData]) -> List[ShapeData]:
 
 
 def calculate_overlap(
-    rect1: Tuple[float, float, float, float],
-    rect2: Tuple[float, float, float, float],
-    tolerance: float = 0.05,
-) -> Tuple[bool, float]:
+    rect1: tuple[float, float, float, float], rect2: tuple[float, float, float, float], tolerance: float = 0.05
+) -> tuple[bool, float]:
     """Calculate if and how much two rectangles overlap.
 
     Args:
@@ -879,7 +792,7 @@ def calculate_overlap(
     return False, 0
 
 
-def detect_overlaps(shapes: List[ShapeData]) -> None:
+def detect_overlaps(shapes: list[ShapeData]) -> None:
     """Detect overlapping shapes and update their overlapping_shapes dictionaries.
 
     This function requires each ShapeData to have its shape_id already set.
@@ -897,8 +810,8 @@ def detect_overlaps(shapes: List[ShapeData]) -> None:
             shape2 = shapes[j]
 
             # Ensure shape IDs are set
-            assert shape1.shape_id, f"Shape at index {i} has no shape_id"
-            assert shape2.shape_id, f"Shape at index {j} has no shape_id"
+            assert shape1.shape_id, f'Shape at index {i} has no shape_id'
+            assert shape2.shape_id, f'Shape at index {j} has no shape_id'
 
             rect1 = (shape1.left, shape1.top, shape1.width, shape1.height)
             rect2 = (shape2.left, shape2.top, shape2.width, shape2.height)
@@ -911,9 +824,7 @@ def detect_overlaps(shapes: List[ShapeData]) -> None:
                 shape2.overlapping_shapes[shape1.shape_id] = overlap_area
 
 
-def extract_text_inventory(
-    pptx_path: Path, prs: Optional[Any] = None, issues_only: bool = False
-) -> InventoryData:
+def extract_text_inventory(pptx_path: Path, prs: Optional[Any] = None, issues_only: bool = False) -> InventoryData:
     """Extract text content from all slides in a PowerPoint presentation.
 
     Args:
@@ -941,19 +852,13 @@ def extract_text_inventory(
 
         # Convert to ShapeData with absolute positions and slide reference
         shape_data_list = [
-            ShapeData(
-                swp.shape,
-                swp.absolute_left,
-                swp.absolute_top,
-                slide,
-            )
-            for swp in shapes_with_positions
+            ShapeData(swp.shape, swp.absolute_left, swp.absolute_top, slide) for swp in shapes_with_positions
         ]
 
         # Sort by visual position and assign stable IDs in one step
         sorted_shapes = sort_shapes_by_position(shape_data_list)
         for idx, shape_data in enumerate(sorted_shapes):
-            shape_data.shape_id = f"shape-{idx}"
+            shape_data.shape_id = f'shape-{idx}'
 
         # Detect overlaps using the stable shape IDs
         if len(sorted_shapes) > 1:
@@ -967,9 +872,7 @@ def extract_text_inventory(
             continue
 
         # Create slide inventory using the stable shape IDs
-        inventory[f"slide-{slide_idx}"] = {
-            shape_data.shape_id: shape_data for shape_data in sorted_shapes
-        }
+        inventory[f'slide-{slide_idx}'] = {shape_data.shape_id: shape_data for shape_data in sorted_shapes}
 
     return inventory
 
@@ -993,9 +896,7 @@ def get_inventory_as_dict(pptx_path: Path, issues_only: bool = False) -> Invento
     # Convert ShapeData objects to dictionaries
     dict_inventory: InventoryDict = {}
     for slide_key, shapes in inventory.items():
-        dict_inventory[slide_key] = {
-            shape_key: shape_data.to_dict() for shape_key, shape_data in shapes.items()
-        }
+        dict_inventory[slide_key] = {shape_key: shape_data.to_dict() for shape_key, shape_data in shapes.items()}
 
     return dict_inventory
 
@@ -1008,13 +909,11 @@ def save_inventory(inventory: InventoryData, output_path: Path) -> None:
     # Convert ShapeData objects to dictionaries
     json_inventory: InventoryDict = {}
     for slide_key, shapes in inventory.items():
-        json_inventory[slide_key] = {
-            shape_key: shape_data.to_dict() for shape_key, shape_data in shapes.items()
-        }
+        json_inventory[slide_key] = {shape_key: shape_data.to_dict() for shape_key, shape_data in shapes.items()}
 
-    with open(output_path, "w", encoding="utf-8") as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(json_inventory, f, indent=2, ensure_ascii=False)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
