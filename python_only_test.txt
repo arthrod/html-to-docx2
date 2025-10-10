@@ -1,0 +1,552 @@
+
+================================================================================
+DISPLAYING FILE CONTENTS
+================================================================================
+
+============================================================
+CONTENTS OF: attempts/attempt_1.py
+FILE PATH: attempts/attempt_1.py
+============================================================
+📄 attempt_1.py [Text file, 20984 characters]
+       1: #!/usr/bin/env python3
+       2: """docx_redline.py.
+       3: 
+       4: Create a third .docx that shows tracked changes (insertions, deletions, and formatting changes)
+       5: between two .docx files while preserving styles.
+       6: 
+       7: Usage:
+       8:     python docx_redline.py --from old.docx --to new.docx --out redline.docx --author "Arthur"
+       9: 
+      10: Notes & scope:
+      11: - Paragraph-level alignment is performed over top-level body paragraphs. Non-paragraph top-level
+      12:   elements in the "to/new" document (e.g., tables) are preserved as-is and remain in place.
+      13: - Word-level redlines are produced for 1:1 paragraph replacements. N↔M replacements are modeled
+      14:   as deletions followed by insertions at the same location.
+      15: - Text inside tables is NOT redlined with this version; those paragraphs are left unchanged
+      16:   (they remain present in the output because we copy the "to/new" structure).
+      17:   If you need redlines inside tables, extend the walker to process p-elements inside w:tbl.
+      18: - Existing tracked changes in the inputs are effectively "accepted" for the purposes of comparison:
+      19:   insertions are kept, deletions are ignored.
+      20: 
+      21: This script uses only the standard library (zipfile, xml.etree), no external deps.
+      22: If the 'graphtage' package is available, you could adapt the SequenceMatcher parts to use it,
+      23: but this script does not require it.
+      24: 
+      25: Author: (you)
+      26: """
+      27: 
+      28: import argparse
+      29: import copy
+      30: import datetime as _dt
+      31: import difflib
+      32: import io
+      33: import re
+      34: import sys
+      35: import xml.etree.ElementTree as ET
+      36: import zipfile
+      37: from typing import Optional
+      38: 
+      39: NS = {
+      40:     'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
+      41:     'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+      42:     'xml': 'http://www.w3.org/XML/1998/namespace',
+      43:     'mc': 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+      44: }
+      45: 
+      46: # Register namespaces to produce nicer prefixes on write
+      47: 
+      48: 
+      49: for _p, _u in NS.items():
+      50:     ET.register_namespace(_p, _u)
+      51: 
+      52: 
+      53: def W(tag: str) -> str:
+      54:     return f'{{{NS["w"]}}}{tag}'
+      55: 
+      56: 
+      57: def R(tag: str) -> str:
+      58:     return f'{{{NS["r"]}}}{tag}'
+      59: 
+      60: 
+      61: def XML_ATTR(local: str) -> str:
+      62:     # e.g., XML_ATTR('space') -> '{http://www.w3.org/XML/1998/namespace}space'
+      63:     return f'{{{NS["xml"]}}}{local}'
+      64: 
+      65: 
+      66: def W_ATTR(local: str) -> str:
+      67:     # e.g., W_ATTR('author') -> '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}author'
+      68:     return f'{{{NS["w"]}}}{local}'
+      69: 
+      70: 
+      71: def _utc_now_iso() -> str:
+      72:     # Word allows UTC timestamp; use 'Z' suffix
+      73:     return _dt.datetime.now(_dt.UTC).replace(microsecond=0).isoformat() + 'Z'
+      74: 
+      75: 
+      76: def _read_docx_xml(docx_path: str, part: str) -> ET.Element:
+      77:     with zipfile.ZipFile(docx_path, 'r') as z:
+      78:         data = z.read(part)
+      79:     return ET.fromstring(data)
+      80: 
+      81: 
+      82: def _read_docx_all(docx_path: str) -> tuple[ET.Element, Optional[ET.Element], dict[str, bytes]]:
+      83:     """Returns (document_root, styles_root, all_files_dict) where document_root is word/document.xml root element."""
+      84:     with zipfile.ZipFile(docx_path, 'r') as z:
+      85:         files = {name: z.read(name) for name in z.namelist()}
+      86:     if 'word/document.xml' not in files:
+      87:         msg = f'{docx_path!r} does not contain word/document.xml'
+      88:         raise ValueError(msg)
+      89:     doc = ET.fromstring(files['word/document.xml'])
+      90:     styles = ET.fromstring(files['word/styles.xml']) if 'word/styles.xml' in files else None
+      91:     return doc, styles, files
+      92: 
+      93: 
+      94: def _write_docx_from_base(
+      95:     base_files: dict[str, bytes], new_document_root: ET.Element, new_styles_root: Optional[ET.Element], out_path: str
+      96: ) -> None:
+      97:     with zipfile.ZipFile(out_path, 'w', compression=zipfile.ZIP_DEFLATED) as outzip:
+      98:         for name, data in base_files.items():
+      99:             if name == 'word/document.xml':
+     100:                 # replaced below
+     101:                 continue
+     102:             if name == 'word/styles.xml' and new_styles_root is not None:
+     103:                 # replaced below
+     104:                 continue
+     105:             outzip.writestr(name, data)
+     106:         # Write the new document.xml
+     107:         buf = io.BytesIO()
+     108:         ET.ElementTree(new_document_root).write(buf, encoding='utf-8', xml_declaration=True)
+     109:         outzip.writestr('word/document.xml', buf.getvalue())
+     110:         # Write new styles.xml if we have it
+     111:         if new_styles_root is not None:
+     112:             sbuf = io.BytesIO()
+     113:             ET.ElementTree(new_styles_root).write(sbuf, encoding='utf-8', xml_declaration=True)
+     114:             outzip.writestr('word/styles.xml', sbuf.getvalue())
+     115: 
+     116: 
+     117: def _clone(el: Optional[ET.Element]) -> Optional[ET.Element]:
+     118:     return copy.deepcopy(el) if el is not None else None
+     119: 
+     120: 
+     121: # ---------- Paragraph and run extraction ----------
+     122: 
+     123: 
+     124: class RunTok:
+     125:     __slots__ = ('rPr', 'text')
+     126: 
+     127:     def __init__(self, text: str, rPr: Optional[ET.Element]) -> None:
+     128:         self.text = text
+     129:         self.rPr = _clone(rPr)
+     130: 
+     131: 
+     132: class Para:
+     133:     __slots__ = ('el', 'pPr', 'raw_text', 'tokens')
+     134: 
+     135:     def __init__(self, el: ET.Element, pPr: Optional[ET.Element], tokens: list[RunTok]) -> None:
+     136:         self.el = el
+     137:         self.pPr = _clone(pPr)
+     138:         self.tokens = tokens
+     139:         self.raw_text = ''.join(tok.text for tok in tokens)
+     140: 
+     141: 
+     142: _word_ws_re = re.compile(r'\S+|\s+')
+     143: 
+     144: 
+     145: def _iter_runlike(p: ET.Element, include_ins: bool = True, include_del: bool = False):
+     146:     """Yield <w:r> elements in logical order for a paragraph, flattening <w:ins> (if include_ins)
+     147:     and skipping <w:del> (unless include_del).
+     148:     """
+     149:     for child in p:
+     150:         t = child.tag
+     151:         if t == W('r'):
+     152:             yield child
+     153:         elif t == W('hyperlink'):
+     154:             for r in child.findall('w:r', NS):
+     155:                 yield r
+     156:         elif t == W('ins'):
+     157:             if include_ins:
+     158:                 for r in child.findall('.//w:r', NS):
+     159:                     yield r
+     160:         elif t == W('del'):
+     161:             if include_del:
+     162:                 for r in child.findall('.//w:r', NS):
+     163:                     yield r
+     164:         else:
+     165:             # ignore other nodes inside a paragraph here
+     166:             pass
+     167: 
+     168: 
+     169: def _run_text_in_order(r: ET.Element) -> str:
+     170:     """Concatenate text-bearing children of a run in order.
+     171:     We preserve whitespace and treat tabs/br as characters.
+     172:     """
+     173:     out = []
+     174:     for ch in r:
+     175:         if ch.tag == W('t') or ch.tag == W('delText'):
+     176:             out.append(ch.text or '')
+     177:         elif ch.tag == W('tab'):
+     178:             out.append('\t')
+     179:         elif ch.tag == W('br'):
+     180:             out.append('\n')
+     181:         # skip other elements (drawing, fields, etc.) for diff purposes
+     182:     return ''.join(out)
+     183: 
+     184: 
+     185: def _tokens_from_para(p: ET.Element) -> tuple[list[RunTok], Optional[ET.Element]]:
+     186:     """Convert a paragraph element into a sequence of word/space tokens with their run properties.
+     187:     Returns (tokens, pPr).
+     188:     """
+     189:     pPr = p.find('w:pPr', NS)
+     190:     tokens: list[RunTok] = []
+     191:     for r in _iter_runlike(p, include_ins=True, include_del=False):
+     192:         rPr = r.find('w:rPr', NS)
+     193:         text = _run_text_in_order(r)
+     194:         if not text:
+     195:             continue
+     196:         # Split into word and whitespace tokens, keep rPr per token
+     197:         tokens.extend(RunTok(tok, rPr) for tok in _word_ws_re.findall(text))
+     198:     return tokens, pPr
+     199: 
+     200: 
+     201: def _collect_top_level_paragraphs(doc_root: ET.Element) -> tuple[list[Para], ET.Element]:
+     202:     """Collect only top-level <w:p> that are direct children of <w:body>.
+     203:     Return ([Para], body_el).
+     204:     """
+     205:     body = doc_root.find('w:body', NS)
+     206:     if body is None:
+     207:         msg = 'Document has no w:body'
+     208:         raise ValueError(msg)
+     209:     paras: list[Para] = []
+     210:     for child in list(body):
+     211:         if child.tag == W('p'):
+     212:             tokens, pPr = _tokens_from_para(child)
+     213:             paras.append(Para(child, pPr, tokens))
+     214:     return paras, body
+     215: 
+     216: 
+     217: # ---------- Styles merge ----------
+     218: 
+     219: 
+     220: def _merge_styles(styles_old: Optional[ET.Element], styles_new: Optional[ET.Element]) -> Optional[ET.Element]:
+     221:     """Merge styles from styles_old into styles_new by styleId if missing."""
+     222:     if styles_new is None:
+     223:         return _clone(styles_old)
+     224:     if styles_old is None:
+     225:         return _clone(styles_new)
+     226:     out = _clone(styles_new)
+     227:     if out is None:
+     228:         return None
+     229:     have = {st.get(W_ATTR('styleId')) for st in out.findall('w:style', NS)}
+     230:     for st in styles_old.findall('w:style', NS):
+     231:         sid = st.get(W_ATTR('styleId'))
+     232:         if sid and sid not in have:
+     233:             out.append(_clone(st))
+     234:             have.add(sid)
+     235:     return out
+     236: 
+     237: 
+     238: # ---------- Building WordprocessingML with track changes ----------
+     239: 
+     240: 
+     241: def _new_run(parent: ET.Element, text: str, rPr: Optional[ET.Element], deleted: bool = False) -> ET.Element:
+     242:     r = ET.SubElement(parent, W('r'))
+     243:     if rPr is not None:
+     244:         r.append(_clone(rPr))
+     245:     t = ET.SubElement(r, W('delText') if deleted else W('t'))
+     246:     # Always preserve spaces to avoid collapsing
+     247:     t.set(XML_ATTR('space'), 'preserve')
+     248:     t.text = text
+     249:     return r
+     250: 
+     251: 
+     252: def _new_change_block(parent: ET.Element, tag: str, author: str, date: str, next_id: int) -> ET.Element:
+     253:     # tag is 'ins' or 'del'
+     254:     attrs = {W_ATTR('author'): author, W_ATTR('date'): date, W_ATTR('id'): str(next_id)}
+     255:     return ET.SubElement(parent, W(tag), attrs)
+     256: 
+     257: 
+     258: def _append_pPr(target_p: ET.Element, pPr: Optional[ET.Element]) -> None:
+     259:     if pPr is not None:
+     260:         target_p.append(_clone(pPr))
+     261: 
+     262: 
+     263: def _wrap_paragraph_as_insertion(p: ET.Element, author: str, date: str, next_id: int) -> ET.Element:
+     264:     """Return a new paragraph where all runs of p are wrapped inside a single <w:ins>."""
+     265:     newp = ET.Element(W('p'))
+     266:     _append_pPr(newp, p.find('w:pPr', NS))
+     267:     ins = _new_change_block(newp, 'ins', author, date, next_id)
+     268:     # Copy runs/hyperlinks within paragraph in order into the ins block
+     269:     for r in _iter_runlike(p, include_ins=True, include_del=False):
+     270:         text = _run_text_in_order(r)
+     271:         if not text:
+     272:             continue
+     273:         rPr = r.find('w:rPr', NS)
+     274:         # Split to preserve spacing faithfully
+     275:         for tok in _word_ws_re.findall(text):
+     276:             _new_run(ins, tok, rPr, deleted=False)
+     277:     return newp
+     278: 
+     279: 
+     280: def _deleted_paragraph_from_old(p_old: ET.Element, author: str, date: str, next_id: int) -> ET.Element:
+     281:     """Create a new paragraph consisting of a single <w:del> with the old paragraph's content as deleted runs."""
+     282:     newp = ET.Element(W('p'))
+     283:     _append_pPr(newp, p_old.find('w:pPr', NS))
+     284:     d = _new_change_block(newp, 'del', author, date, next_id)
+     285:     for r in _iter_runlike(p_old, include_ins=True, include_del=True):
+     286:         text = _run_text_in_order(r)
+     287:         if not text:
+     288:             continue
+     289:         rPr = r.find('w:rPr', NS)
+     290:         for tok in _word_ws_re.findall(text):
+     291:             _new_run(d, tok, rPr, deleted=True)
+     292:     return newp
+     293: 
+     294: 
+     295: def _same_rpr(a: Optional[ET.Element], b: Optional[ET.Element]) -> bool:
+     296:     if (a is None) and (b is None):
+     297:         return True
+     298:     if (a is None) != (b is None):
+     299:         return False
+     300:     return ET.tostring(a, encoding='utf-8') == ET.tostring(b, encoding='utf-8')
+     301: 
+     302: 
+     303: def _add_rPr_change(run_el: ET.Element, old_rPr: Optional[ET.Element], author: str, date: str, next_id: int) -> None:
+     304:     """For a run whose text is unchanged but formatting differs, append <w:rPrChange> with the prior formatting."""
+     305:     rPr = run_el.find('w:rPr', NS)
+     306:     if rPr is None:
+     307:         rPr = ET.SubElement(run_el, W('rPr'))
+     308:     ch = ET.Element(W('rPrChange'), {W_ATTR('author'): author, W_ATTR('date'): date, W_ATTR('id'): str(next_id)})
+     309:     if old_rPr is not None:
+     310:         # Insert the old formatting properties inside rPrChange:
+     311:         for child in list(old_rPr):
+     312:             ch.append(_clone(child))
+     313:     rPr.append(ch)
+     314: 
+     315: 
+     316: def _redline_1to1_paragraph(p_old: Para, p_new: Para, author: str, date: str, id_start: int) -> tuple[ET.Element, int]:
+     317:     """Build a new paragraph with word-level tracked changes between p_old and p_new.
+     318:     Returns (new_paragraph_element, next_id_after_use).
+     319:     """
+     320:     next_id = id_start
+     321:     newp = ET.Element(W('p'))
+     322:     _append_pPr(newp, p_new.pPr if p_new.pPr is not None else p_old.pPr)
+     323: 
+     324:     old_tokens = p_old.tokens
+     325:     new_tokens = p_new.tokens
+     326: 
+     327:     sm = difflib.SequenceMatcher(a=[t.text for t in old_tokens], b=[t.text for t in new_tokens])
+     328:     for tag, i1, i2, j1, j2 in sm.get_opcodes():
+     329:         if tag == 'equal':
+     330:             # Emit new runs using NEW formatting; if formatting changed vs old, add rPrChange
+     331:             for k in range(j1, j2):
+     332:                 tok_new = new_tokens[k]
+     333:                 tok_old = old_tokens[i1 + (k - j1)]
+     334:                 run = _new_run(newp, tok_new.text, tok_new.rPr, deleted=False)
+     335:                 if not _same_rpr(tok_old.rPr, tok_new.rPr):
+     336:                     _add_rPr_change(run, tok_old.rPr, author, date, next_id)
+     337:                     next_id += 1
+     338:         elif tag == 'insert':
+     339:             ins = _new_change_block(newp, 'ins', author, date, next_id)
+     340:             next_id += 1
+     341:             for tok in new_tokens[j1:j2]:
+     342:                 _new_run(ins, tok.text, tok.rPr, deleted=False)
+     343:         elif tag == 'delete':
+     344:             d = _new_change_block(newp, 'del', author, date, next_id)
+     345:             next_id += 1
+     346:             for tok in old_tokens[i1:i2]:
+     347:                 _new_run(d, tok.text, tok.rPr, deleted=True)
+     348:         elif tag == 'replace':
+     349:             # Delete old, then insert new
+     350:             d = _new_change_block(newp, 'del', author, date, next_id)
+     351:             next_id += 1
+     352:             for tok in old_tokens[i1:i2]:
+     353:                 _new_run(d, tok.text, tok.rPr, deleted=True)
+     354:             ins = _new_change_block(newp, 'ins', author, date, next_id)
+     355:             next_id += 1
+     356:             for tok in new_tokens[j1:j2]:
+     357:                 _new_run(ins, tok.text, tok.rPr, deleted=False)
+     358:         else:
+     359:             msg = f'Unexpected opcode: {tag}'
+     360:             raise RuntimeError(msg)
+     361:     return newp, next_id
+     362: 
+     363: 
+     364: # ---------- High-level diff orchestration ----------
+     365: 
+     366: 
+     367: def build_redlined_document(
+     368:     doc_old: ET.Element, doc_new: ET.Element, author: str, now_iso: Optional[str] = None
+     369: ) -> ET.Element:
+     370:     """Returns a NEW document root (<w:document>) whose <w:body> is rebuilt with track changes.
+     371:     Uses 'doc_new' as the structural base (preserves all non-paragraph direct children).
+     372:     """
+     373:     if now_iso is None:
+     374:         now_iso = _utc_now_iso()
+     375: 
+     376:     # Prepare top-level body structures
+     377:     old_paras, _ = _collect_top_level_paragraphs(doc_old)
+     378:     new_paras, _body_new = _collect_top_level_paragraphs(doc_new)
+     379: 
+     380:     # Map position of top-level paragraphs in doc_new to their indices among body children
+     381:     body_children = list(doc_new.find('w:body', NS))
+     382:     [i for i, ch in enumerate(body_children) if ch.tag == W('p')]
+     383: 
+     384:     # Paragraph-level diff (by textual content)
+     385:     sm = difflib.SequenceMatcher(a=[p.raw_text for p in old_paras], b=[p.raw_text for p in new_paras])
+     386: 
+     387:     # Plan: for each doc_new paragraph index j, how to output it; and where to inject deletion-only paragraphs.
+     388:     plan_for_p2: dict[int, tuple[str, Optional[int]]] = {}
+     389:     pending_deletions_at_index: dict[int, list[int]] = {}
+     390: 
+     391:     for tag, i1, i2, j1, j2 in sm.get_opcodes():
+     392:         if tag == 'equal':
+     393:             for j in range(j1, j2):
+     394:                 plan_for_p2[j] = ('as_is', None)
+     395:         elif tag == 'insert':
+     396:             for j in range(j1, j2):
+     397:                 plan_for_p2[j] = ('insert_para', None)
+     398:         elif tag == 'delete':
+     399:             # no paragraph at position j in new doc; schedule deletions before j
+     400:             if i1 < i2:
+     401:                 pending_deletions_at_index.setdefault(j1, []).extend(list(range(i1, i2)))
+     402:         elif tag == 'replace':
+     403:             len_old = i2 - i1
+     404:             len_new = j2 - j1
+     405:             if len_old == 1 and len_new == 1:
+     406:                 plan_for_p2[j1] = ('replace_1to1', i1)
+     407:             else:
+     408:                 # generalized: insert all new paras, and inject deletions before the first new position
+     409:                 for j in range(j1, j2):
+     410:                     plan_for_p2[j] = ('insert_para', None)
+     411:                 if i1 < i2:
+     412:                     pending_deletions_at_index.setdefault(j1, []).extend(list(range(i1, i2)))
+     413:         else:
+     414:             msg = f'Unexpected opcode: {tag}'
+     415:             raise RuntimeError(msg)
+     416: 
+     417:     # Rebuild a new body: iterate through original new body children to preserve non-paragraph items & order
+     418:     new_body = ET.Element(W('body'))
+     419:     next_change_id = 1
+     420: 
+     421:     # We'll need to detect the (last) sectPr from the new doc body to append at the end
+     422:     sectPr = None
+     423:     for ch in body_children:
+     424:         if ch.tag == W('sectPr'):
+     425:             sectPr = ch  # keep last sectPr
+     426:         elif ch.tag != W('p'):
+     427:             # preserve non-paragraph children (e.g., tables) as-is
+     428:             new_body.append(_clone(ch))
+     429:         else:
+     430:             # This is a paragraph in new doc; determine its paragraph index j among top-level paras
+     431:             j = len([x for x in new_body if x.tag == W('p')])  # not reliable because we added non-p too
+     432:             # The above line counts paragraphs we have already appended to new_body, not the index in new_paras.
+     433:             # We need the original index among NEW-paragraphs up to this child. Compute from body_children.
+     434:             # Calculate j by counting how many 'p' we've passed in the original sequence up to this child index.
+     435:             # We'll maintain a separate counter instead.
+     436:             # will handle below
+     437: 
+     438:     # Rebuild again with a correct streaming counter:
+     439:     new_body = ET.Element(W('body'))
+     440:     new_para_counter = 0
+     441:     for ch in body_children:
+     442:         if ch.tag == W('sectPr'):
+     443:             sectPr = ch
+     444:             continue
+     445:         if ch.tag != W('p'):
+     446:             new_body.append(_clone(ch))
+     447:             continue
+     448: 
+     449:         # Inject any pending deletions scheduled for BEFORE this new paragraph index
+     450:         if new_para_counter in pending_deletions_at_index:
+     451:             for i_old in pending_deletions_at_index[new_para_counter]:
+     452:                 old_p_el = old_paras[i_old].el
+     453:                 delp = _deleted_paragraph_from_old(old_p_el, author, now_iso, next_change_id)
+     454:                 next_change_id += 1
+     455:                 new_body.append(delp)
+     456: 
+     457:         action, maybe_i_old = plan_for_p2.get(new_para_counter, ('as_is', None))
+     458: 
+     459:         if action == 'as_is':
+     460:             new_body.append(_clone(ch))
+     461:         elif action == 'insert_para':
+     462:             ins_p = _wrap_paragraph_as_insertion(ch, author, now_iso, next_change_id)
+     463:             next_change_id += 1
+     464:             new_body.append(ins_p)
+     465:         elif action == 'replace_1to1':
+     466:             i_old = maybe_i_old  # type: ignore
+     467:             para_old = old_paras[i_old]
+     468:             # Build word-level tracked paragraph
+     469:             para_new_index = new_para_counter
+     470:             para_new = new_paras[para_new_index]
+     471:             redlined_p, next_change_id = _redline_1to1_paragraph(para_old, para_new, author, now_iso, next_change_id)
+     472:             new_body.append(redlined_p)
+     473:         else:
+     474:             msg = f'Unknown action: {action}'
+     475:             raise RuntimeError(msg)
+     476: 
+     477:         new_para_counter += 1
+     478: 
+     479:     # Any deletions scheduled after the last paragraph?
+     480:     if new_para_counter in pending_deletions_at_index:
+     481:         for i_old in pending_deletions_at_index[new_para_counter]:
+     482:             delp = _deleted_paragraph_from_old(old_paras[i_old].el, author, now_iso, next_change_id)
+     483:             next_change_id += 1
+     484:             new_body.append(delp)
+     485: 
+     486:     # Append sectPr at the end if present
+     487:     if sectPr is not None:
+     488:         new_body.append(_clone(sectPr))
+     489: 
+     490:     # Build a new document root by cloning doc_new root and swapping its body
+     491:     out_doc = _clone(doc_new)
+     492:     # replace the body element
+     493:     parent = out_doc  # <w:document>
+     494:     # Find old body
+     495:     for i, child in enumerate(list(parent)):
+     496:         if child.tag == W('body'):
+     497:             parent.remove(child)
+     498:             parent.insert(i, new_body)
+     499:             break
+     500:     else:
+     501:         msg = 'No w:body in document'
+     502:         raise RuntimeError(msg)
+     503: 
+     504:     return out_doc
+     505: 
+     506: 
+     507: # ---------- CLI ----------
+     508: 
+     509: 
+     510: def main() -> None:
+     511:     ap = argparse.ArgumentParser(description='Produce a tracked-changes DOCX that redlines two DOCX files.')
+     512:     ap.add_argument('--from', dest='from_path', required=True, help='Old / base DOCX path')
+     513:     ap.add_argument('--to', dest='to_path', required=True, help='New / target DOCX path')
+     514:     ap.add_argument('--out', dest='out_path', required=True, help='Output DOCX path')
+     515:     ap.add_argument('--author', dest='author', default='Comparison', help='Track-changes author name')
+     516:     ap.add_argument(
+     517:         '--date',
+     518:         dest='date',
+     519:         default=None,
+     520:         help='ISO datetime for changes (default: now UTC, e.g., 2025-10-10T12:00:00Z)',
+     521:     )
+     522:     args = ap.parse_args()
+     523: 
+     524:     old_doc, old_styles, _old_files = _read_docx_all(args.from_path)
+     525:     new_doc, new_styles, new_files = _read_docx_all(args.to_path)
+     526: 
+     527:     date_iso = args.date or _utc_now_iso()
+     528: 
+     529:     out_doc = build_redlined_document(old_doc, new_doc, author=args.author, now_iso=date_iso)
+     530:     out_styles = _merge_styles(old_styles, new_styles)
+     531: 
+     532:     # Write using "to/new" as the base package so relationships stay consistent
+     533:     _write_docx_from_base(new_files, out_doc, out_styles, args.out_path)
+     534: 
+     535: 
+     536: if __name__ == '__main__':
+     537:     try:
+     538:         main()
+     539:     except Exception as e:
+     540:         sys.stderr.write(f'Error: {e!s}\n')
+     541:         sys.exit(2)
+     542: 

@@ -33,6 +33,7 @@ import argparse
 import copy
 import datetime as dt
 import io
+import re
 import sys
 import uuid
 import xml.etree.ElementTree as ET
@@ -54,16 +55,44 @@ logger.add(
 
 app = typer.Typer(help="Create redlined DOCX files with character-level tracked changes")
 
-# Namespaces
+# Namespaces - Complete Word schema
 NS_W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 NS_XML = 'http://www.w3.org/XML/1998/namespace'
 
 NS = {'w': NS_W, 'r': NS_R, 'xml': NS_XML}
 
-# Register namespaces
+# Additional Word namespaces for full compatibility
+EXTENDED_NS = {
+    'w14': 'http://schemas.microsoft.com/office/word/2010/wordml',
+    'w15': 'http://schemas.microsoft.com/office/word/2012/wordml',
+    'w16': 'http://schemas.microsoft.com/office/word/2018/wordml',
+    'w16cex': 'http://schemas.microsoft.com/office/word/2018/wordml/cex',
+    'w16cid': 'http://schemas.microsoft.com/office/word/2016/wordml/cid',
+    'w16du': 'http://schemas.microsoft.com/office/word/2023/wordml/word16du',
+    'w16se': 'http://schemas.microsoft.com/office/word/2015/wordml/symex',
+    'w16sdtdh': 'http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash',
+    'w16sdtfl': 'http://schemas.microsoft.com/office/word/2024/wordml/sdtformatlock',
+    'mc': 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+    'o': 'urn:schemas-microsoft-com:office:office',
+    'v': 'urn:schemas-microsoft-com:vml',
+    'wp': 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
+    'wp14': 'http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing',
+    'wps': 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape',
+    'wpg': 'http://schemas.microsoft.com/office/word/2010/wordprocessingGroup',
+    'wpi': 'http://schemas.microsoft.com/office/word/2010/wordprocessingInk',
+    'wpc': 'http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas',
+}
+
+# Register all namespaces
 for _prefix, _uri in NS.items():
     ET.register_namespace(_prefix, _uri)
+
+for _prefix, _uri in EXTENDED_NS.items():
+    ET.register_namespace(_prefix, _uri)
+
+# Word/whitespace regex pattern for tokenization
+_word_ws_re = re.compile(r'\S+|\s+')
 
 
 def qn(tag: str) -> str:
@@ -234,7 +263,10 @@ def block_iter(body: ET.Element):
 
 
 def paragraph_runs_tokens(p: ET.Element) -> list[dict]:
-    """Convert paragraph to list of run tokens.
+    """Convert paragraph to list of WORD-LEVEL tokens.
+
+    FIXED: Now splits each run's text into words/whitespace for finer granularity.
+    This allows proper detection of formatting changes when run structure differs.
 
     Each token is a dict with:
         kind: 'text' | 'tab' | 'br' | 'other'
@@ -253,11 +285,13 @@ def paragraph_runs_tokens(p: ET.Element) -> list[dict]:
         rPr = r.find(qn('w:rPr'))
         rPr_copy = copy.deepcopy(rPr) if rPr is not None else None
 
-        # Text nodes
+        # Text nodes - FIX: Split into word/whitespace tokens
         t_nodes = r.findall(qn('w:t'))
         if t_nodes:
             full_text = ''.join([t.text or '' for t in t_nodes])
-            tokens.append({'kind': 'text', 'text': full_text, 'rPr': rPr_copy, 'run_xml': r})
+            # Split text into words and whitespace for finer-grained comparison
+            for word_or_space in _word_ws_re.findall(full_text):
+                tokens.append({'kind': 'text', 'text': word_or_space, 'rPr': rPr_copy, 'run_xml': r})
             continue
 
         # Tab
@@ -462,6 +496,8 @@ def diff_run_text_charlevel(
 ) -> list[ET.Element]:
     """Yield char-level changes for single-run replacement.
 
+    FIXED: Now properly tracks formatting-only changes with rPrChange.
+
     Args:
         old_text: Original text
         new_text: New text
@@ -480,7 +516,12 @@ def diff_run_text_charlevel(
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == 'equal':
             if i2 > i1:
-                out.append(clone_r_with_text(old_text[i1:i2], new_rPr, deleted=False))
+                # FIX: Check for formatting changes even when text is equal
+                r = clone_r_with_text(old_text[i1:i2], new_rPr, deleted=False)
+                if not equal_runs_style(old_rPr, new_rPr):
+                    # Formatting changed - add rPrChange
+                    add_rPrChange(r, old_rPr, author, date_iso, cidgen.next())
+                out.append(r)
         elif tag == 'delete':
             if i2 > i1:
                 de = make_del_container(author, date_iso, cidgen.next())
