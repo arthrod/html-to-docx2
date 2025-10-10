@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Create thumbnail grids from PowerPoint presentation slides.
+"""Create thumbnail grids from PowerPoint presentation slides.
 
 Creates a grid layout of slide thumbnails with configurable columns (max 6).
 Each grid contains up to cols×(cols+1) images. For presentations with more
@@ -64,27 +63,20 @@ FONT_SIZE_RATIO = 0.12  # Font size as fraction of thumbnail width
 LABEL_PADDING_RATIO = 0.4  # Label padding as fraction of font size
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Create thumbnail grids from PowerPoint slides."
-    )
-    parser.add_argument("input", help="Input PowerPoint file (.pptx)")
+def main() -> None:
+    parser = argparse.ArgumentParser(description='Create thumbnail grids from PowerPoint slides.')
+    parser.add_argument('input', help='Input PowerPoint file (.pptx)')
     parser.add_argument(
-        "output_prefix",
-        nargs="?",
-        default="thumbnails",
-        help="Output prefix for image files (default: thumbnails, will create prefix.jpg or prefix-N.jpg)",
+        'output_prefix',
+        nargs='?',
+        default='thumbnails',
+        help='Output prefix for image files (default: thumbnails, will create prefix.jpg or prefix-N.jpg)',
     )
     parser.add_argument(
-        "--cols",
-        type=int,
-        default=DEFAULT_COLS,
-        help=f"Number of columns (default: {DEFAULT_COLS}, max: {MAX_COLS})",
+        '--cols', type=int, default=DEFAULT_COLS, help=f'Number of columns (default: {DEFAULT_COLS}, max: {MAX_COLS})'
     )
     parser.add_argument(
-        "--outline-placeholders",
-        action="store_true",
-        help="Outline text placeholders with a colored border",
+        '--outline-placeholders', action='store_true', help='Outline text placeholders with a colored border'
     )
 
     args = parser.parse_args()
@@ -92,18 +84,15 @@ def main():
     # Validate columns
     cols = min(args.cols, MAX_COLS)
     if args.cols > MAX_COLS:
-        print(f"Warning: Columns limited to {MAX_COLS} (requested {args.cols})")
+        pass
 
     # Validate input
     input_path = Path(args.input)
-    if not input_path.exists() or input_path.suffix.lower() != ".pptx":
-        print(f"Error: Invalid PowerPoint file: {args.input}")
+    if not input_path.exists() or input_path.suffix.lower() != '.pptx':
         sys.exit(1)
 
     # Construct output path (always JPG)
-    output_path = Path(f"{args.output_prefix}.jpg")
-
-    print(f"Processing: {args.input}")
+    output_path = Path(f'{args.output_prefix}.jpg')
 
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -111,48 +100,35 @@ def main():
             placeholder_regions = None
             slide_dimensions = None
             if args.outline_placeholders:
-                print("Extracting placeholder regions...")
-                placeholder_regions, slide_dimensions = get_placeholder_regions(
-                    input_path
-                )
+                placeholder_regions, slide_dimensions = get_placeholder_regions(input_path)
                 if placeholder_regions:
-                    print(f"Found placeholders on {len(placeholder_regions)} slides")
+                    pass
 
             # Convert slides to images
             slide_images = convert_to_images(input_path, Path(temp_dir), CONVERSION_DPI)
             if not slide_images:
-                print("Error: No slides found")
                 sys.exit(1)
-
-            print(f"Found {len(slide_images)} slides")
 
             # Create grids (max cols×(cols+1) images per grid)
             grid_files = create_grids(
-                slide_images,
-                cols,
-                THUMBNAIL_WIDTH,
-                output_path,
-                placeholder_regions,
-                slide_dimensions,
+                slide_images, cols, THUMBNAIL_WIDTH, output_path, placeholder_regions, slide_dimensions
             )
 
             # Print saved files
-            print(f"Created {len(grid_files)} grid(s):")
-            for grid_file in grid_files:
-                print(f"  - {grid_file}")
+            for _grid_file in grid_files:
+                pass
 
-    except Exception as e:
-        print(f"Error: {e}")
+    except Exception:
         sys.exit(1)
 
 
 def create_hidden_slide_placeholder(size):
     """Create placeholder image for hidden slides."""
-    img = Image.new("RGB", size, color="#F0F0F0")
+    img = Image.new('RGB', size, color='#F0F0F0')
     draw = ImageDraw.Draw(img)
     line_width = max(5, min(size) // 100)
-    draw.line([(0, 0), size], fill="#CCCCCC", width=line_width)
-    draw.line([(size[0], 0), (0, size[1])], fill="#CCCCCC", width=line_width)
+    draw.line([(0, 0), size], fill='#CCCCCC', width=line_width)
+    draw.line([(size[0], 0), (0, size[1])], fill='#CCCCCC', width=line_width)
     return img
 
 
@@ -174,19 +150,13 @@ def get_placeholder_regions(pptx_path):
 
     for slide_key, shapes in inventory.items():
         # Extract slide index from "slide-N" format
-        slide_idx = int(slide_key.split("-")[1])
-        regions = []
+        slide_idx = int(slide_key.split('-')[1])
 
-        for shape_key, shape_data in shapes.items():
-            # The inventory only contains shapes with text, so all shapes should be highlighted
-            regions.append(
-                {
-                    "left": shape_data.left,
-                    "top": shape_data.top,
-                    "width": shape_data.width,
-                    "height": shape_data.height,
-                }
-            )
+        # The inventory only contains shapes with text, so all shapes should be highlighted
+        regions = [
+            {'left': shape_data.left, 'top': shape_data.top, 'width': shape_data.width, 'height': shape_data.height}
+            for shape_data in shapes.values()
+        ]
 
         if regions:
             placeholder_regions[slide_idx] = regions
@@ -197,52 +167,40 @@ def get_placeholder_regions(pptx_path):
 def convert_to_images(pptx_path, temp_dir, dpi):
     """Convert PowerPoint to images via PDF, handling hidden slides."""
     # Detect hidden slides
-    print("Analyzing presentation...")
     prs = Presentation(str(pptx_path))
     total_slides = len(prs.slides)
 
     # Find hidden slides (1-based indexing for display)
-    hidden_slides = {
-        idx + 1
-        for idx, slide in enumerate(prs.slides)
-        if slide.element.get("show") == "0"
-    }
+    hidden_slides = {idx + 1 for idx, slide in enumerate(prs.slides) if slide.element.get('show') == '0'}
 
-    print(f"Total slides: {total_slides}")
     if hidden_slides:
-        print(f"Hidden slides: {sorted(hidden_slides)}")
+        pass
 
-    pdf_path = temp_dir / f"{pptx_path.stem}.pdf"
+    pdf_path = temp_dir / f'{pptx_path.stem}.pdf'
 
     # Convert to PDF
-    print("Converting to PDF...")
     result = subprocess.run(
-        [
-            "soffice",
-            "--headless",
-            "--convert-to",
-            "pdf",
-            "--outdir",
-            str(temp_dir),
-            str(pptx_path),
-        ],
+        ['soffice', '--headless', '--convert-to', 'pdf', '--outdir', str(temp_dir), str(pptx_path)],
         capture_output=True,
         text=True,
+        check=False,
     )
     if result.returncode != 0 or not pdf_path.exists():
-        raise RuntimeError("PDF conversion failed")
+        msg = 'PDF conversion failed'
+        raise RuntimeError(msg)
 
     # Convert PDF to images
-    print(f"Converting to images at {dpi} DPI...")
     result = subprocess.run(
-        ["pdftoppm", "-jpeg", "-r", str(dpi), str(pdf_path), str(temp_dir / "slide")],
+        ['pdftoppm', '-jpeg', '-r', str(dpi), str(pdf_path), str(temp_dir / 'slide')],
         capture_output=True,
         text=True,
+        check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError("Image conversion failed")
+        msg = 'Image conversion failed'
+        raise RuntimeError(msg)
 
-    visible_images = sorted(temp_dir.glob("slide-*.jpg"))
+    visible_images = sorted(temp_dir.glob('slide-*.jpg'))
 
     # Create full list with placeholders for hidden slides
     all_images = []
@@ -258,47 +216,31 @@ def convert_to_images(pptx_path, temp_dir, dpi):
     for slide_num in range(1, total_slides + 1):
         if slide_num in hidden_slides:
             # Create placeholder image for hidden slide
-            placeholder_path = temp_dir / f"hidden-{slide_num:03d}.jpg"
+            placeholder_path = temp_dir / f'hidden-{slide_num:03d}.jpg'
             placeholder_img = create_hidden_slide_placeholder(placeholder_size)
-            placeholder_img.save(placeholder_path, "JPEG")
+            placeholder_img.save(placeholder_path, 'JPEG')
             all_images.append(placeholder_path)
-        else:
-            # Use the actual visible slide image
-            if visible_idx < len(visible_images):
-                all_images.append(visible_images[visible_idx])
-                visible_idx += 1
+        # Use the actual visible slide image
+        elif visible_idx < len(visible_images):
+            all_images.append(visible_images[visible_idx])
+            visible_idx += 1
 
     return all_images
 
 
-def create_grids(
-    image_paths,
-    cols,
-    width,
-    output_path,
-    placeholder_regions=None,
-    slide_dimensions=None,
-):
+def create_grids(image_paths, cols, width, output_path, placeholder_regions=None, slide_dimensions=None):
     """Create multiple thumbnail grids from slide images, max cols×(cols+1) images per grid."""
     # Maximum images per grid is cols × (cols + 1) for better proportions
     max_images_per_grid = cols * (cols + 1)
     grid_files = []
 
-    print(
-        f"Creating grids with {cols} columns (max {max_images_per_grid} images per grid)"
-    )
-
     # Split images into chunks
-    for chunk_idx, start_idx in enumerate(
-        range(0, len(image_paths), max_images_per_grid)
-    ):
+    for chunk_idx, start_idx in enumerate(range(0, len(image_paths), max_images_per_grid)):
         end_idx = min(start_idx + max_images_per_grid, len(image_paths))
         chunk_images = image_paths[start_idx:end_idx]
 
         # Create grid for this chunk
-        grid = create_grid(
-            chunk_images, cols, width, start_idx, placeholder_regions, slide_dimensions
-        )
+        grid = create_grid(chunk_images, cols, width, start_idx, placeholder_regions, slide_dimensions)
 
         # Generate output filename
         if len(image_paths) <= max_images_per_grid:
@@ -308,7 +250,7 @@ def create_grids(
             # Multiple grids - insert index before extension with dash
             stem = output_path.stem
             suffix = output_path.suffix
-            grid_filename = output_path.parent / f"{stem}-{chunk_idx + 1}{suffix}"
+            grid_filename = output_path.parent / f'{stem}-{chunk_idx + 1}{suffix}'
 
         # Save grid
         grid_filename.parent.mkdir(parents=True, exist_ok=True)
@@ -318,14 +260,7 @@ def create_grids(
     return grid_files
 
 
-def create_grid(
-    image_paths,
-    cols,
-    width,
-    start_slide_num=0,
-    placeholder_regions=None,
-    slide_dimensions=None,
-):
+def create_grid(image_paths, cols, width, start_slide_num=0, placeholder_regions=None, slide_dimensions=None):
     """Create thumbnail grid from slide images with optional placeholder outlining."""
     font_size = int(width * FONT_SIZE_RATIO)
     label_padding = int(font_size * LABEL_PADDING_RATIO)
@@ -341,7 +276,7 @@ def create_grid(
     grid_h = rows * (height + font_size + label_padding * 2) + (rows + 1) * GRID_PADDING
 
     # Create grid
-    grid = Image.new("RGB", (grid_w, grid_h), "white")
+    grid = Image.new('RGB', (grid_w, grid_h), 'white')
     draw = ImageDraw.Draw(grid)
 
     # Load font with size based on thumbnail width
@@ -356,20 +291,13 @@ def create_grid(
     for i, img_path in enumerate(image_paths):
         row, col = i // cols, i % cols
         x = col * width + (col + 1) * GRID_PADDING
-        y_base = (
-            row * (height + font_size + label_padding * 2) + (row + 1) * GRID_PADDING
-        )
+        y_base = row * (height + font_size + label_padding * 2) + (row + 1) * GRID_PADDING
 
         # Add label with actual slide number
-        label = f"{start_slide_num + i}"
+        label = f'{start_slide_num + i}'
         bbox = draw.textbbox((0, 0), label, font=font)
         text_w = bbox[2] - bbox[0]
-        draw.text(
-            (x + (width - text_w) // 2, y_base + label_padding),
-            label,
-            fill="black",
-            font=font,
-        )
+        draw.text((x + (width - text_w) // 2, y_base + label_padding), label, fill='black', font=font)
 
         # Add thumbnail below label with proportional spacing
         y_thumbnail = y_base + label_padding + font_size + label_padding
@@ -381,8 +309,8 @@ def create_grid(
             # Apply placeholder outlines if enabled
             if placeholder_regions and (start_slide_num + i) in placeholder_regions:
                 # Convert to RGBA for transparency support
-                if img.mode != "RGBA":
-                    img = img.convert("RGBA")
+                if img.mode != 'RGBA':
+                    img = img.convert('RGBA')
 
                 # Get the regions for this slide
                 regions = placeholder_regions[start_slide_num + i]
@@ -399,22 +327,20 @@ def create_grid(
                 y_scale = orig_h / slide_height_inches
 
                 # Create a highlight overlay
-                overlay = Image.new("RGBA", img.size, (255, 255, 255, 0))
+                overlay = Image.new('RGBA', img.size, (255, 255, 255, 0))
                 overlay_draw = ImageDraw.Draw(overlay)
 
                 # Highlight each placeholder region
                 for region in regions:
                     # Convert from inches to pixels in the original image
-                    px_left = int(region["left"] * x_scale)
-                    px_top = int(region["top"] * y_scale)
-                    px_width = int(region["width"] * x_scale)
-                    px_height = int(region["height"] * y_scale)
+                    px_left = int(region['left'] * x_scale)
+                    px_top = int(region['top'] * y_scale)
+                    px_width = int(region['width'] * x_scale)
+                    px_height = int(region['height'] * y_scale)
 
                     # Draw highlight outline with red color and thick stroke
                     # Using a bright red outline instead of fill
-                    stroke_width = max(
-                        5, min(orig_w, orig_h) // 150
-                    )  # Thicker proportional stroke width
+                    stroke_width = max(5, min(orig_w, orig_h) // 150)  # Thicker proportional stroke width
                     overlay_draw.rectangle(
                         [(px_left, px_top), (px_left + px_width, px_top + px_height)],
                         outline=(255, 0, 0, 255),  # Bright red, fully opaque
@@ -424,7 +350,7 @@ def create_grid(
                 # Composite the overlay onto the image using alpha blending
                 img = Image.alpha_composite(img, overlay)
                 # Convert back to RGB for JPEG saving
-                img = img.convert("RGB")
+                img = img.convert('RGB')
 
             img.thumbnail((width, height), Image.Resampling.LANCZOS)
             w, h = img.size
@@ -435,16 +361,13 @@ def create_grid(
             # Add border
             if BORDER_WIDTH > 0:
                 draw.rectangle(
-                    [
-                        (tx - BORDER_WIDTH, ty - BORDER_WIDTH),
-                        (tx + w + BORDER_WIDTH - 1, ty + h + BORDER_WIDTH - 1),
-                    ],
-                    outline="gray",
+                    [(tx - BORDER_WIDTH, ty - BORDER_WIDTH), (tx + w + BORDER_WIDTH - 1, ty + h + BORDER_WIDTH - 1)],
+                    outline='gray',
                     width=BORDER_WIDTH,
                 )
 
     return grid
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -9,10 +9,11 @@ ALL text shapes identified by inventory.py will have their text cleared
 unless "paragraphs" is specified in the replacements for that shape.
 """
 
+import contextlib
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from inventory import InventoryData, extract_text_inventory
 from pptx import Presentation
@@ -30,73 +31,73 @@ def clear_paragraph_bullets(paragraph):
     # Remove existing bullet elements
     for child in list(pPr):
         if (
-            child.tag.endswith("buChar")
-            or child.tag.endswith("buNone")
-            or child.tag.endswith("buAutoNum")
-            or child.tag.endswith("buFont")
+            child.tag.endswith('buChar')
+            or child.tag.endswith('buNone')
+            or child.tag.endswith('buAutoNum')
+            or child.tag.endswith('buFont')
         ):
             pPr.remove(child)
 
     return pPr
 
 
-def apply_paragraph_properties(paragraph, para_data: Dict[str, Any]):
+def apply_paragraph_properties(paragraph, para_data: dict[str, Any]) -> None:
     """Apply formatting properties to a paragraph."""
     # Get the text but don't set it on paragraph directly yet
-    text = para_data.get("text", "")
+    text = para_data.get('text', '')
 
     # Get or create paragraph properties
     pPr = clear_paragraph_bullets(paragraph)
 
     # Handle bullet formatting
-    if para_data.get("bullet", False):
-        level = para_data.get("level", 0)
+    if para_data.get('bullet'):
+        level = para_data.get('level', 0)
         paragraph.level = level
 
         # Calculate font-proportional indentation
-        font_size = para_data.get("font_size", 18.0)
+        font_size = para_data.get('font_size', 18.0)
         level_indent_emu = int((font_size * (1.6 + level * 1.6)) * 12700)
         hanging_indent_emu = int(-font_size * 0.8 * 12700)
 
         # Set indentation
-        pPr.attrib["marL"] = str(level_indent_emu)
-        pPr.attrib["indent"] = str(hanging_indent_emu)
+        pPr.attrib['marL'] = str(level_indent_emu)
+        pPr.attrib['indent'] = str(hanging_indent_emu)
 
         # Add bullet character
-        buChar = OxmlElement("a:buChar")
-        buChar.set("char", "•")
+        buChar = OxmlElement('a:buChar')
+        buChar.set('char', '•')
         pPr.append(buChar)
 
         # Default to left alignment for bullets if not specified
-        if "alignment" not in para_data:
+        if 'alignment' not in para_data:
             paragraph.alignment = PP_ALIGN.LEFT
     else:
         # Remove indentation for non-bullet text
-        pPr.attrib["marL"] = "0"
-        pPr.attrib["indent"] = "0"
+        pPr.attrib['marL'] = '0'
+        pPr.attrib['indent'] = '0'
 
         # Add buNone element
-        buNone = OxmlElement("a:buNone")
+        buNone = OxmlElement('a:buNone')
         pPr.insert(0, buNone)
 
     # Apply alignment
-    if "alignment" in para_data:
+    if 'alignment' in para_data:
         alignment_map = {
-            "LEFT": PP_ALIGN.LEFT,
-            "CENTER": PP_ALIGN.CENTER,
-            "RIGHT": PP_ALIGN.RIGHT,
-            "JUSTIFY": PP_ALIGN.JUSTIFY,
+            'LEFT': PP_ALIGN.LEFT,
+            'CENTER': PP_ALIGN.CENTER,
+            'RIGHT': PP_ALIGN.RIGHT,
+            'JUSTIFY': PP_ALIGN.JUSTIFY,
         }
-        if para_data["alignment"] in alignment_map:
-            paragraph.alignment = alignment_map[para_data["alignment"]]
+        if para_data['alignment'] in alignment_map:
+            paragraph.alignment = alignment_map[para_data['alignment']]
 
     # Apply spacing
-    if "space_before" in para_data:
-        paragraph.space_before = Pt(para_data["space_before"])
-    if "space_after" in para_data:
-        paragraph.space_after = Pt(para_data["space_after"])
-    if "line_spacing" in para_data:
-        paragraph.line_spacing = Pt(para_data["line_spacing"])
+    if 'space_before' in para_data:
+        paragraph.space_before = Pt(para_data['space_before'])
+    if 'space_after' in para_data:
+        paragraph.space_after = Pt(para_data['space_after'])
+    if 'line_spacing' in para_data:
+        paragraph.line_spacing = Pt(para_data['line_spacing'])
 
     # Apply run-level formatting
     if not paragraph.runs:
@@ -110,37 +111,35 @@ def apply_paragraph_properties(paragraph, para_data: Dict[str, Any]):
     apply_font_properties(run, para_data)
 
 
-def apply_font_properties(run, para_data: Dict[str, Any]):
+def apply_font_properties(run, para_data: dict[str, Any]) -> None:
     """Apply font properties to a text run."""
-    if "bold" in para_data:
-        run.font.bold = para_data["bold"]
-    if "italic" in para_data:
-        run.font.italic = para_data["italic"]
-    if "underline" in para_data:
-        run.font.underline = para_data["underline"]
-    if "font_size" in para_data:
-        run.font.size = Pt(para_data["font_size"])
-    if "font_name" in para_data:
-        run.font.name = para_data["font_name"]
+    if 'bold' in para_data:
+        run.font.bold = para_data['bold']
+    if 'italic' in para_data:
+        run.font.italic = para_data['italic']
+    if 'underline' in para_data:
+        run.font.underline = para_data['underline']
+    if 'font_size' in para_data:
+        run.font.size = Pt(para_data['font_size'])
+    if 'font_name' in para_data:
+        run.font.name = para_data['font_name']
 
     # Apply color - prefer RGB, fall back to theme_color
-    if "color" in para_data:
-        color_hex = para_data["color"].lstrip("#")
+    if 'color' in para_data:
+        color_hex = para_data['color'].lstrip('#')
         if len(color_hex) == 6:
             r = int(color_hex[0:2], 16)
             g = int(color_hex[2:4], 16)
             b = int(color_hex[4:6], 16)
             run.font.color.rgb = RGBColor(r, g, b)
-    elif "theme_color" in para_data:
+    elif 'theme_color' in para_data:
         # Get theme color by name (e.g., "DARK_1", "ACCENT_1")
-        theme_name = para_data["theme_color"]
-        try:
+        theme_name = para_data['theme_color']
+        with contextlib.suppress(AttributeError):
             run.font.color.theme_color = getattr(MSO_THEME_COLOR, theme_name)
-        except AttributeError:
-            print(f"  WARNING: Unknown theme color name '{theme_name}'")
 
 
-def detect_frame_overflow(inventory: InventoryData) -> Dict[str, Dict[str, float]]:
+def detect_frame_overflow(inventory: InventoryData) -> dict[str, dict[str, float]]:
     """Detect text overflow in shapes (text exceeding shape bounds).
 
     Returns dict of slide_key -> shape_key -> overflow_inches.
@@ -159,7 +158,7 @@ def detect_frame_overflow(inventory: InventoryData) -> Dict[str, Dict[str, float
     return overflow_map
 
 
-def validate_replacements(inventory: InventoryData, replacements: Dict) -> List[str]:
+def validate_replacements(inventory: InventoryData, replacements: dict) -> list[str]:
     """Validate that all shapes in replacements exist in inventory.
 
     Returns list of error messages.
@@ -167,7 +166,7 @@ def validate_replacements(inventory: InventoryData, replacements: Dict) -> List[
     errors = []
 
     for slide_key, shapes_data in replacements.items():
-        if not slide_key.startswith("slide-"):
+        if not slide_key.startswith('slide-'):
             continue
 
         # Check if slide exists
@@ -176,11 +175,11 @@ def validate_replacements(inventory: InventoryData, replacements: Dict) -> List[
             continue
 
         # Check each shape
-        for shape_key in shapes_data.keys():
+        for shape_key in shapes_data:
             if shape_key not in inventory[slide_key]:
                 # Find shapes without replacements defined and show their content
                 unused_with_content = []
-                for k in inventory[slide_key].keys():
+                for k in inventory[slide_key]:
                     if k not in shapes_data:
                         shape_data = inventory[slide_key][k]
                         # Get text from paragraphs as preview
@@ -188,14 +187,14 @@ def validate_replacements(inventory: InventoryData, replacements: Dict) -> List[
                         if paragraphs and paragraphs[0].text:
                             first_text = paragraphs[0].text[:50]
                             if len(paragraphs[0].text) > 50:
-                                first_text += "..."
+                                first_text += '...'
                             unused_with_content.append(f"{k} ('{first_text}')")
                         else:
                             unused_with_content.append(k)
 
                 errors.append(
                     f"Shape '{shape_key}' not found on '{slide_key}'. "
-                    f"Shapes without replacements: {', '.join(sorted(unused_with_content)) if unused_with_content else 'none'}"
+                    f'Shapes without replacements: {", ".join(sorted(unused_with_content)) if unused_with_content else "none"}'
                 )
 
     return errors
@@ -206,14 +205,14 @@ def check_duplicate_keys(pairs):
     result = {}
     for key, value in pairs:
         if key in result:
-            raise ValueError(f"Duplicate key found in JSON: '{key}'")
+            msg = f"Duplicate key found in JSON: '{key}'"
+            raise ValueError(msg)
         result[key] = value
     return result
 
 
-def apply_replacements(pptx_file: str, json_file: str, output_file: str):
+def apply_replacements(pptx_file: str, json_file: str, output_file: str) -> None:
     """Apply text replacements from JSON to PowerPoint presentation."""
-
     # Load presentation
     prs = Presentation(pptx_file)
 
@@ -225,20 +224,16 @@ def apply_replacements(pptx_file: str, json_file: str, output_file: str):
     original_overflow = detect_frame_overflow(inventory)
 
     # Load replacement data with duplicate key detection
-    with open(json_file, "r") as f:
+    with open(json_file, encoding='utf-8') as f:
         replacements = json.load(f, object_pairs_hook=check_duplicate_keys)
 
     # Validate replacements
     errors = validate_replacements(inventory, replacements)
     if errors:
-        print("ERROR: Invalid shapes in replacement JSON:")
-        for error in errors:
-            print(f"  - {error}")
-        print("\nPlease check the inventory and update your replacement JSON.")
-        print(
-            "You can regenerate the inventory with: python inventory.py <input.pptx> <output.json>"
-        )
-        raise ValueError(f"Found {len(errors)} validation error(s)")
+        for _error in errors:
+            pass
+        msg = f'Found {len(errors)} validation error(s)'
+        raise ValueError(msg)
 
     # Track statistics
     shapes_processed = 0
@@ -247,13 +242,12 @@ def apply_replacements(pptx_file: str, json_file: str, output_file: str):
 
     # Process each slide from inventory
     for slide_key, shapes_dict in inventory.items():
-        if not slide_key.startswith("slide-"):
+        if not slide_key.startswith('slide-'):
             continue
 
-        slide_index = int(slide_key.split("-")[1])
+        slide_index = int(slide_key.split('-')[1])
 
         if slide_index >= len(prs.slides):
-            print(f"Warning: Slide {slide_index} not found")
             continue
 
         # Process each shape from inventory
@@ -263,7 +257,6 @@ def apply_replacements(pptx_file: str, json_file: str, output_file: str):
             # Get the shape directly from ShapeData
             shape = shape_data.shape
             if not shape:
-                print(f"Warning: {shape_key} has no shape reference")
                 continue
 
             # ShapeData already validates text_frame in __init__
@@ -274,13 +267,13 @@ def apply_replacements(pptx_file: str, json_file: str, output_file: str):
 
             # Check for replacement paragraphs
             replacement_shape_data = replacements.get(slide_key, {}).get(shape_key, {})
-            if "paragraphs" not in replacement_shape_data:
+            if 'paragraphs' not in replacement_shape_data:
                 continue
 
             shapes_replaced += 1
 
             # Add replacement paragraphs
-            for i, para_data in enumerate(replacement_shape_data["paragraphs"]):
+            for i, para_data in enumerate(replacement_shape_data['paragraphs']):
                 if i == 0:
                     p = text_frame.paragraphs[0]  # type: ignore
                 else:
@@ -293,7 +286,7 @@ def apply_replacements(pptx_file: str, json_file: str, output_file: str):
     # (extract_text_inventory accesses font.color which adds empty <a:solidFill/> elements)
     import tempfile
 
-    with tempfile.NamedTemporaryFile(suffix=".pptx", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(suffix='.pptx', delete=False) as tmp:
         tmp_path = Path(tmp.name)
         prs.save(str(tmp_path))
 
@@ -323,40 +316,28 @@ def apply_replacements(pptx_file: str, json_file: str, output_file: str):
     for slide_key, shapes_dict in updated_inventory.items():
         for shape_key, shape_data in shapes_dict.items():
             if shape_data.warnings:
-                for warning in shape_data.warnings:
-                    warnings.append(f"{slide_key}/{shape_key}: {warning}")
+                warnings.extend(f'{slide_key}/{shape_key}: {warning}' for warning in shape_data.warnings)
 
     # Fail if there are any issues
     if overflow_errors or warnings:
-        print("\nERROR: Issues detected in replacement output:")
         if overflow_errors:
-            print("\nText overflow worsened:")
-            for error in overflow_errors:
-                print(f"  - {error}")
+            for _error in overflow_errors:
+                pass
         if warnings:
-            print("\nFormatting warnings:")
-            for warning in warnings:
-                print(f"  - {warning}")
-        print("\nPlease fix these issues before saving.")
-        raise ValueError(
-            f"Found {len(overflow_errors)} overflow error(s) and {len(warnings)} warning(s)"
-        )
+            for _warning in warnings:
+                pass
+        msg = f'Found {len(overflow_errors)} overflow error(s) and {len(warnings)} warning(s)'
+        raise ValueError(msg)
 
     # Save the presentation
     prs.save(output_file)
 
     # Report results
-    print(f"Saved updated presentation to: {output_file}")
-    print(f"Processed {len(prs.slides)} slides")
-    print(f"  - Shapes processed: {shapes_processed}")
-    print(f"  - Shapes cleared: {shapes_cleared}")
-    print(f"  - Shapes replaced: {shapes_replaced}")
 
 
-def main():
+def main() -> None:
     """Main entry point for command-line usage."""
     if len(sys.argv) != 4:
-        print(__doc__)
         sys.exit(1)
 
     input_pptx = Path(sys.argv[1])
@@ -364,22 +345,19 @@ def main():
     output_pptx = Path(sys.argv[3])
 
     if not input_pptx.exists():
-        print(f"Error: Input file '{input_pptx}' not found")
         sys.exit(1)
 
     if not replacements_json.exists():
-        print(f"Error: Replacements JSON file '{replacements_json}' not found")
         sys.exit(1)
 
     try:
         apply_replacements(str(input_pptx), str(replacements_json), str(output_pptx))
-    except Exception as e:
-        print(f"Error applying replacements: {e}")
+    except Exception:
         import traceback
 
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

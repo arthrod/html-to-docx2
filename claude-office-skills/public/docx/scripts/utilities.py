@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Utilities for editing OOXML documents.
+"""Utilities for editing OOXML documents.
 
 This module provides XMLEditor, a tool for manipulating XML files with support for
 line-number-based node finding and DOM manipulation. Each element is automatically
@@ -30,6 +29,7 @@ Example usage:
     editor.save()
 """
 
+import contextlib
 import html
 from pathlib import Path
 from typing import Optional, Union
@@ -39,8 +39,7 @@ import defusedxml.sax
 
 
 class XMLEditor:
-    """
-    Editor for manipulating OOXML XML files with line-number-based node finding.
+    """Editor for manipulating OOXML XML files with line-number-based node finding.
 
     This class parses XML files and tracks the original line and column position
     of each element. This enables finding nodes by their line number in the original
@@ -52,9 +51,8 @@ class XMLEditor:
         dom: Parsed DOM tree with parse_position attributes on elements
     """
 
-    def __init__(self, xml_path):
-        """
-        Initialize with path to XML file and parse with line number tracking.
+    def __init__(self, xml_path) -> None:
+        """Initialize with path to XML file and parse with line number tracking.
 
         Args:
             xml_path: Path to XML file to edit (str or Path)
@@ -64,11 +62,12 @@ class XMLEditor:
         """
         self.xml_path = Path(xml_path)
         if not self.xml_path.exists():
-            raise ValueError(f"XML file not found: {xml_path}")
+            msg = f'XML file not found: {xml_path}'
+            raise ValueError(msg)
 
-        with open(self.xml_path, "rb") as f:
-            header = f.read(200).decode("utf-8", errors="ignore")
-        self.encoding = "ascii" if 'encoding="ascii"' in header else "utf-8"
+        with open(self.xml_path, 'rb') as f:
+            header = f.read(200).decode('utf-8', errors='ignore')
+        self.encoding = 'ascii' if 'encoding="ascii"' in header else 'utf-8'
 
         parser = _create_line_tracking_parser()
         self.dom = defusedxml.minidom.parse(str(self.xml_path), parser)
@@ -80,8 +79,7 @@ class XMLEditor:
         line_number: Optional[Union[int, range]] = None,
         contains: Optional[str] = None,
     ):
-        """
-        Get a DOM element by tag and identifier.
+        """Get a DOM element by tag and identifier.
 
         Finds an element by either its line number in the original file or by
         matching attribute values. Exactly one match must be found.
@@ -113,24 +111,21 @@ class XMLEditor:
         for elem in self.dom.getElementsByTagName(tag):
             # Check line_number filter
             if line_number is not None:
-                parse_pos = getattr(elem, "parse_position", (None,))
+                parse_pos = getattr(elem, 'parse_position', (None,))
                 elem_line = parse_pos[0]
 
                 # Handle both single line number and range
                 if isinstance(line_number, range):
                     if elem_line not in line_number:
                         continue
-                else:
-                    if elem_line != line_number:
-                        continue
+                elif elem_line != line_number:
+                    continue
 
             # Check attrs filter
-            if attrs is not None:
-                if not all(
-                    elem.getAttribute(attr_name) == attr_value
-                    for attr_name, attr_value in attrs.items()
-                ):
-                    continue
+            if attrs is not None and not all(
+                elem.getAttribute(attr_name) == attr_value for attr_name, attr_value in attrs.items()
+            ):
+                continue
 
             # Check contains filter
             if contains is not None:
@@ -149,40 +144,41 @@ class XMLEditor:
             filters = []
             if line_number is not None:
                 line_str = (
-                    f"lines {line_number.start}-{line_number.stop - 1}"
+                    f'lines {line_number.start}-{line_number.stop - 1}'
                     if isinstance(line_number, range)
-                    else f"line {line_number}"
+                    else f'line {line_number}'
                 )
-                filters.append(f"at {line_str}")
+                filters.append(f'at {line_str}')
             if attrs is not None:
-                filters.append(f"with attributes {attrs}")
+                filters.append(f'with attributes {attrs}')
             if contains is not None:
                 filters.append(f"containing '{contains}'")
 
-            filter_desc = " ".join(filters) if filters else ""
-            base_msg = f"Node not found: <{tag}> {filter_desc}".strip()
+            filter_desc = ' '.join(filters) if filters else ''
+            base_msg = f'Node not found: <{tag}> {filter_desc}'.strip()
 
             # Add helpful hint based on filters used
             if contains:
-                hint = "Text may be split across elements or use different wording."
+                hint = 'Text may be split across elements or use different wording.'
             elif line_number:
-                hint = "Line numbers may have changed if document was modified."
+                hint = 'Line numbers may have changed if document was modified.'
             elif attrs:
-                hint = "Verify attribute values are correct."
+                hint = 'Verify attribute values are correct.'
             else:
-                hint = "Try adding filters (attrs, line_number, or contains)."
+                hint = 'Try adding filters (attrs, line_number, or contains).'
 
-            raise ValueError(f"{base_msg}. {hint}")
+            msg = f'{base_msg}. {hint}'
+            raise ValueError(msg)
         if len(matches) > 1:
-            raise ValueError(
-                f"Multiple nodes found: <{tag}>. "
-                f"Add more filters (attrs, line_number, or contains) to narrow the search."
+            msg = (
+                f'Multiple nodes found: <{tag}>. '
+                f'Add more filters (attrs, line_number, or contains) to narrow the search.'
             )
+            raise ValueError(msg)
         return matches[0]
 
     def _get_element_text(self, elem):
-        """
-        Recursively extract all text content from an element.
+        """Recursively extract all text content from an element.
 
         Skips text nodes that contain only whitespace (spaces, tabs, newlines),
         which typically represent XML formatting rather than document content.
@@ -201,11 +197,10 @@ class XMLEditor:
                     text_parts.append(node.data)
             elif node.nodeType == node.ELEMENT_NODE:
                 text_parts.append(self._get_element_text(node))
-        return "".join(text_parts)
+        return ''.join(text_parts)
 
     def replace_node(self, elem, new_content):
-        """
-        Replace a DOM element with new XML content.
+        """Replace a DOM element with new XML content.
 
         Args:
             elem: defusedxml.minidom.Element to replace
@@ -225,8 +220,7 @@ class XMLEditor:
         return nodes
 
     def insert_after(self, elem, xml_content):
-        """
-        Insert XML content after a DOM element.
+        """Insert XML content after a DOM element.
 
         Args:
             elem: defusedxml.minidom.Element to insert after
@@ -249,8 +243,7 @@ class XMLEditor:
         return nodes
 
     def insert_before(self, elem, xml_content):
-        """
-        Insert XML content before a DOM element.
+        """Insert XML content before a DOM element.
 
         Args:
             elem: defusedxml.minidom.Element to insert before
@@ -269,8 +262,7 @@ class XMLEditor:
         return nodes
 
     def append_to(self, elem, xml_content):
-        """
-        Append XML content as a child of a DOM element.
+        """Append XML content as a child of a DOM element.
 
         Args:
             elem: defusedxml.minidom.Element to append to
@@ -287,21 +279,18 @@ class XMLEditor:
             elem.appendChild(node)
         return nodes
 
-    def get_next_rid(self):
+    def get_next_rid(self) -> str:
         """Get the next available rId for relationships files."""
         max_id = 0
-        for rel_elem in self.dom.getElementsByTagName("Relationship"):
-            rel_id = rel_elem.getAttribute("Id")
-            if rel_id.startswith("rId"):
-                try:
+        for rel_elem in self.dom.getElementsByTagName('Relationship'):
+            rel_id = rel_elem.getAttribute('Id')
+            if rel_id.startswith('rId'):
+                with contextlib.suppress(ValueError):
                     max_id = max(max_id, int(rel_id[3:]))
-                except ValueError:
-                    pass
-        return f"rId{max_id + 1}"
+        return f'rId{max_id + 1}'
 
-    def save(self):
-        """
-        Save the edited XML back to the file.
+    def save(self) -> None:
+        """Save the edited XML back to the file.
 
         Serializes the DOM tree and writes it back to the original file path,
         preserving the original encoding (ascii or utf-8).
@@ -310,8 +299,7 @@ class XMLEditor:
         self.xml_path.write_bytes(content)
 
     def _parse_fragment(self, xml_content):
-        """
-        Parse XML fragment and return list of imported nodes.
+        """Parse XML fragment and return list of imported nodes.
 
         Args:
             xml_content: String containing XML fragment
@@ -328,24 +316,23 @@ class XMLEditor:
         if root_elem and root_elem.attributes:
             for i in range(root_elem.attributes.length):
                 attr = root_elem.attributes.item(i)
-                if attr.name.startswith("xmlns"):  # type: ignore
+                if attr.name.startswith('xmlns'):  # type: ignore
                     namespaces.append(f'{attr.name}="{attr.value}"')  # type: ignore
 
-        ns_decl = " ".join(namespaces)
-        wrapper = f"<root {ns_decl}>{xml_content}</root>"
+        ns_decl = ' '.join(namespaces)
+        wrapper = f'<root {ns_decl}>{xml_content}</root>'
         fragment_doc = defusedxml.minidom.parseString(wrapper)
         nodes = [
             self.dom.importNode(child, deep=True)
             for child in fragment_doc.documentElement.childNodes  # type: ignore
         ]
         elements = [n for n in nodes if n.nodeType == n.ELEMENT_NODE]
-        assert elements, "Fragment must contain at least one element"
+        assert elements, 'Fragment must contain at least one element'
         return nodes
 
 
 def _create_line_tracking_parser():
-    """
-    Create a SAX parser that tracks line and column numbers for each element.
+    """Create a SAX parser that tracks line and column numbers for each element.
 
     Monkey patches the SAX content handler to store the current line and column
     position from the underlying expat parser onto each element as a parse_position
@@ -355,8 +342,8 @@ def _create_line_tracking_parser():
         defusedxml.sax.xmlreader.XMLReader: Configured SAX parser
     """
 
-    def set_content_handler(dom_handler):
-        def startElementNS(name, tagName, attrs):
+    def set_content_handler(dom_handler) -> None:
+        def startElementNS(name, tagName, attrs) -> None:
             orig_start_cb(name, tagName, attrs)
             cur_elem = dom_handler.elementStack[-1]
             cur_elem.parse_position = (
