@@ -444,29 +444,38 @@ def make_del_container(author: str, date_iso: str, cid: int) -> ET.Element:
 def add_rPrChange(new_r: ET.Element, old_rPr: Optional[ET.Element], author: str, date_iso: str, cid: int) -> None:
     """Mark formatting change with <w:rPrChange>.
 
+    CRITICAL FIX: Now correctly handles old_rPr=None (no formatting in old doc).
+    When old had no formatting, we create empty <w:rPr/> in rPrChange.
+
     Args:
         new_r: Run element to modify
-        old_rPr: Old run properties to record
+        old_rPr: Old run properties to record (can be None for no formatting)
         author: Author name
         date_iso: ISO date string
         cid: Change ID
     """
-    if old_rPr is None:
-        return
-
+    # Ensure new run has rPr element
     rPr = new_r.find(qn('w:rPr'))
     if rPr is None:
         rPr = ET.Element(qn('w:rPr'))
         new_r.insert(0, rPr)
 
+    # Create rPrChange element
     rPrChange = ET.Element(qn('w:rPrChange'))
     rPrChange.set(qn('w:id'), str(cid))
     rPrChange.set(qn('w:author'), author)
     rPrChange.set(qn('w:date'), date_iso)
 
-    prior = copy.deepcopy(old_rPr)
-    prior.tag = qn('w:rPr')
-    rPrChange.append(prior)
+    # Add prior formatting (empty if None)
+    if old_rPr is not None:
+        prior = copy.deepcopy(old_rPr)
+        prior.tag = qn('w:rPr')
+        rPrChange.append(prior)
+    else:
+        # Old had no formatting - create empty rPr element
+        prior = ET.Element(qn('w:rPr'))
+        rPrChange.append(prior)
+
     rPr.append(rPrChange)
 
 

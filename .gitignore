@@ -9,6 +9,8 @@
 !new_2.docx
 !old_2.docx
 # Logs
+trash/
+.venv/
 logs
 *.log
 npm-debug.log*
