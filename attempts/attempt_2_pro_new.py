@@ -499,57 +499,32 @@ def blocks_text_key(elem: etree._Element, kind: str) -> str:
     """Return a normalized text key to align blocks across documents."""
     if kind == 'p':
         return tokens_text_key(paragraph_runs_tokens(elem))
-    if kind == 'tbl':
-        # Use all text in table for alignment; if too coarse, it degrades to replace
-        return 'TABLE|' + text_of_element(elem)
-    return 'OTHER|' + (text_of_element(elem) or '')
-
-
-def build_body_with_diffs(
-    old_body: etree._Element, new_body: etree._Element, author: str, date_iso: str, cidgen: ChangeIdGen
-) -> etree._Element:
-    """Create a new <w:body> by aligning block-level content (paragraphs/tables)
-    and emitting inserts/deletes and intra-paragraph diffs.
-    """
-    # Collect blocks, keeping any trailing sectPr from the new doc (section props)
-    old_blocks = [(e, k) for e, k in block_iter(old_body) if k != 'sectPr']
-    new_blocks = [(e, k) for e, k in block_iter(new_body) if k != 'sectPr']
-
-    old_keys = list(starmap(blocks_text_key, old_blocks))
-    new_keys = list(starmap(blocks_text_key, new_blocks))
-
-    body = etree.Element(qn('w:body'))
-
-    sm = SequenceMatcher(a=old_keys, b=new_keys, autojunk=False)
-    for tag, i1, i2, j1, j2 in sm.get_opcodes():
-        old_slice = old_blocks[i1:i2]
-        new_slice = new_blocks[j1:j2]
-
-        if tag == 'equal':
-            # Blocks exist in both – but if paragraph text is equal, we still check
-            # for formatting-only changes and record them via rPrChange.
-            for (oe, ok), (ne, nk) in zip(old_slice, new_slice):
-                if ok == 'p' and nk == 'p':
-                    body.append(build_paragraph_with_diffs(oe, ne, author, date_iso, cidgen))
-                else:
-                    # Copy new block (tables/others)
-                    body.append(deepcopy(ne))
-
         elif tag == 'delete':
             # Entire blocks removed => emit <w:del> wrappers (block-level)
             for oe, ok in old_slice:
-                cid = cidgen.next()
-                de = make_del_container(author, date_iso, cid)
-                # Insert the whole block inside the deletion (paragraph/table)
-                de.append(deepcopy(oe))
-                body.append(de)
+                if ok == 'p':
+                    empty_new = etree.Element(qn('w:p'))
+                    body.append(build_paragraph_with_diffs(oe, empty_new, author, date_iso, cidgen))
+                else:
+                    cid = cidgen.next()
+                    paragraph_wrapper = etree.Element(qn('w:p'))
+                    change = make_del_container(author, date_iso, cid)
+                    change.append(deepcopy(oe))
+                    paragraph_wrapper.append(change)
+                    body.append(paragraph_wrapper)
 
         elif tag == 'insert':
             for ne, nk in new_slice:
-                cid = cidgen.next()
-                ins = make_ins_container(author, date_iso, cid)
-                ins.append(deepcopy(ne))
-                body.append(ins)
+                if nk == 'p':
+                    empty_old = etree.Element(qn('w:p'))
+                    body.append(build_paragraph_with_diffs(empty_old, ne, author, date_iso, cidgen))
+                else:
+                    cid = cidgen.next()
+                    paragraph_wrapper = etree.Element(qn('w:p'))
+                    change = make_ins_container(author, date_iso, cid)
+                    change.append(deepcopy(ne))
+                    paragraph_wrapper.append(change)
+                    body.append(paragraph_wrapper)
 
         elif tag == 'replace':
             # If it's a 1:1 paragraph replace, try intra-paragraph diff; else delete+insert groups.
@@ -558,14 +533,18 @@ def build_body_with_diffs(
             else:
                 for oe, ok in old_slice:
                     cid = cidgen.next()
-                    de = make_del_container(author, date_iso, cid)
-                    de.append(deepcopy(oe))
-                    body.append(de)
+                    paragraph_wrapper = etree.Element(qn('w:p'))
+                    change = make_del_container(author, date_iso, cid)
+                    change.append(deepcopy(oe))
+                    paragraph_wrapper.append(change)
+                    body.append(paragraph_wrapper)
                 for ne, nk in new_slice:
                     cid = cidgen.next()
-                    ins = make_ins_container(author, date_iso, cid)
-                    ins.append(deepcopy(ne))
-                    body.append(ins)
+                    paragraph_wrapper = etree.Element(qn('w:p'))
+                    change = make_ins_container(author, date_iso, cid)
+                    change.append(deepcopy(ne))
+                    paragraph_wrapper.append(change)
+                    body.append(paragraph_wrapper)
 
     # Append sectPr from the *new* body if present (ensures section settings)
     sect = new_body.find(qn('w:sectPr'))
