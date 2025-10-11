@@ -480,7 +480,10 @@ def diff_run_text_charlevel(
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == 'equal':
             if i2 > i1:
-                out.append(clone_r_with_text(old_text[i1:i2], new_rPr, deleted=False))
+                r = clone_r_with_text(old_text[i1:i2], new_rPr, deleted=False)
+                if not equal_runs_style(old_rPr, new_rPr):
+                    add_rPrChange(r, old_rPr, author, date_iso, cidgen.next())
+                out.append(r)
         elif tag == 'delete':
             if i2 > i1:
                 de = make_del_container(author, date_iso, cidgen.next())
