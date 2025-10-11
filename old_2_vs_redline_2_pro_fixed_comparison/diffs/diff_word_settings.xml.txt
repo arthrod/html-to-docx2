@@ -1,0 +1,21 @@
+Comparing: word/settings.xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 11
+--------------------------------------------------------------------------------
+
+1. MoveNode(node='/w:settings/w:proofState[1]', target='/w:settings[1]', position=10)
+2. MoveNode(node='/w:settings/w:listSeparator[1]', target='/w:settings[1]', position=14)
+3. RenameNode(node='/w:settings/w:proofState[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}listSeparator')
+4. InsertAttrib(node='/w:settings/w:listSeparator[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value=',')
+5. DeleteAttrib(node='/w:settings/w:listSeparator[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}grammar')
+6. RenameNode(node='/w:settings/w:listSeparator[2]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}trackRevisions')
+7. DeleteAttrib(node='/w:settings/w:trackRevisions[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+8. InsertNode(target='/w:settings/w:rsids[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rsid', position=7)
+9. InsertAttrib(node='/w:settings/w:rsids/w:rsid[7]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='00A06123')
+10. InsertNode(target='/w:settings/w:rsids[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rsid', position=9)
+11. InsertAttrib(node='/w:settings/w:rsids/w:rsid[9]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='00B15A54')
+
+--------------------------------------------------------------------------------
+End of diff for word/settings.xml

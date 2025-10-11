@@ -1,0 +1,12 @@
+Comparing: docProps/core.xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 2
+--------------------------------------------------------------------------------
+
+1. UpdateTextIn(node='/cp:coreProperties/cp:revision[1]', text='1')
+2. UpdateTextIn(node='/cp:coreProperties/dcterms:modified[1]', text='2025-10-10T20:56:00Z')
+
+--------------------------------------------------------------------------------
+End of diff for docProps/core.xml

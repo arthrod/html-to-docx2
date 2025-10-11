@@ -23,18 +23,11 @@ import sys
 import uuid
 import zipfile
 from copy import deepcopy
-from difflib import SequenceMatcher
 from itertools import starmap
+from difflib import SequenceMatcher
 
 from lxml import etree
 
-# Optional import from provided xmldiff code to honor the user's
-# "import as much as possible" request; we still use SequenceMatcher
-# for opcode generation because it’s convenient for ranges.
-try:
-    from xmldiff.utils import longest_common_subsequence as xmldiff_lcs
-except Exception:
-    xmldiff_lcs = None  # Fallback; we don't strictly require it
 
 
 # Namespaces
@@ -107,16 +100,16 @@ def enforce_standalone_on_xml_header(part_path: str, xml_bytes: bytes) -> bytes:
 
 def serialize_xml(elem_or_tree: etree._Element | etree._ElementTree, part_path: str = '') -> bytes:
     """Serialize XML element to bytes with proper XML declaration.
-    
+
     For Word document.xml and settings.xml, enforces standalone="yes".
     """
     root = elem_or_tree.getroot() if isinstance(elem_or_tree, etree._ElementTree) else elem_or_tree
     xml_bytes = etree.tostring(root, encoding='UTF-8', xml_declaration=True, standalone=False)
-    
+
     # Apply standalone enforcement if needed
     if part_path:
         xml_bytes = enforce_standalone_on_xml_header(part_path, xml_bytes)
-    
+
     return xml_bytes
 
 

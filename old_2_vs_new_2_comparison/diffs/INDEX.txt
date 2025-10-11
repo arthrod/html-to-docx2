@@ -1,0 +1,29 @@
+XML DIFF FILES INDEX
+================================================================================
+
+File 1: old_2.docx
+File 2: new_2.docx
+
+================================================================================
+
+✗ DIFFERENT: [Content_Types].xml -> diff_[Content_Types].xml.txt
+✓ IDENTICAL: _rels/.rels -> diff__rels_.rels.txt
+✗ DIFFERENT: docProps/app.xml -> diff_docProps_app.xml.txt
+✗ DIFFERENT: docProps/core.xml -> diff_docProps_core.xml.txt
+✗ DIFFERENT: word/_rels/document.xml.rels -> diff_word__rels_document.xml.rels.txt
+✗ DIFFERENT: word/document.xml -> diff_word_document.xml.txt
+✓ IDENTICAL: word/fontTable.xml -> diff_word_fontTable.xml.txt
+⚠️  MISSING: word/people.xml -> diff_word_people.xml.txt
+✗ DIFFERENT: word/settings.xml -> diff_word_settings.xml.txt
+✗ DIFFERENT: word/styles.xml -> diff_word_styles.xml.txt
+✓ IDENTICAL: word/theme/theme1.xml -> diff_word_theme_theme1.xml.txt
+✓ IDENTICAL: word/webSettings.xml -> diff_word_webSettings.xml.txt
+
+================================================================================
+SUMMARY
+================================================================================
+Total files compared: 12
+Identical files: 4
+Different files: 7
+Missing files: 1
+================================================================================

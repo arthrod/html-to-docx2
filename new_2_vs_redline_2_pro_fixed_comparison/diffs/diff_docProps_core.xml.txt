@@ -1,0 +1,4 @@
+Comparing: docProps/core.xml
+================================================================================
+✓ Files are IDENTICAL (byte-for-byte match)
+No differences found.

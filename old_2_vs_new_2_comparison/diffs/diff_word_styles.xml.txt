@@ -1,0 +1,28 @@
+Comparing: word/styles.xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 18
+--------------------------------------------------------------------------------
+
+1. InsertNode(target='/w:styles[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}style', position=35)
+2. InsertAttrib(node='/w:styles/w:style[34]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}styleId', value='Revision')
+3. InsertAttrib(node='/w:styles/w:style[34]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}type', value='paragraph')
+4. InsertNode(target='/w:styles/w:style[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rsid', position=2)
+5. InsertAttrib(node='/w:styles/w:style[1]/w:rsid[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='00B15A54')
+6. InsertNode(target='/w:styles/w:style[34]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}name', position=0)
+7. InsertAttrib(node='/w:styles/w:style[34]/w:name[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='Revision')
+8. InsertNode(target='/w:styles/w:style[34]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hidden', position=1)
+9. InsertNode(target='/w:styles/w:style[34]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}uiPriority', position=2)
+10. InsertAttrib(node='/w:styles/w:style[34]/w:uiPriority[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='99')
+11. InsertNode(target='/w:styles/w:style[34]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}semiHidden', position=3)
+12. InsertNode(target='/w:styles/w:style[34]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rsid', position=4)
+13. InsertAttrib(node='/w:styles/w:style[34]/w:rsid[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='00B15A54')
+14. InsertNode(target='/w:styles/w:style[34]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}pPr', position=5)
+15. InsertNode(target='/w:styles/w:style[34]/w:pPr[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}spacing', position=0)
+16. InsertAttrib(node='/w:styles/w:style[34]/w:pPr/w:spacing[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}after', value='0')
+17. InsertAttrib(node='/w:styles/w:style[34]/w:pPr/w:spacing[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}line', value='240')
+18. InsertAttrib(node='/w:styles/w:style[34]/w:pPr/w:spacing[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}lineRule', value='auto')
+
+--------------------------------------------------------------------------------
+End of diff for word/styles.xml

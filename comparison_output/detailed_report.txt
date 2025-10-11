@@ -1,0 +1,67 @@
+/Users/arthrod/temp/Manual Library/temp/html-to-docx/comparison_output/detailed_comparison.py:38: DeprecationWarning: Testing an element's truth value will always return True in future versions.  Use specific 'len(elem)' or 'elem is not None' test instead.
+  if not body:
+================================================================================
+DETAILED DOCX STRUCTURE COMPARISON
+================================================================================
+File 1: redline_2_pro_fixed.docx
+File 2: old_2_new_2_ideal_redline.docx
+================================================================================
+
+📊 DOCUMENT STATISTICS
+--------------------------------------------------------------------------------
+Metric                                            File 1          File 2       Diff
+--------------------------------------------------------------------------------
+Total Paragraphs                                      27              32         -5
+Total Deletions (redline)                              3               0          3
+Total Insertions (redline)                             2               0          2
+
+
+🗑️  DELETED CONTENT (REDLINE DELETIONS)
+--------------------------------------------------------------------------------
+
+File 1 has 3 deletion(s):
+  1. [48 chars] NOME EMPRESARIAL, SEDE, PRAZO E EXERCÍCIO SOCIAL
+  2. [77 chars] 5.1 Nome empresarial: [NOME EMPRESARIAL] LTDA. (sempre com o sufixo “Ltda.”).
+  3. [203 chars] 5.2 Sede: [endereço completo: logradouro, nº, complemento, bairro, município, UF, CEP]. [OPÇÃO: Esta...
+
+File 2 has 0 deletion(s):
+
+
+➕ INSERTED CONTENT (REDLINE INSERTIONS)
+--------------------------------------------------------------------------------
+
+File 1 has 2 insertion(s):
+  1. [337 chars] 6.4 Mora na integralização: O Sócio em mora sujeita-se a (i) multa de [X]% e juros de [Y]% a.m.; (ii...
+  2. [0 chars] 
+
+File 2 has 0 insertion(s):
+
+
+📝 REGULAR PARAGRAPHS (NON-REDLINE)
+--------------------------------------------------------------------------------
+File 1: 26 non-empty paragraphs
+File 2: 30 non-empty paragraphs
+Difference: -4 paragraphs
+
+First 5 non-empty paragraphs from File 1:
+  1. Pelo presente instrumento particular de Contrato Social, os abaixo qualificados:
+  2. •[SÓCIO 1], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [...
+  3. PREÂMBULO E RECITAIS
+  4. •Os Sócios declaram possuir capacidade civil plena, legitimidade e poderes para ...
+  5. •Declaram, ainda, que discutiram e negociaram previamente os termos aqui estabel...
+
+First 5 non-empty paragraphs from File 2:
+  1. Pelo presente instrumento particular de Contrato Social, os abaixo qualificados:
+  2. •[SÓCIO 1], [nacionalidade], [estado civil], [profissão], portador(a) do RG nº [...
+  3. PREÂMBULO E RECITAIS
+  4. •Os Sócios declaram possuir capacidade civil plena, legitimidade e poderes para ...
+  5. •Declaram, ainda, que discutiram e negociaram previamente os termos aqui estabel...
+
+================================================================================
+KEY FINDINGS
+================================================================================
+⚠️  File 1 has 5 fewer paragraphs than File 2
+⚠️  File 1 has 3 more redline deletions than File 2
+⚠️  File 1 has 2 more redline insertions than File 2
+
+

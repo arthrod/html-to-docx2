@@ -1,0 +1,4 @@
+Comparing: word/fontTable.xml
+================================================================================
+✓ Files are IDENTICAL (byte-for-byte match)
+No differences found.

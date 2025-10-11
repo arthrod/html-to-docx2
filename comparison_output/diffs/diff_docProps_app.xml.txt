@@ -1,0 +1,15 @@
+Comparing: docProps/app.xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 5
+--------------------------------------------------------------------------------
+
+1. UpdateTextIn(node='/*/*[2]', text='3')
+2. UpdateTextIn(node='/*/*[4]', text='742')
+3. UpdateTextIn(node='/*/*[5]', text='4232')
+4. UpdateTextIn(node='/*/*[8]', text='35')
+5. UpdateTextIn(node='/*/*[13]', text='4965')
+
+--------------------------------------------------------------------------------
+End of diff for docProps/app.xml

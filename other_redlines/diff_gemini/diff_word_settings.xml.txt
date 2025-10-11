@@ -1,0 +1,28 @@
+Comparing: word/settings.xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 18
+--------------------------------------------------------------------------------
+
+1. MoveNode(node='/w:settings/w:proofState[1]', target='/w:settings[1]', position=3)
+2. MoveNode(node='/w:settings/w:characterSpacingControl[1]', target='/w:settings[1]', position=10)
+3. MoveNode(node='/w:settings/w:listSeparator[1]', target='/w:settings[1]', position=12)
+4. RenameNode(node='/w:settings/w:proofState[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}characterSpacingControl')
+5. InsertAttrib(node='/w:settings/w:characterSpacingControl[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='doNotCompress')
+6. DeleteAttrib(node='/w:settings/w:characterSpacingControl[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}grammar')
+7. DeleteAttrib(node='/w:settings/w:characterSpacingControl[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}spelling')
+8. RenameNode(node='/w:settings/w:characterSpacingControl[2]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}listSeparator')
+9. UpdateAttrib(node='/w:settings/w:listSeparator[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value=',')
+10. RenameNode(node='/w:settings/w:listSeparator[2]', tag='{http://schemas.microsoft.com/office/word/2012/wordml}chartTrackingRefBased')
+11. DeleteAttrib(node='/w:settings/w15:chartTrackingRefBased[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+12. RenameNode(node='/w:settings/w15:chartTrackingRefBased[2]', tag='{http://schemas.microsoft.com/office/word/2012/wordml}docId')
+13. InsertAttrib(node='/w:settings/w15:docId[1]', name='{http://schemas.microsoft.com/office/word/2012/wordml}val', value='{C3A94D45-6E3C-A24D-9F01-5F871AAE8701}')
+14. MoveNode(node='/w:settings/w:rsids/w:rsid[11]', target='/w:settings[1]', position=14)
+15. RenameNode(node='/w:settings/w:rsid[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}trackRevisions')
+16. DeleteAttrib(node='/w:settings/w:trackRevisions[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+17. UpdateAttrib(node='/w:settings/w:rsids/w:rsid[10]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='00D47378')
+18. DeleteNode(node='/w:settings/w15:docId[2]')
+
+--------------------------------------------------------------------------------
+End of diff for word/settings.xml

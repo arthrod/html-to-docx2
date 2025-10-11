@@ -1,0 +1,4 @@
+Comparing: word/webSettings.xml
+================================================================================
+✓ Files are IDENTICAL (byte-for-byte match)
+No differences found.

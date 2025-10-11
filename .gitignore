@@ -10,7 +10,9 @@
 !old_2.docx
 # Logs
 trash/
-.venv/
+#.venv/
+!.venv/lib/python3.13/site-packages/*
+!.venv/lib/python3.13/site-packages/lxml/
 logs
 *.log
 npm-debug.log*

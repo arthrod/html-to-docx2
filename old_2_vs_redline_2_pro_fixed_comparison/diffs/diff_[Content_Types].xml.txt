@@ -1,0 +1,13 @@
+Comparing: [Content_Types].xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 3
+--------------------------------------------------------------------------------
+
+1. InsertNode(target='/*[1]', tag='{http://schemas.openxmlformats.org/package/2006/content-types}Override', position=7)
+2. InsertAttrib(node='/*/*[8]', name='ContentType', value='application/vnd.openxmlformats-officedocument.wordprocessingml.people+xml')
+3. InsertAttrib(node='/*/*[8]', name='PartName', value='/word/people.xml')
+
+--------------------------------------------------------------------------------
+End of diff for [Content_Types].xml

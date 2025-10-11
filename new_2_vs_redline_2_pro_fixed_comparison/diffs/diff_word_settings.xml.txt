@@ -1,0 +1,11 @@
+Comparing: word/settings.xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 1
+--------------------------------------------------------------------------------
+
+1. InsertNode(target='/w:settings[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}trackRevisions', position=14)
+
+--------------------------------------------------------------------------------
+End of diff for word/settings.xml

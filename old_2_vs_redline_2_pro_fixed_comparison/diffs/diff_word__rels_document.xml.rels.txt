@@ -1,0 +1,15 @@
+Comparing: word/_rels/document.xml.rels
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 5
+--------------------------------------------------------------------------------
+
+1. UpdateAttrib(node='/*/*[4]', name='Id', value='rId6')
+2. InsertNode(target='/*[1]', tag='{http://schemas.openxmlformats.org/package/2006/relationships}Relationship', position=4)
+3. InsertAttrib(node='/*/*[5]', name='Id', value='rId5')
+4. InsertAttrib(node='/*/*[5]', name='Target', value='people.xml')
+5. InsertAttrib(node='/*/*[5]', name='Type', value='http://schemas.microsoft.com/office/2011/relationships/people')
+
+--------------------------------------------------------------------------------
+End of diff for word/_rels/document.xml.rels

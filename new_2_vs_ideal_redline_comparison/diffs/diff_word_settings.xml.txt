@@ -1,0 +1,15 @@
+Comparing: word/settings.xml
+================================================================================
+✗ Files are DIFFERENT
+
+Total differences detected: 5
+--------------------------------------------------------------------------------
+
+1. InsertNode(target='/w:settings[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}proofState', position=2)
+2. InsertAttrib(node='/w:settings/w:proofState[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}grammar', value='clean')
+3. InsertAttrib(node='/w:settings/w:proofState[1]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}spelling', value='clean')
+4. InsertNode(target='/w:settings/w:rsids[1]', tag='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}rsid', position=10)
+5. InsertAttrib(node='/w:settings/w:rsids/w:rsid[10]', name='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val', value='00D330BC')
+
+--------------------------------------------------------------------------------
+End of diff for word/settings.xml

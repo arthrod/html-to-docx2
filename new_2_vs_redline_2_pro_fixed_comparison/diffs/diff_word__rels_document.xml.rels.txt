@@ -1,0 +1,4 @@
+Comparing: word/_rels/document.xml.rels
+================================================================================
+✓ Files are IDENTICAL (byte-for-byte match)
+No differences found.
