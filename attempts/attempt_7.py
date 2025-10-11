@@ -746,7 +746,7 @@ def main(
 
         out_doc = build_redlined_document(old_doc, new_doc, author=author, now_iso=date_iso)
         out_styles = _merge_styles(old_styles, new_styles)
-
+        new_files['word/settings.xml'] = _ensure_track_revisions(new_files.get('word/settings.xml'))
         _write_docx_from_base(new_files, out_doc, out_styles, out_path)
 
         logger.success(f"Redlined document created: {out_path}")
