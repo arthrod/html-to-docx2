@@ -216,6 +216,7 @@ def _collect_paragraphs_recursive(element: ET.Element) -> list[Para]:
             # Recursively process table cells
             for tc in child.findall('.//w:tc', NS):
                 paras.extend(_collect_paragraphs_recursive(tc))
+            continue
         # Recurse into other containers
         paras.extend(_collect_paragraphs_recursive(child))
     return paras
