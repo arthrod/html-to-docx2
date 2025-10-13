@@ -113,7 +113,7 @@ def read_docx_xml_parts(path: str) -> dict[str, bytes]:
         msg = f'File not found: {path}'
         raise FileNotFoundError(msg)
 
-    if not path_obj.suffix.lower() == '.docx':
+    if path_obj.suffix.lower() != '.docx':
         logger.warning(f'File {path} does not have .docx extension')
 
     try:
