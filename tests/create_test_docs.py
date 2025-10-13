@@ -17,6 +17,11 @@ def add_hyperlink(paragraph, text, url):
     new_run = docx.oxml.shared.OxmlElement('w:r')
     rPr = docx.oxml.shared.OxmlElement('w:rPr')
 
+    # Add the Hyperlink style
+    style = docx.oxml.shared.OxmlElement('w:rStyle')
+    style.set(docx.oxml.shared.qn('w:val'), 'Hyperlink')
+    rPr.append(style)
+
     new_run.append(rPr)
     new_run.text = text
     hyperlink.append(new_run)
@@ -24,6 +29,7 @@ def add_hyperlink(paragraph, text, url):
     r = paragraph.add_run()
     r._r.append(hyperlink)
 
+    # Manual styling is still useful as a fallback
     r.font.color.rgb = RGBColor(0x05, 0x63, 0xc1)
     r.font.underline = True
 
