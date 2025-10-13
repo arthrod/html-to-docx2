@@ -85,7 +85,7 @@ def now_iso() -> str:
     ts = dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat()
     # Convert '+00:00' or 'Z' variants to a single 'Z' suffix
     if ts.endswith('+00:00'):
-        ts = ts[:-6] + 'Z'
+        ts = f'{ts[:-6]}Z'
     elif not ts.endswith('Z'):
         # Fallback: ensure 'Z' if no offset present
         ts += 'Z'
