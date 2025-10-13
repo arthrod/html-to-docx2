@@ -54,7 +54,7 @@ def create_basic_functionality_docs():
     # Test Case 1.1: Simple text insertion
     doc_old = Document()
     doc_old.add_paragraph('This is a test.')
-    doc_old.save('tests/test_files/1.1_old.docx')
+    doc_old.save(os.path.join('tests', 'test_files', '1.1_old.docx'))
     doc_new = Document()
     doc_new.add_paragraph('This is a test insertion.')
     doc_new.save('tests/test_files/1.1_new.docx')
