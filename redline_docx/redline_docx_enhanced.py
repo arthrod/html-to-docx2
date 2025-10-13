@@ -558,6 +558,21 @@ def equal_runs_style(a_rPr: Optional[etree._Element], b_rPr: Optional[etree._Ele
     return as_c14n(a_rPr) == as_c14n(b_rPr)
 
 
+def equal_p_style(a_pPr: Optional[etree._Element], b_pPr: Optional[etree._Element]) -> bool:
+    """Compare paragraph properties for equality.
+
+    Args:
+        a_pPr: First paragraph properties element
+        b_pPr: Second paragraph properties element
+
+    Returns:
+        True if properties are equivalent
+    """
+    def as_c14n(e):
+        return etree.tostring(e, method='c14n') if e is not None else b''
+    return as_c14n(a_pPr) == as_c14n(b_pPr)
+
+
 def diff_run_text_charlevel(
     old_text: str,
     new_text: str,
@@ -651,11 +666,33 @@ def build_paragraph_with_diffs(
         New paragraph element with tracked changes
     """
     out_p = etree.Element(qn('w:p'))
-
-    # Copy paragraph properties from new
+    old_pPr = old_p.find(qn('w:pPr'))
     new_pPr = new_p.find(qn('w:pPr'))
+
+    # Copy paragraph properties from new and add change tracking if necessary
     if new_pPr is not None:
-        out_p.append(deepcopy(new_pPr))
+        out_pPr = deepcopy(new_pPr)
+        if not equal_p_style(old_pPr, new_pPr):
+            pPrChange = etree.Element(qn('w:pPrChange'))
+            pPrChange.set(qn('w:id'), str(cidgen.next()))
+            pPrChange.set(qn('w:author'), author)
+            pPrChange.set(qn('w:date'), date_iso)
+            if old_pPr is not None:
+                pPrChange.append(deepcopy(old_pPr))
+            out_pPr.append(pPrChange)
+        out_p.append(out_pPr)
+    elif old_pPr is not None:
+        # Properties were deleted
+        pPrChange = etree.Element(qn('w:pPrChange'))
+        pPrChange.set(qn('w:id'), str(cidgen.next()))
+        pPrChange.set(qn('w:author'), author)
+        pPrChange.set(qn('w:date'), date_iso)
+        pPrChange.append(deepcopy(old_pPr))
+
+        # Create a pPr to hold the change
+        out_pPr = etree.Element(qn('w:pPr'))
+        out_pPr.append(pPrChange)
+        out_p.append(out_pPr)
 
     old_tokens = paragraph_runs_tokens(old_p, preserve_hyperlinks=True)
     new_tokens = paragraph_runs_tokens(new_p, preserve_hyperlinks=True)
@@ -827,7 +864,6 @@ def build_table_with_diffs(
 def _diff_table_row(old_row: etree._Element, new_row: etree._Element,
                      author: str, date_iso: str, cidgen: ChangeIdGen) -> None:
     """Compare and diff cells within a table row (modifies new_row in place).
-
     Args:
         old_row: Original row
         new_row: New row (will be modified)
@@ -838,10 +874,31 @@ def _diff_table_row(old_row: etree._Element, new_row: etree._Element,
     old_cells = old_row.xpath('./w:tc', namespaces=NSMAP)
     new_cells = new_row.xpath('./w:tc', namespaces=NSMAP)
 
-    for i, new_cell in enumerate(new_cells):
-        if i < len(old_cells):
+    common_len = min(len(old_cells), len(new_cells))
+    for i in range(common_len):
+        _diff_table_cell(old_cells[i], new_cells[i], author, date_iso, cidgen)
+
+    if len(new_cells) > len(old_cells):
+        for i in range(common_len, len(new_cells)):
+            new_cell = new_cells[i]
+            for child in list(new_cell):
+                if child.tag != qn('w:tcPr'):
+                    new_cell.remove(child)
+                    ins = make_ins_container(author, date_iso, cidgen.next())
+                    ins.append(child)
+                    new_cell.append(ins)
+
+    if len(old_cells) > len(new_cells):
+        for i in range(common_len, len(old_cells)):
             old_cell = old_cells[i]
-            _diff_table_cell(old_cell, new_cell, author, date_iso, cidgen)
+            deleted_cell = deepcopy(old_cell)
+            for child in list(deleted_cell):
+                if child.tag != qn('w:tcPr'):
+                    deleted_cell.remove(child)
+                    de = make_del_container(author, date_iso, cidgen.next())
+                    de.append(child)
+                    deleted_cell.append(de)
+            new_row.append(deleted_cell)
 
 
 def _diff_table_cell(old_cell: etree._Element, new_cell: etree._Element,

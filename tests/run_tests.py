@@ -1,6 +1,7 @@
 import os
 import subprocess
 import unittest
+from create_test_docs import create_test_docs
 
 class TestRedlineDocx(unittest.TestCase):
     """Test cases for redline_docx_enhanced.py."""
@@ -12,6 +13,7 @@ class TestRedlineDocx(unittest.TestCase):
         self.output_dir = 'tests/output'
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
+        create_test_docs()
 
     def run_script(self, old_file, new_file, out_file, author=None, date=None, extra_args=None):
         """Helper function to run the script."""
@@ -33,15 +35,36 @@ class TestRedlineDocx(unittest.TestCase):
 
     def test_basic_functionality(self):
         """Test basic functionality."""
+        import zipfile
+        from lxml import etree
+
         # Test Case 1.1: Simple text insertion
+        out_path_1_1 = os.path.join(self.output_dir, '1.1_out.docx')
         result = self.run_script('1.1_old.docx', '1.1_new.docx', '1.1_out.docx')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(os.path.exists(os.path.join(self.output_dir, '1.1_out.docx')))
+        self.assertTrue(os.path.exists(out_path_1_1))
+
+        # Verify the XML output for insertion
+        with zipfile.ZipFile(out_path_1_1) as docx_zip:
+            doc_xml_bytes = docx_zip.read('word/document.xml')
+            root = etree.fromstring(doc_xml_bytes)
+            ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+            insertions = root.xpath('//w:ins', namespaces=ns)
+            self.assertTrue(len(insertions) > 0, "No <w:ins> tag found for insertion.")
 
         # Test Case 1.2: Simple text deletion
+        out_path_1_2 = os.path.join(self.output_dir, '1.2_out.docx')
         result = self.run_script('1.2_old.docx', '1.2_new.docx', '1.2_out.docx')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(os.path.exists(os.path.join(self.output_dir, '1.2_out.docx')))
+        self.assertTrue(os.path.exists(out_path_1_2))
+
+        # Verify the XML output for deletion
+        with zipfile.ZipFile(out_path_1_2) as docx_zip:
+            doc_xml_bytes = docx_zip.read('word/document.xml')
+            root = etree.fromstring(doc_xml_bytes)
+            ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+            deletions = root.xpath('//w:del', namespaces=ns)
+            self.assertTrue(len(deletions) > 0, "No <w:del> tag found for deletion.")
 
         # Test Case 1.3: Simple text replacement
         result = self.run_script('1.3_old.docx', '1.3_new.docx', '1.3_out.docx')
