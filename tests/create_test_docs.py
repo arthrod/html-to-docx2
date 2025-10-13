@@ -57,7 +57,7 @@ def create_basic_functionality_docs():
     doc_old.save(os.path.join('tests', 'test_files', '1.1_old.docx'))
     doc_new = Document()
     doc_new.add_paragraph('This is a test insertion.')
-    doc_new.save('tests/test_files/1.1_new.docx')
+    doc_new.save(os.path.join('tests', 'test_files', '1.1_new.docx'))
 
     # Test Case 1.2: Simple text deletion
     doc_old = Document()
