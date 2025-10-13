@@ -445,10 +445,9 @@ def wrap_run_in_hyperlink(r: etree._Element, hyperlink_template: etree._Element)
         New hyperlink element containing the run
     """
     hl = etree.Element(qn('w:hyperlink'))
-    # Copy relevant attributes
-    for attr_name in [qn('r:id'), qn('w:anchor'), qn('w:tooltip')]:
-        if attr_name in hyperlink_template.attrib:
-            hl.set(attr_name, hyperlink_template.get(attr_name))
+    # Copy all attributes from the template
+    for attr_name, attr_value in hyperlink_template.attrib.items():
+        hl.set(attr_name, attr_value)
     hl.append(r)
     return hl
 
