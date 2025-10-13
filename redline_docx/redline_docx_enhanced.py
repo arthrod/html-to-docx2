@@ -81,7 +81,7 @@ def qn(tag: str) -> str:
 
 def now_iso() -> str:
     """Return current UTC timestamp in ISO format with 'Z' suffix."""
-    return dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat() + 'Z'
+    return f'{dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat()}Z'
 
 
 # -----------------------------------------------------------------------------
