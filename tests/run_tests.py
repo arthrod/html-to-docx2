@@ -187,12 +187,38 @@ class TestRedlineDocx(unittest.TestCase):
         # Test Case 7.1: Custom author
         result = self.run_script('1.1_old.docx', '1.1_new.docx', '7.1_out.docx', author='Test Author')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(os.path.exists(os.path.join(self.output_dir, '7.1_out.docx')))
+        out_path_71 = os.path.join(self.output_dir, '7.1_out.docx')
+        self.assertTrue(os.path.exists(out_path_71))
+
+        # Check author metadata in tracked changes
+        import zipfile
+        from lxml import etree
+
+        with zipfile.ZipFile(out_path_71) as docx_zip:
+            with docx_zip.open('word/document.xml') as doc_xml:
+                tree = etree.parse(doc_xml)
+                # Find all tracked change elements (e.g., w:ins, w:del)
+                tracked_changes = tree.xpath('//w:ins | //w:del', namespaces={'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'})
+                self.assertTrue(tracked_changes, "No tracked changes found in DOCX output")
+                for change in tracked_changes:
+                    author = change.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}author')
+                    self.assertEqual(author, 'Test Author', f"Tracked change author mismatch: {author}")
 
         # Test Case 7.2: Custom date
         result = self.run_script('1.1_old.docx', '1.1_new.docx', '7.2_out.docx', date='2025-01-01T12:00:00Z')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(os.path.exists(os.path.join(self.output_dir, '7.2_out.docx')))
+        out_path_72 = os.path.join(self.output_dir, '7.2_out.docx')
+        self.assertTrue(os.path.exists(out_path_72))
+
+        # Check date metadata in tracked changes
+        with zipfile.ZipFile(out_path_72) as docx_zip:
+            with docx_zip.open('word/document.xml') as doc_xml:
+                tree = etree.parse(doc_xml)
+                tracked_changes = tree.xpath('//w:ins | //w:del', namespaces={'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'})
+                self.assertTrue(tracked_changes, "No tracked changes found in DOCX output")
+                for change in tracked_changes:
+                    date = change.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}date')
+                    self.assertEqual(date, '2025-01-01T12:00:00Z', f"Tracked change date mismatch: {date}")
 
         # Test Case 7.3: Verbose flag
         result = self.run_script('1.1_old.docx', '1.1_new.docx', '7.3_out.docx', extra_args=['--verbose'])
