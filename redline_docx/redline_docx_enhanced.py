@@ -80,8 +80,16 @@ def qn(tag: str) -> str:
 
 
 def now_iso() -> str:
-    """Return current UTC timestamp in ISO format with 'Z' suffix."""
-    return f'{dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat()}Z'
+    """Return current UTC timestamp in ISO 8601 format ending with 'Z'."""
+    # Use UTC datetime with offset and normalize to 'Z'
+    ts = dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat()
+    # Convert '+00:00' or 'Z' variants to a single 'Z' suffix
+    if ts.endswith('+00:00'):
+        ts = ts[:-6] + 'Z'
+    elif not ts.endswith('Z'):
+        # Fallback: ensure 'Z' if no offset present
+        ts += 'Z'
+    return ts
 
 
 # -----------------------------------------------------------------------------
