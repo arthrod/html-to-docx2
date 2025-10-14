@@ -1,7 +1,7 @@
 [project]
-name = "html-to-docx"
+name = "redline_docx"
 version = "0.1.0"
-description = "Add your description here"
+description = "A tool to compare two .docx files and generate a redlined version with tracked changes."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -10,3 +10,6 @@ dependencies = [
     "lxml-stubs>=0.5.1",
     "xmldiff>=2.7.0",
 ]
+
+[tool.setuptools]
+packages = ["redline_docx"]

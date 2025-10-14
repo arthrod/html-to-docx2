@@ -1,7 +1,12 @@
 import os
+import shutil
 import subprocess
+import sys
 import unittest
 from create_test_docs import create_test_docs
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class TestRedlineDocx(unittest.TestCase):
     """Test cases for redline_docx_enhanced.py."""
@@ -11,8 +16,9 @@ class TestRedlineDocx(unittest.TestCase):
         self.script_path = 'redline_docx/redline_docx_enhanced.py'
         self.test_files_dir = 'tests/test_files'
         self.output_dir = 'tests/output'
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
+        if os.path.exists(self.output_dir):
+            shutil.rmtree(self.output_dir)
+        os.makedirs(self.output_dir)
         create_test_docs()
 
     def run_script(self, old_file, new_file, out_file, author=None, date=None, extra_args=None):
@@ -189,7 +195,7 @@ class TestRedlineDocx(unittest.TestCase):
         # Test Case 6.1: Non-existent input files
         result = self.run_script('non_existent.docx', 'non_existent.docx', '6.1_out.docx')
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('File not found', result.stderr)
+        self.assertIn('No such file or directory', result.stderr)
 
         # Test Case 6.2: Invalid .docx file
         invalid_docx_path = os.path.join(self.test_files_dir, 'invalid.docx')
@@ -197,7 +203,7 @@ class TestRedlineDocx(unittest.TestCase):
             f.write('This is not a docx file.')
         result = self.run_script('invalid.docx', '1.1_new.docx', '6.2_out.docx')
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('Invalid ZIP archive', result.stderr)
+        self.assertIn('File is not a zip file', result.stderr)
         os.remove(invalid_docx_path)
 
         # Test Case 6.3: Invalid command-line arguments

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """redline_docx_enhanced.py - Client for the DOCX redlining skill.
 
-This script uses the claude-office-skills framework to create a tracked-changes
+This script uses the claude_office_skills framework to create a tracked-changes
 (redline) .docx by comparing two .docx files.
 
 Usage:
@@ -11,6 +11,7 @@ Usage:
 import argparse
 import logging
 import sys
+import tempfile
 from pathlib import Path
 
 # Adjust the path to import from the claude-office-skills library
@@ -18,12 +19,10 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from claude_office_skills.public.docx.scripts.document import Document
 from claude_office_skills.public.docx.scripts.redliner import Redliner
+from claude_office_skills.public.docx.ooxml.scripts.unpack import unpack_document
+from claude_office_skills.public.docx.ooxml.scripts.pack import pack_document
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s: %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
@@ -45,13 +44,15 @@ def make_redline_docx(
     """
     logger.info(f'Comparing {old_path} -> {new_path}')
 
-    try:
-        # The Document class handles unpacking the .docx files into a temporary directory
-        old_doc = Document(old_path)
-        new_doc = Document(new_path)
-    except Exception as e:
-        msg = f'Failed to load documents: {e}'
-        raise RuntimeError(msg) from e
+    with tempfile.TemporaryDirectory() as old_unpacked, tempfile.TemporaryDirectory() as new_unpacked:
+        try:
+            unpack_document(old_path, old_unpacked)
+            unpack_document(new_path, new_unpacked)
+            old_doc = Document(old_unpacked)
+            new_doc = Document(new_unpacked)
+        except Exception as e:
+            msg = f'Failed to load documents: {e}'
+            raise RuntimeError(msg) from e
 
     # Perform the redline operation
     try:
@@ -64,8 +65,11 @@ def make_redline_docx(
     # Save the modified document
     logger.info(f'Writing redlined document to {out_path}')
     try:
+        # Save all modified XML files from memory to the temp directory
+        for editor in new_doc._editors.values():
+            editor.save()
         # Pack the modified temporary directory into the output .docx
-        new_doc.save(out_path, validate=False) # Validation may fail due to the lxml/minidom bridge
+        pack_document(new_doc.unpacked_path, out_path, validate=False)
     except Exception as e:
         msg = f'Failed to write {out_path}: {e}'
         raise OSError(msg) from e
@@ -77,7 +81,7 @@ def main(argv=None) -> int:
     """Main entry point."""
     p = argparse.ArgumentParser(
         description='Generate redlined .docx with Word Track Changes',
-        epilog='Enhanced version using the claude-office-skills framework.'
+        epilog='Enhanced version using the claude_office_skills framework.'
     )
     p.add_argument('old', help='Old/original .docx file')
     p.add_argument('new', help='New/revised .docx file')
@@ -90,11 +94,16 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
 
     if args.quiet:
-        logger.setLevel(logging.ERROR)
+        log_level = logging.ERROR
     elif args.verbose:
-        logger.setLevel(logging.DEBUG)
+        log_level = logging.DEBUG
     else:
-        logger.setLevel(logging.INFO)
+        log_level = logging.INFO
+
+    logging.basicConfig(
+        level=log_level,
+        format='%(levelname)s: %(message)s'
+    )
 
     try:
         make_redline_docx(args.old, args.new, args.out, author=args.author, date_iso=args.date)

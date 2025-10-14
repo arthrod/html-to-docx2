@@ -60,11 +60,15 @@ class Redliner:
             date_iso = self._now_iso()
 
         # Bridge from minidom to lxml
-        old_body_minidom = self.old_doc['word/document.xml'].get_node(tag='w:body')
         new_body_minidom = self.new_doc['word/document.xml'].get_node(tag='w:body')
 
-        old_body_lxml = etree.fromstring(old_body_minidom.toxml())
-        new_body_lxml = etree.fromstring(new_body_minidom.toxml())
+        old_doc_xml = self.old_doc['word/document.xml'].dom.toxml()
+        new_doc_xml = self.new_doc['word/document.xml'].dom.toxml()
+        old_doc_lxml = etree.fromstring(old_doc_xml.encode('utf-8'))
+        new_doc_lxml = etree.fromstring(new_doc_xml.encode('utf-8'))
+
+        old_body_lxml = old_doc_lxml.find(_qn('w:body'))
+        new_body_lxml = new_doc_lxml.find(_qn('w:body'))
 
         # Perform diff
         redline_body_lxml = _build_body_with_diffs(
@@ -74,26 +78,11 @@ class Redliner:
         # Bridge back from lxml to minidom
         redline_body_str = etree.tostring(redline_body_lxml, encoding='unicode')
 
-        # Parse the redline body string into minidom
-        from xml.dom import minidom
-        redline_body_minidom = minidom.parseString(redline_body_str).documentElement
+        # Get the existing <w:body> node in the new document to be replaced
+        body_to_replace = self.new_doc['word/document.xml'].get_node(tag='w:body')
 
-        # Get the existing <w:body> node in the new document
-        doc_minidom = self.new_doc['word/document.xml'].dom
-        body_nodes = [node for node in doc_minidom.getElementsByTagName('w:body')]
-        if body_nodes:
-            body_node = body_nodes[0]
-            # Remove all child nodes from the body
-            while body_node.hasChildNodes():
-                body_node.removeChild(body_node.firstChild)
-            # Append each child from the redline body
-            for child in redline_body_minidom.childNodes:
-                # Import node to the target document
-                imported = doc_minidom.importNode(child, deep=True)
-                body_node.appendChild(imported)
-        else:
-            # Fallback: replace the body node entirely if not found
-            self.new_doc['word/document.xml'].replace_node(new_body_minidom, redline_body_str)
+        # Replace the old body with the new redlined body
+        self.new_doc['word/document.xml'].replace_node(body_to_replace, redline_body_str)
 
         self._ensure_track_revisions()
 
@@ -562,7 +551,7 @@ def _build_body_with_diffs(
     new_blocks = [(e, k) for e, k in _block_iter(new_body) if k != 'sectPr']
     old_keys = [_block_text_key(e, k) for e, k in old_blocks]
     new_keys = [_block_text_key(e, k) for e, k in new_blocks]
-    body = etree.Element(_qn('w:body'))
+    body = etree.Element(_qn('w:body'), nsmap=NSMAP)
     sm = SequenceMatcher(a=old_keys, b=new_keys, autojunk=False)
 
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
