@@ -73,7 +73,28 @@ class Redliner:
 
         # Bridge back from lxml to minidom
         redline_body_str = etree.tostring(redline_body_lxml, encoding='unicode')
-        self.new_doc['word/document.xml'].replace_node(new_body_minidom, redline_body_str)
+
+        # Parse the redline body string into minidom
+        from xml.dom import minidom
+        redline_body_minidom = minidom.parseString(redline_body_str).documentElement
+
+        # Get the existing <w:body> node in the new document
+        doc_minidom = self.new_doc['word/document.xml'].dom
+        body_nodes = [node for node in doc_minidom.getElementsByTagName('w:body')]
+        if body_nodes:
+            body_node = body_nodes[0]
+            # Remove all child nodes from the body
+            while body_node.hasChildNodes():
+                body_node.removeChild(body_node.firstChild)
+            # Append each child from the redline body
+            for child in redline_body_minidom.childNodes:
+                # Import node to the target document
+                imported = doc_minidom.importNode(child, deep=True)
+                body_node.appendChild(imported)
+        else:
+            # Fallback: replace the body node entirely if not found
+            self.new_doc['word/document.xml'].replace_node(new_body_minidom, redline_body_str)
+
         self._ensure_track_revisions()
 
     def _now_iso(self) -> str:
