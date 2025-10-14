@@ -59,7 +59,8 @@ class Redliner:
         if date_iso is None:
             date_iso = self._now_iso()
 
-        # Bridge from minidom to lxml
+        # Bridge from minidom to lxml. Note that this approach may omit node attributes,
+        # comments, or processing instructions, especially with non-standard XML.
         old_body_minidom = self.old_doc['word/document.xml'].get_node(tag='w:body')
         new_body_minidom = self.new_doc['word/document.xml'].get_node(tag='w:body')
 
@@ -99,12 +100,7 @@ class Redliner:
 
     def _now_iso(self) -> str:
         """Return current UTC timestamp in ISO 8601 format ending with 'Z'."""
-        ts = dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat()
-        if ts.endswith('+00:00'):
-            ts = ts[:-6] + 'Z'
-        elif not ts.endswith('Z'):
-            ts += 'Z'
-        return ts
+        return dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
 
     def _ensure_track_revisions(self):
         """Enable <w:trackRevisions/> in settings.xml of the new document."""
@@ -145,8 +141,7 @@ def _extract_runs_from_hyperlink(hyperlink: etree._Element) -> list[etree._Eleme
 def _process_single_run(r: etree._Element, hyperlink: Optional[etree._Element]) -> list[dict]:
     rPr = r.find(_qn('w:rPr'))
     rPr_copy = deepcopy(rPr) if rPr is not None else None
-    t_nodes = r.findall(_qn('w:t'))
-    if t_nodes:
+    if t_nodes := r.findall(_qn('w:t')):
         full_text = ''.join([t.text or '' for t in t_nodes])
         return [{
             'kind': 'hyperlink' if hyperlink is not None else 'text',
@@ -164,12 +159,10 @@ def _paragraph_runs_tokens(p: etree._Element, preserve_hyperlinks: bool = True):
     for child in p:
         if child.tag == _qn('w:r'):
             tokens.extend(_process_single_run(child, None))
-        elif child.tag == _qn('w:hyperlink') and preserve_hyperlinks:
-            for r in _extract_runs_from_hyperlink(child):
-                tokens.extend(_process_single_run(r, child))
         elif child.tag == _qn('w:hyperlink'):
+            hyperlink_arg = child if preserve_hyperlinks else None
             for r in _extract_runs_from_hyperlink(child):
-                tokens.extend(_process_single_run(r, None))
+                tokens.extend(_process_single_run(r, hyperlink_arg))
     return tokens
 
 
@@ -264,6 +257,32 @@ def _equal_p_style(a_pPr: Optional[etree._Element], b_pPr: Optional[etree._Eleme
     return as_c14n(a_pPr) == as_c14n(b_pPr)
 
 
+def _create_deleted_run_element(
+    text: str, rPr: Optional[etree._Element], author: str, date_iso: str,
+    cidgen: _ChangeIdGen, hyperlink: Optional[etree._Element]
+) -> etree._Element:
+    """Create a <w:del> container for a run."""
+    de = _make_del_container(author, date_iso, cidgen.next())
+    r = _clone_r_with_text(text, rPr, deleted=True)
+    if hyperlink is not None:
+        r = _wrap_run_in_hyperlink(r, hyperlink)
+    de.append(r)
+    return de
+
+
+def _create_inserted_run_element(
+    text: str, rPr: Optional[etree._Element], author: str, date_iso: str,
+    cidgen: _ChangeIdGen, hyperlink: Optional[etree._Element]
+) -> etree._Element:
+    """Create a <w:ins> container for a run."""
+    ins = _make_ins_container(author, date_iso, cidgen.next())
+    r = _clone_r_with_text(text, rPr, deleted=False)
+    if hyperlink is not None:
+        r = _wrap_run_in_hyperlink(r, hyperlink)
+    ins.append(r)
+    return ins
+
+
 def _diff_run_text_charlevel(
     old_text: str, new_text: str, new_rPr: Optional[etree._Element], old_rPr: Optional[etree._Element],
     author: str, date_iso: str, cidgen: _ChangeIdGen, hyperlink: Optional[etree._Element] = None
@@ -279,36 +298,47 @@ def _diff_run_text_charlevel(
                 out.append(r)
         elif tag == 'delete':
             if i2 > i1:
-                de = _make_del_container(author, date_iso, cidgen.next())
-                r = _clone_r_with_text(old_text[i1:i2], old_rPr, deleted=True)
-                if hyperlink is not None:
-                    r = _wrap_run_in_hyperlink(r, hyperlink)
-                de.append(r)
-                out.append(de)
+                out.append(_create_deleted_run_element(
+                    old_text[i1:i2], old_rPr, author, date_iso, cidgen, hyperlink
+                ))
         elif tag == 'insert':
             if j2 > j1:
-                ins = _make_ins_container(author, date_iso, cidgen.next())
-                r = _clone_r_with_text(new_text[j1:j2], new_rPr, deleted=False)
-                if hyperlink is not None:
-                    r = _wrap_run_in_hyperlink(r, hyperlink)
-                ins.append(r)
-                out.append(ins)
+                out.append(_create_inserted_run_element(
+                    new_text[j1:j2], new_rPr, author, date_iso, cidgen, hyperlink
+                ))
         elif tag == 'replace':
             if i2 > i1:
-                de = _make_del_container(author, date_iso, cidgen.next())
-                r = _clone_r_with_text(old_text[i1:i2], old_rPr, deleted=True)
-                if hyperlink is not None:
-                    r = _wrap_run_in_hyperlink(r, hyperlink)
-                de.append(r)
-                out.append(de)
+                out.append(_create_deleted_run_element(
+                    old_text[i1:i2], old_rPr, author, date_iso, cidgen, hyperlink
+                ))
             if j2 > j1:
-                ins = _make_ins_container(author, date_iso, cidgen.next())
-                r = _clone_r_with_text(new_text[j1:j2], new_rPr, deleted=False)
-                if hyperlink is not None:
-                    r = _wrap_run_in_hyperlink(r, hyperlink)
-                ins.append(r)
-                out.append(ins)
+                out.append(_create_inserted_run_element(
+                    new_text[j1:j2], new_rPr, author, date_iso, cidgen, hyperlink
+                ))
     return out
+
+
+def _build_changed_run_container(
+    tokens: list[dict], author: str, date_iso: str, cidgen: _ChangeIdGen, is_insertion: bool
+) -> etree._Element | None:
+    """Build a <w:ins> or <w:del> container for a slice of tokens."""
+    if not tokens:
+        return None
+
+    container = _make_ins_container(author, date_iso, cidgen.next()) if is_insertion else _make_del_container(author, date_iso, cidgen.next())
+    deleted_flag = not is_insertion
+
+    for tok in tokens:
+        if tok['kind'] in {'text', 'hyperlink'}:
+            r = _clone_r_with_text(tok['text'], tok['rPr'], deleted=deleted_flag)
+            if tok.get('hyperlink') is not None:
+                r = _wrap_run_in_hyperlink(r, tok['hyperlink'])
+            container.append(r)
+        elif tok['kind'] in {'tab', 'br'}:
+            container.append(_clone_r_special(tok['kind'], tok['rPr'], deleted=deleted_flag))
+        else:
+            container.append(deepcopy(tok['run_xml']))
+    return container
 
 
 def _build_paragraph_with_diffs(
@@ -362,33 +392,11 @@ def _build_paragraph_with_diffs(
                 else:
                     out_p.append(deepcopy(n['run_xml']))
         elif tag == 'delete':
-            if not old_slice: continue
-            de = _make_del_container(author, date_iso, cidgen.next())
-            for o in old_slice:
-                if o['kind'] in {'text', 'hyperlink'}:
-                    r = _clone_r_with_text(o['text'], o['rPr'], deleted=True)
-                    if o.get('hyperlink') is not None:
-                        r = _wrap_run_in_hyperlink(r, o['hyperlink'])
-                    de.append(r)
-                elif o['kind'] in {'tab', 'br'}:
-                    de.append(_clone_r_special(o['kind'], o['rPr'], deleted=True))
-                else:
-                    de.append(deepcopy(o['run_xml']))
-            out_p.append(de)
+            if de := _build_changed_run_container(old_slice, author, date_iso, cidgen, is_insertion=False):
+                out_p.append(de)
         elif tag == 'insert':
-            if not new_slice: continue
-            ins = _make_ins_container(author, date_iso, cidgen.next())
-            for n in new_slice:
-                if n['kind'] in {'text', 'hyperlink'}:
-                    r = _clone_r_with_text(n['text'], n['rPr'], deleted=False)
-                    if n.get('hyperlink') is not None:
-                        r = _wrap_run_in_hyperlink(r, n['hyperlink'])
-                    ins.append(r)
-                elif n['kind'] in {'tab', 'br'}:
-                    ins.append(_clone_r_special(n['kind'], n['rPr'], deleted=False))
-                else:
-                    ins.append(deepcopy(n['run_xml']))
-            out_p.append(ins)
+            if ins := _build_changed_run_container(new_slice, author, date_iso, cidgen, is_insertion=True):
+                out_p.append(ins)
         elif tag == 'replace':
             if (len(old_slice) == 1 and len(new_slice) == 1 and
                 old_slice[0]['kind'] in {'text', 'hyperlink'} and
@@ -402,31 +410,9 @@ def _build_paragraph_with_diffs(
                 for node in pieces:
                     out_p.append(node)
             else:
-                if old_slice:
-                    de = _make_del_container(author, date_iso, cidgen.next())
-                    for o in old_slice:
-                        if o['kind'] in {'text', 'hyperlink'}:
-                            r = _clone_r_with_text(o['text'], o['rPr'], deleted=True)
-                            if o.get('hyperlink') is not None:
-                                r = _wrap_run_in_hyperlink(r, o['hyperlink'])
-                            de.append(r)
-                        elif o['kind'] in {'tab', 'br'}:
-                            de.append(_clone_r_special(o['kind'], o['rPr'], deleted=True))
-                        else:
-                            de.append(deepcopy(o['run_xml']))
+                if de := _build_changed_run_container(old_slice, author, date_iso, cidgen, is_insertion=False):
                     out_p.append(de)
-                if new_slice:
-                    ins = _make_ins_container(author, date_iso, cidgen.next())
-                    for n in new_slice:
-                        if n['kind'] in {'text', 'hyperlink'}:
-                            r = _clone_r_with_text(n['text'], n['rPr'], deleted=False)
-                            if n.get('hyperlink') is not None:
-                                r = _wrap_run_in_hyperlink(r, n['hyperlink'])
-                            ins.append(r)
-                        elif n['kind'] in {'tab', 'br'}:
-                            ins.append(_clone_r_special(n['kind'], n['rPr'], deleted=False))
-                        else:
-                            ins.append(deepcopy(n['run_xml']))
+                if ins := _build_changed_run_container(new_slice, author, date_iso, cidgen, is_insertion=True):
                     out_p.append(ins)
     return out_p
 
@@ -461,22 +447,30 @@ def _diff_table_row(
     if len(new_cells) > len(old_cells):
         for i in range(common_len, len(new_cells)):
             new_cell = new_cells[i]
-            for child in list(new_cell):
-                if child.tag != _qn('w:tcPr'):
-                    new_cell.remove(child)
-                    ins = _make_ins_container(author, date_iso, cidgen.next())
-                    ins.append(child)
-                    new_cell.append(ins)
+            content_to_wrap = [child for child in list(new_cell) if child.tag != _qn('w:tcPr')]
+            if not content_to_wrap:
+                continue
+            for child in content_to_wrap:
+                new_cell.remove(child)
+            ins = _make_ins_container(author, date_iso, cidgen.next())
+            for child in content_to_wrap:
+                ins.append(child)
+            new_cell.append(ins)
     if len(old_cells) > len(new_cells):
         for i in range(common_len, len(old_cells)):
             old_cell = old_cells[i]
             deleted_cell = deepcopy(old_cell)
-            for child in list(deleted_cell):
-                if child.tag != _qn('w:tcPr'):
-                    deleted_cell.remove(child)
-                    de = _make_del_container(author, date_iso, cidgen.next())
+            content_to_wrap = [child for child in list(deleted_cell) if child.tag != _qn('w:tcPr')]
+
+            for child in content_to_wrap:
+                deleted_cell.remove(child)
+
+            if content_to_wrap:
+                de = _make_del_container(author, date_iso, cidgen.next())
+                for child in content_to_wrap:
                     de.append(child)
-                    deleted_cell.append(de)
+                deleted_cell.append(de)
+
             new_row.append(deleted_cell)
 
 
@@ -529,30 +523,36 @@ def _diff_table_cell(
 
 def _mark_row_as_inserted(row: etree._Element, author: str, date_iso: str, cidgen: _ChangeIdGen) -> None:
     for cell in row.xpath('./w:tc', namespaces=NSMAP):
-        for child in list(cell):
-            if child.tag != _qn('w:tcPr'):
-                cell.remove(child)
-                ins = _make_ins_container(author, date_iso, cidgen.next())
-                ins.append(child)
-                cell.append(ins)
+        content_to_wrap = [child for child in list(cell) if child.tag != _qn('w:tcPr')]
+        if not content_to_wrap:
+            continue
+        for child in content_to_wrap:
+            cell.remove(child)
+        ins = _make_ins_container(author, date_iso, cidgen.next())
+        for child in content_to_wrap:
+            ins.append(child)
+        cell.append(ins)
 
 
 def _mark_row_as_deleted(row: etree._Element, author: str, date_iso: str, cidgen: _ChangeIdGen) -> None:
     for cell in row.xpath('./w:tc', namespaces=NSMAP):
-        for child in list(cell):
-            if child.tag != _qn('w:tcPr'):
-                cell.remove(child)
-                de = _make_del_container(author, date_iso, cidgen.next())
-                de.append(child)
-                cell.append(de)
+        content_to_wrap = [child for child in list(cell) if child.tag != _qn('w:tcPr')]
+        if not content_to_wrap:
+            continue
+        for child in content_to_wrap:
+            cell.remove(child)
+        de = _make_del_container(author, date_iso, cidgen.next())
+        for child in content_to_wrap:
+            de.append(child)
+        cell.append(de)
 
 
 def _block_text_key(elem: etree._Element, kind: str) -> str:
     if kind == 'p':
         return _tokens_text_key(_paragraph_runs_tokens(elem))
     if kind == 'tbl':
-        return 'TABLE|' + _text_of_element(elem)
-    return 'OTHER|' + (_text_of_element(elem) or '')
+        return f'TABLE|{_text_of_element(elem)}'
+    return f'OTHER|{_text_of_element(elem) or ""}'
 
 
 def _build_body_with_diffs(

@@ -32,7 +32,8 @@ def make_redline_docx(
     new_path: str,
     out_path: str,
     author: str = 'AutoDiff',
-    date_iso: str | None = None
+    date_iso: str | None = None,
+    validate_on_save: bool = False
 ) -> None:
     """Create redlined .docx by comparing two .docx files using the Redliner skill.
 
@@ -42,6 +43,7 @@ def make_redline_docx(
         out_path: Path for output .docx
         author: Author name for tracked changes
         date_iso: ISO timestamp (uses current time if None)
+        validate_on_save: Whether to validate the document on save.
     """
     logger.info(f'Comparing {old_path} -> {new_path}')
 
@@ -65,7 +67,9 @@ def make_redline_docx(
     logger.info(f'Writing redlined document to {out_path}')
     try:
         # Pack the modified temporary directory into the output .docx
-        new_doc.save(out_path, validate=False) # Validation may fail due to the lxml/minidom bridge
+        if not validate_on_save:
+            logger.warning("Saving document with validation disabled. This may result in malformed documents.")
+        new_doc.save(out_path, validate=validate_on_save) # Validation may fail due to the lxml/minidom bridge
     except Exception as e:
         msg = f'Failed to write {out_path}: {e}'
         raise OSError(msg) from e
@@ -99,7 +103,7 @@ def main(argv=None) -> int:
     try:
         make_redline_docx(args.old, args.new, args.out, author=args.author, date_iso=args.date)
         return 0
-    except (FileNotFoundError, ValueError, RuntimeError, OSError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         logger.error(f'Error: {e}')
         return 1
     except Exception as e:
