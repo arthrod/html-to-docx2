@@ -622,8 +622,8 @@ class Document:
         # Unpack the docx file into the temporary directory
         try:
             shutil.unpack_archive(self.original_path, self.unpacked_path, 'zip')
-        except Exception as e:
-            msg = f'Failed to unpack {docx_path}: {e}'
+        except (shutil.ReadError, zipfile.BadZipFile) as e:
+            msg = f'Failed to unpack {docx_path}, it might be corrupted or not a valid DOCX file: {e}'
             raise RuntimeError(msg) from e
 
         # Pack original directory into temporary .docx for validation baseline (outside unpacked dir)
