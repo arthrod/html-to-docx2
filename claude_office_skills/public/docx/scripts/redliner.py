@@ -677,7 +677,10 @@ def make_redline_docx(
     finally:
         for doc in (old_doc, new_doc):
             if doc is not None:
-                doc.close()
+                try:
+                    doc.close()
+                except Exception as e:
+                    logger.warning(f'Failed to close doc {doc}: {e}')
 
 
 def main(argv=None) -> int:
