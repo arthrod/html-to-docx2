@@ -3,44 +3,25 @@
 
 Usage: python scripts/diff-redline-final.py <baseline.docx> <current.docx> <output.docx>
 
-This script uses the Document library and utilities from claude-office-skills
+This script uses the Document library and utilities from claude_office_skills
 to generate proper Word tracked changes with complete style preservation.
 """
 
-import subprocess
 import sys
-import tempfile
 from difflib import SequenceMatcher
 from pathlib import Path
 
-# Add claude-office-skills to path
-skills_path = Path(__file__).parent.parent / 'claude-office-skills'
+# Add claude_office_skills to path
+skills_path = Path(__file__).parent.parent / 'claude_office_skills'
 sys.path.insert(0, str(skills_path))
 sys.path.insert(0, str(skills_path / 'public' / 'docx'))
 
 import contextlib
 
-from public.docx.ooxml.scripts.pack import pack_document
 from public.docx.scripts.document import Document, DocxXMLEditor
 
 
-def unpack_docx(docx_path, output_dir) -> None:
-    """Unpack DOCX using the official unpack.py script."""
-    unpack_script = skills_path / 'public' / 'docx' / 'ooxml' / 'scripts' / 'unpack.py'
-
-    result = subprocess.run(
-        [sys.executable, str(unpack_script), str(docx_path), str(output_dir)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if result.returncode != 0:
-        msg = f'Unpack failed: {result.stderr}'
-        raise RuntimeError(msg)
-
-
-def compare_and_redline(doc: Document, current_unpacked: Path) -> None:
+def compare_and_redline(doc: Document, current_docx: Path) -> None:
     """Compare baseline (doc) with current document and apply tracked changes.
 
     Uses the Document library's methods for proper tracked change generation:
@@ -49,7 +30,7 @@ def compare_and_redline(doc: Document, current_unpacked: Path) -> None:
     - replace_node() with w:ins/w:del for inline changes
     """
     # Load current document for comparison
-    current_doc = Document(current_unpacked, track_revisions=False)
+    current_doc = Document(current_docx, track_revisions=False)
 
     # Get paragraphs from both documents
     baseline_paras = list(doc['word/document.xml'].dom.getElementsByTagName('w:p'))
@@ -150,6 +131,9 @@ def compare_and_redline(doc: Document, current_unpacked: Path) -> None:
                 else:
                     body = doc['word/document.xml'].get_node(tag='w:body')
                     doc['word/document.xml'].append_to(body, tracked_para_xml)
+
+    # Ensure temporary resources for the comparison document are cleaned up
+    del current_doc
 
 
 def _compare_paragraph_runs(doc: Document, baseline_para, current_para) -> None:
@@ -410,33 +394,14 @@ def main() -> None:
     if not current_docx.exists():
         sys.exit(1)
 
-    # Create temp directories
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        baseline_unpacked = temp_path / 'baseline'
-        current_unpacked = temp_path / 'current'
+    # Initialize Document with baseline
+    doc = Document(baseline_docx, track_revisions=True)
 
-        # Unpack both documents
-        unpack_docx(baseline_docx, baseline_unpacked)
-        unpack_docx(current_docx, current_unpacked)
+    # Compare and apply tracked changes
+    compare_and_redline(doc, current_docx)
 
-        # Initialize Document with baseline
-        doc = Document(baseline_unpacked, track_revisions=True)
-
-        # Compare and apply tracked changes
-        compare_and_redline(doc, current_unpacked)
-
-        # Save redlined document
-        output_unpacked = temp_path / 'output'
-        doc.save(destination=output_unpacked, validate=False)
-
-        # Pack using official pack_document
-        success = pack_document(output_unpacked, output_docx, validate=False)
-
-        if success:
-            pass
-        else:
-            sys.exit(1)
+    # Save redlined document directly to requested output path
+    doc.save(destination=output_docx, validate=False)
 
 
 if __name__ == '__main__':
