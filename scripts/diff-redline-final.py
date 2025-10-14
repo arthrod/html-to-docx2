@@ -147,8 +147,8 @@ def _compare_paragraph_runs(doc: Document, baseline_para, current_para) -> None:
     baseline_text = ''.join(r['text'] for r in baseline_runs)
     current_text = ''.join(r['text'] for r in current_runs)
 
-    finally:
-        current_doc.close()
+    # Character-level diff
+    matcher = SequenceMatcher(None, baseline_text, current_text)
 
     # Track positions in runs
     baseline_run_idx = 0
