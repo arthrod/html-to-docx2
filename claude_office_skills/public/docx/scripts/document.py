@@ -27,6 +27,8 @@ Usage:
 
 import contextlib
 import html
+import logging
+import os
 import random
 import shutil
 import tempfile
@@ -42,6 +44,8 @@ from .utilities import XMLEditor
 
 # Path to template files
 TEMPLATE_DIR = Path(__file__).parent / 'templates'
+
+logger = logging.getLogger(__name__)
 
 
 class DocxXMLEditor(XMLEditor):
@@ -592,31 +596,39 @@ def _generate_rsid() -> str:
 class Document:
     """Manages comments in unpacked Word documents."""
 
-    def __init__(self, unpacked_dir, rsid=None, track_revisions=False, author='Claude', initials='C') -> None:
-        """Initialize with path to unpacked Word document directory.
-        Automatically sets up comment infrastructure (people.xml, RSIDs).
+    def __init__(self, docx_path, rsid=None, track_revisions=False, author='Claude', initials='C') -> None:
+        """Initialize with path to a .docx file.
+        The file is unpacked into a temporary directory for processing.
 
         Args:
-            unpacked_dir: Path to unpacked DOCX directory (must contain word/ subdirectory)
+            docx_path: Path to the .docx file
             rsid: Optional RSID to use for all comment elements. If not provided, one will be generated.
             track_revisions: If True, enables track revisions in settings.xml (default: False)
             author: Default author name for comments (default: "Claude")
             initials: Default author initials for comments (default: "C")
         """
-        self.original_path = Path(unpacked_dir)
+        self.original_path = Path(docx_path)
+        logger.info(f"CWD: {os.getcwd()}")
+        logger.info(f"Absolute path: {self.original_path.resolve()}")
 
-        if not self.original_path.exists() or not self.original_path.is_dir():
-            msg = f'Directory not found: {unpacked_dir}'
+        if not self.original_path.exists() or not self.original_path.is_file():
+            msg = f'File not found: {docx_path}'
             raise ValueError(msg)
 
         # Create temporary directory with subdirectories for unpacked content and baseline
         self.temp_dir = tempfile.mkdtemp(prefix='docx_')
         self.unpacked_path = Path(self.temp_dir) / 'unpacked'
-        shutil.copytree(self.original_path, self.unpacked_path)
+
+        # Unpack the docx file into the temporary directory
+        try:
+            shutil.unpack_archive(self.original_path, self.unpacked_path, 'zip')
+        except Exception as e:
+            msg = f'Failed to unpack {docx_path}: {e}'
+            raise RuntimeError(msg) from e
 
         # Pack original directory into temporary .docx for validation baseline (outside unpacked dir)
         self.original_docx = Path(self.temp_dir) / 'original.docx'
-        pack_document(self.original_path, self.original_docx, validate=False)
+        pack_document(self.unpacked_path, self.original_docx, validate=False)
 
         self.word_path = self.unpacked_path / 'word'
 
@@ -826,9 +838,12 @@ class Document:
         if validate:
             self.validate()
 
-        # Copy contents from temp directory to destination (or original directory)
-        target_path = Path(destination) if destination else self.original_path
-        shutil.copytree(self.unpacked_path, target_path, dirs_exist_ok=True)
+        # Pack the modified document into the destination
+        if destination:
+            pack_document(self.unpacked_path, destination, validate=False)
+        else:
+            # If no destination, pack back to original file
+            pack_document(self.unpacked_path, self.original_path, validate=False)
 
     # ==================== Private: Initialization ====================
 
