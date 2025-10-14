@@ -173,7 +173,7 @@ def _paragraph_runs_tokens(p: etree._Element, preserve_hyperlinks: bool = True):
     return tokens
 
 
-def _tokens_text_key(tokens) -> str:
+def _tokens_text_key(tokens: list[dict]) -> str:
     parts = []
     for tok in tokens:
         if tok['kind'] in {'text', 'hyperlink'}:
