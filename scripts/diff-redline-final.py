@@ -3,44 +3,25 @@
 
 Usage: python scripts/diff-redline-final.py <baseline.docx> <current.docx> <output.docx>
 
-This script uses the Document library and utilities from claude-office-skills
+This script uses the Document library and utilities from claude_office_skills
 to generate proper Word tracked changes with complete style preservation.
 """
 
-import subprocess
 import sys
-import tempfile
 from difflib import SequenceMatcher
 from pathlib import Path
 
-# Add claude-office-skills to path
-skills_path = Path(__file__).parent.parent / 'claude-office-skills'
+# Add claude_office_skills to path
+skills_path = Path(__file__).parent.parent / 'claude_office_skills'
 sys.path.insert(0, str(skills_path))
 sys.path.insert(0, str(skills_path / 'public' / 'docx'))
 
 import contextlib
 
-from public.docx.ooxml.scripts.pack import pack_document
 from public.docx.scripts.document import Document, DocxXMLEditor
 
 
-def unpack_docx(docx_path, output_dir) -> None:
-    """Unpack DOCX using the official unpack.py script."""
-    unpack_script = skills_path / 'public' / 'docx' / 'ooxml' / 'scripts' / 'unpack.py'
-
-    result = subprocess.run(
-        [sys.executable, str(unpack_script), str(docx_path), str(output_dir)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if result.returncode != 0:
-        msg = f'Unpack failed: {result.stderr}'
-        raise RuntimeError(msg)
-
-
-def compare_and_redline(doc: Document, current_unpacked: Path) -> None:
+def compare_and_redline(doc: Document, current_docx: Path) -> None:
     """Compare baseline (doc) with current document and apply tracked changes.
 
     Uses the Document library's methods for proper tracked change generation:
@@ -48,108 +29,109 @@ def compare_and_redline(doc: Document, current_unpacked: Path) -> None:
     - suggest_paragraph() for inserted paragraphs
     - replace_node() with w:ins/w:del for inline changes
     """
-    # Load current document for comparison
-    current_doc = Document(current_unpacked, track_revisions=False)
+    current_doc = Document(current_docx, track_revisions=False)
+    try:
+        # Get paragraphs from both documents
+        baseline_paras = list(doc['word/document.xml'].dom.getElementsByTagName('w:p'))
+        current_paras = list(current_doc['word/document.xml'].dom.getElementsByTagName('w:p'))
 
-    # Get paragraphs from both documents
-    baseline_paras = list(doc['word/document.xml'].dom.getElementsByTagName('w:p'))
-    current_paras = list(current_doc['word/document.xml'].dom.getElementsByTagName('w:p'))
+        # Extract text from each paragraph for comparison
+        baseline_texts = [(p, _get_para_text(p)) for p in baseline_paras]
+        current_texts = [(p, _get_para_text(p)) for p in current_paras]
 
-    # Extract text from each paragraph for comparison
-    baseline_texts = [(p, _get_para_text(p)) for p in baseline_paras]
-    current_texts = [(p, _get_para_text(p)) for p in current_paras]
+        # Perform paragraph-level diff
+        matcher = SequenceMatcher(None, [t[1] for t in baseline_texts], [t[1] for t in current_texts])
 
-    # Perform paragraph-level diff
-    matcher = SequenceMatcher(None, [t[1] for t in baseline_texts], [t[1] for t in current_texts])
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == 'equal':
+                # Paragraphs match - check for run-level changes
+                for i, j in zip(range(i1, i2), range(j1, j2)):
+                    baseline_para, baseline_text = baseline_texts[i]
+                    current_para, current_text = current_texts[j]
 
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        if tag == 'equal':
-            # Paragraphs match - check for run-level changes
-            for i, j in zip(range(i1, i2), range(j1, j2)):
-                baseline_para, baseline_text = baseline_texts[i]
-                current_para, current_text = current_texts[j]
+                    if baseline_text != current_text:
+                        _compare_paragraph_runs(doc, baseline_para, current_para)
 
-                if baseline_text != current_text:
-                    _compare_paragraph_runs(doc, baseline_para, current_para)
+            elif tag == 'delete':
+                # Deleted paragraphs
+                for i in range(i1, i2):
+                    baseline_para = baseline_texts[i][0]
+                    try:
+                        doc['word/document.xml'].suggest_deletion(baseline_para)
+                    except ValueError:
+                        # Skip if already has tracked changes
+                        pass
 
-        elif tag == 'delete':
-            # Deleted paragraphs
-            for i in range(i1, i2):
-                baseline_para = baseline_texts[i][0]
-                try:
-                    doc['word/document.xml'].suggest_deletion(baseline_para)
-                except ValueError:
-                    # Skip if already has tracked changes
-                    pass
+            elif tag == 'insert':
+                # Inserted paragraphs
+                for j in range(j1, j2):
+                    current_para = current_texts[j][0]
 
-        elif tag == 'insert':
-            # Inserted paragraphs
-            for j in range(j1, j2):
-                current_para = current_texts[j][0]
+                    # Build paragraph XML by reconstructing from text
+                    # Get paragraph properties (styles, alignment, etc.)
+                    ppr_xml = _extract_element_xml(current_para, 'w:pPr')
 
-                # Build paragraph XML by reconstructing from text
-                # Get paragraph properties (styles, alignment, etc.)
-                ppr_xml = _extract_element_xml(current_para, 'w:pPr')
+                    # Get runs (with formatting)
+                    runs_xml = []
+                    for run in current_para.getElementsByTagName('w:r'):
+                        # Skip runs already in tracked changes
+                        if run.parentNode.tagName in {'w:ins', 'w:del'}:
+                            continue
+                        runs_xml.append(_serialize_run(run))
 
-                # Get runs (with formatting)
-                runs_xml = []
-                for run in current_para.getElementsByTagName('w:r'):
-                    # Skip runs already in tracked changes
-                    if run.parentNode.tagName in {'w:ins', 'w:del'}:
+                    # Skip empty paragraphs (no runs)
+                    if not runs_xml:
                         continue
-                    runs_xml.append(_serialize_run(run))
 
-                # Skip empty paragraphs (no runs)
-                if not runs_xml:
-                    continue
+                    # Build simple paragraph
+                    para_xml = f'<w:p>{ppr_xml}{"".join(runs_xml)}</w:p>'
 
-                # Build simple paragraph
-                para_xml = f'<w:p>{ppr_xml}{"".join(runs_xml)}</w:p>'
+                    # Transform to tracked insertion
+                    tracked_para_xml = DocxXMLEditor.suggest_paragraph(para_xml)
 
-                # Transform to tracked insertion
-                tracked_para_xml = DocxXMLEditor.suggest_paragraph(para_xml)
+                    # Find insertion point
+                    if i1 < len(baseline_texts):
+                        anchor = baseline_texts[i1][0]
+                        doc['word/document.xml'].insert_before(anchor, tracked_para_xml)
+                    else:
+                        # Insert at end of body
+                        body = doc['word/document.xml'].get_node(tag='w:body')
+                        doc['word/document.xml'].append_to(body, tracked_para_xml)
 
-                # Find insertion point
-                if i1 < len(baseline_texts):
-                    anchor = baseline_texts[i1][0]
-                    doc['word/document.xml'].insert_before(anchor, tracked_para_xml)
-                else:
-                    # Insert at end of body
-                    body = doc['word/document.xml'].get_node(tag='w:body')
-                    doc['word/document.xml'].append_to(body, tracked_para_xml)
+            elif tag == 'replace':
+                # Paragraphs differ completely - delete old, insert new
+                for i in range(i1, i2):
+                    baseline_para = baseline_texts[i][0]
+                    with contextlib.suppress(ValueError):
+                        doc['word/document.xml'].suggest_deletion(baseline_para)
 
-        elif tag == 'replace':
-            # Paragraphs differ completely - delete old, insert new
-            for i in range(i1, i2):
-                baseline_para = baseline_texts[i][0]
-                with contextlib.suppress(ValueError):
-                    doc['word/document.xml'].suggest_deletion(baseline_para)
+                for j in range(j1, j2):
+                    current_para = current_texts[j][0]
 
-            for j in range(j1, j2):
-                current_para = current_texts[j][0]
+                    # Build paragraph XML
+                    ppr_xml = _extract_element_xml(current_para, 'w:pPr')
 
-                # Build paragraph XML
-                ppr_xml = _extract_element_xml(current_para, 'w:pPr')
+                    runs_xml = []
+                    for run in current_para.getElementsByTagName('w:r'):
+                        if run.parentNode.tagName in {'w:ins', 'w:del'}:
+                            continue
+                        runs_xml.append(_serialize_run(run))
 
-                runs_xml = []
-                for run in current_para.getElementsByTagName('w:r'):
-                    if run.parentNode.tagName in {'w:ins', 'w:del'}:
+                    # Skip empty paragraphs
+                    if not runs_xml:
                         continue
-                    runs_xml.append(_serialize_run(run))
 
-                # Skip empty paragraphs
-                if not runs_xml:
-                    continue
+                    para_xml = f'<w:p>{ppr_xml}{"".join(runs_xml)}</w:p>'
+                    tracked_para_xml = DocxXMLEditor.suggest_paragraph(para_xml)
 
-                para_xml = f'<w:p>{ppr_xml}{"".join(runs_xml)}</w:p>'
-                tracked_para_xml = DocxXMLEditor.suggest_paragraph(para_xml)
-
-                if i1 < len(baseline_texts):
-                    anchor = baseline_texts[i1][0]
-                    doc['word/document.xml'].insert_before(anchor, tracked_para_xml)
-                else:
-                    body = doc['word/document.xml'].get_node(tag='w:body')
-                    doc['word/document.xml'].append_to(body, tracked_para_xml)
+                    if i1 < len(baseline_texts):
+                        anchor = baseline_texts[i1][0]
+                        doc['word/document.xml'].insert_before(anchor, tracked_para_xml)
+                    else:
+                        body = doc['word/document.xml'].get_node(tag='w:body')
+                        doc['word/document.xml'].append_to(body, tracked_para_xml)
+    finally:
+        current_doc.close()
 
 
 def _compare_paragraph_runs(doc: Document, baseline_para, current_para) -> None:
@@ -165,8 +147,8 @@ def _compare_paragraph_runs(doc: Document, baseline_para, current_para) -> None:
     baseline_text = ''.join(r['text'] for r in baseline_runs)
     current_text = ''.join(r['text'] for r in current_runs)
 
-    # Character-level diff
-    matcher = SequenceMatcher(None, baseline_text, current_text)
+    finally:
+        current_doc.close()
 
     # Track positions in runs
     baseline_run_idx = 0
@@ -410,33 +392,19 @@ def main() -> None:
     if not current_docx.exists():
         sys.exit(1)
 
-    # Create temp directories
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        baseline_unpacked = temp_path / 'baseline'
-        current_unpacked = temp_path / 'current'
-
-        # Unpack both documents
-        unpack_docx(baseline_docx, baseline_unpacked)
-        unpack_docx(current_docx, current_unpacked)
-
+    doc = None
+    try:
         # Initialize Document with baseline
-        doc = Document(baseline_unpacked, track_revisions=True)
+        doc = Document(baseline_docx, track_revisions=True)
 
         # Compare and apply tracked changes
-        compare_and_redline(doc, current_unpacked)
+        compare_and_redline(doc, current_docx)
 
         # Save redlined document
-        output_unpacked = temp_path / 'output'
-        doc.save(destination=output_unpacked, validate=False)
-
-        # Pack using official pack_document
-        success = pack_document(output_unpacked, output_docx, validate=False)
-
-        if success:
-            pass
-        else:
-            sys.exit(1)
+        doc.save(destination=output_docx)
+    finally:
+        if doc is not None:
+            doc.close()
 
 
 if __name__ == '__main__':

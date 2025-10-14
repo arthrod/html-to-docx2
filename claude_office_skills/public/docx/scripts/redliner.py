@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import argparse
@@ -8,7 +7,6 @@ import sys
 import uuid
 from copy import deepcopy
 from difflib import SequenceMatcher
-from typing import Optional
 
 from lxml import etree
 
@@ -37,7 +35,7 @@ def _qn(tag: str) -> str:
 class _ChangeIdGen:
     """Generate unique change IDs for tracked changes."""
 
-    def __init__(self, start: Optional[int] = None) -> None:
+    def __init__(self, start: int | None = None) -> None:
         if start is None:
             start = int(uuid.uuid4().int & 0x7FFFFFFF)
         self.cur = start
@@ -56,7 +54,7 @@ class Redliner:
         self.new_doc = new_doc
         self.cidgen = _ChangeIdGen()
 
-    def redline(self, author: str = 'AutoDiff', date_iso: Optional[str] = None):
+    def redline(self, author: str = 'AutoDiff', date_iso: str | None = None):
         """Perform redline comparison and update the new document."""
         if date_iso is None:
             date_iso = self._now_iso()
@@ -78,9 +76,22 @@ class Redliner:
         if new_body_lxml is None:
             raise ValueError("Could not find w:body in new document")
 
+        # Seed change IDs from existing tracked changes in the new document
+        existing_ids: list[int] = []
+        for tracked in new_doc_lxml.xpath('.//w:ins|.//w:del', namespaces=NSMAP):
+            raw_id = tracked.get(_qn('w:id'))
+            if raw_id and raw_id.isdigit():
+                existing_ids.append(int(raw_id))
+        self.cidgen = _ChangeIdGen(start=max(existing_ids, default=0))
+
         # Perform diff
         redline_body_lxml = _build_body_with_diffs(
-            old_body_lxml, new_body_lxml, author, date_iso, self.cidgen
+            old_body_lxml,
+            new_body_lxml,
+            author,
+            date_iso,
+            self.cidgen,
+            nsmap=new_body_lxml.nsmap,
         )
 
         # To replace the node, I still need the minidom body node.
@@ -136,7 +147,7 @@ def _extract_runs_from_hyperlink(hyperlink: etree._Element) -> list[etree._Eleme
     return hyperlink.xpath('./w:r', namespaces=NSMAP)
 
 
-def _process_single_run(r: etree._Element, hyperlink: Optional[etree._Element]) -> list[dict]:
+def _process_single_run(r: etree._Element, hyperlink: etree._Element | None) -> list[dict]:
     rPr = r.find(_qn('w:rPr'))
     rPr_copy = deepcopy(rPr) if rPr is not None else None
     t_nodes = r.findall(_qn('w:t'))
@@ -181,7 +192,7 @@ def _tokens_text_key(tokens) -> str:
     return ''.join(parts)
 
 
-def _clone_r_with_text(text: str, rPr: Optional[etree._Element], *, deleted: bool = False) -> etree._Element:
+def _clone_r_with_text(text: str, rPr: etree._Element | None, *, deleted: bool = False) -> etree._Element:
     r = etree.Element(_qn('w:r'))
     if rPr is not None:
         r.append(deepcopy(rPr))
@@ -193,7 +204,7 @@ def _clone_r_with_text(text: str, rPr: Optional[etree._Element], *, deleted: boo
     return r
 
 
-def _clone_r_special(kind: str, rPr: Optional[etree._Element], *, deleted: bool = False) -> etree._Element:
+def _clone_r_special(kind: str, rPr: etree._Element | None, *, deleted: bool = False) -> etree._Element:
     r = etree.Element(_qn('w:r'))
     if rPr is not None:
         r.append(deepcopy(rPr))
@@ -229,7 +240,7 @@ def _make_del_container(author: str, date_iso: str, cid: int) -> etree._Element:
     return de
 
 
-def _add_rPrChange(new_r: etree._Element, old_rPr: Optional[etree._Element], author: str, date_iso: str, cid: int) -> None:
+def _add_rPrChange(new_r: etree._Element, old_rPr: etree._Element | None, author: str, date_iso: str, cid: int) -> None:
     if old_rPr is None:
         return
     rPr = new_r.find(_qn('w:rPr'))
@@ -246,21 +257,21 @@ def _add_rPrChange(new_r: etree._Element, old_rPr: Optional[etree._Element], aut
     rPr.append(rPrChange)
 
 
-def _equal_runs_style(a_rPr: Optional[etree._Element], b_rPr: Optional[etree._Element]) -> bool:
+def _equal_runs_style(a_rPr: etree._Element | None, b_rPr: etree._Element | None) -> bool:
     def as_c14n(e):
         return etree.tostring(e, method='c14n') if e is not None else b''
     return as_c14n(a_rPr) == as_c14n(b_rPr)
 
 
-def _equal_p_style(a_pPr: Optional[etree._Element], b_pPr: Optional[etree._Element]) -> bool:
+def _equal_p_style(a_pPr: etree._Element | None, b_pPr: etree._Element | None) -> bool:
     def as_c14n(e):
         return etree.tostring(e, method='c14n') if e is not None else b''
     return as_c14n(a_pPr) == as_c14n(b_pPr)
 
 
 def _diff_run_text_charlevel(
-    old_text: str, new_text: str, new_rPr: Optional[etree._Element], old_rPr: Optional[etree._Element],
-    author: str, date_iso: str, cidgen: _ChangeIdGen, hyperlink: Optional[etree._Element] = None
+    old_text: str, new_text: str, new_rPr: etree._Element | None, old_rPr: etree._Element | None,
+    author: str, date_iso: str, cidgen: _ChangeIdGen, hyperlink: etree._Element | None = None
 ) -> list[etree._Element]:
     out = []
     sm = SequenceMatcher(a=old_text, b=new_text, autojunk=False)
@@ -550,13 +561,23 @@ def _block_text_key(elem: etree._Element, kind: str) -> str:
 
 
 def _build_body_with_diffs(
-    old_body: etree._Element, new_body: etree._Element, author: str, date_iso: str, cidgen: _ChangeIdGen
+    old_body: etree._Element,
+    new_body: etree._Element,
+    author: str,
+    date_iso: str,
+    cidgen: _ChangeIdGen,
+    *,
+    nsmap: dict[str | None, str] | None = None,
 ) -> etree._Element:
     old_blocks = [(e, k) for e, k in _block_iter(old_body) if k != 'sectPr']
     new_blocks = [(e, k) for e, k in _block_iter(new_body) if k != 'sectPr']
     old_keys = [_block_text_key(e, k) for e, k in old_blocks]
     new_keys = [_block_text_key(e, k) for e, k in new_blocks]
-    body = etree.Element(_qn('w:body'))
+    nsmap = (nsmap or {}).copy()
+    nsmap.setdefault('w', NS_W)
+    nsmap.setdefault('r', NS_R)
+    nsmap.setdefault('xml', NS_XML)
+    body = etree.Element(_qn('w:body'), nsmap=nsmap)
     sm = SequenceMatcher(a=old_keys, b=new_keys, autojunk=False)
 
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
@@ -608,7 +629,9 @@ def make_redline_docx(
     new_path: str,
     out_path: str,
     author: str = 'AutoDiff',
-    date_iso: str | None = None
+    date_iso: str | None = None,
+    *,
+    validate: bool = True,
 ) -> None:
     """Create redlined .docx by comparing two .docx files using the Redliner skill.
 
@@ -618,35 +641,43 @@ def make_redline_docx(
         out_path: Path for output .docx
         author: Author name for tracked changes
         date_iso: ISO timestamp (uses current time if None)
+        validate: When True, validate the resulting DOCX before saving (default)
     """
     logger.info(f'Comparing {old_path} -> {new_path}')
 
+    old_doc: Document | None = None
+    new_doc: Document | None = None
     try:
-        # The Document class handles unpacking the .docx files into a temporary directory
-        old_doc = Document(old_path)
-        new_doc = Document(new_path)
-    except Exception as e:
-        msg = f'Failed to load documents: {e}'
-        raise RuntimeError(msg) from e
+        try:
+            # The Document class handles unpacking the .docx files into a temporary directory
+            old_doc = Document(old_path)
+            new_doc = Document(new_path)
+        except (ValueError, RuntimeError) as e:
+            msg = f'Failed to load documents: {e}'
+            raise RuntimeError(msg) from e
 
-    # Perform the redline operation
-    try:
-        redliner = Redliner(old_doc, new_doc)
-        redliner.redline(author=author, date_iso=date_iso)
-    except Exception as e:
-        msg = f'Failed to build redlined content: {e}'
-        raise RuntimeError(msg) from e
+        # Perform the redline operation
+        try:
+            redliner = Redliner(old_doc, new_doc)
+            redliner.redline(author=author, date_iso=date_iso)
+        except ValueError as e:
+            msg = f'Failed to build redlined content: {e}'
+            raise RuntimeError(msg) from e
 
-    # Save the modified document
-    logger.info(f'Writing redlined document to {out_path}')
-    try:
-        # Pack the modified temporary directory into the output .docx
-        new_doc.save(out_path, validate=False) # Validation may fail due to the lxml/minidom bridge
-    except Exception as e:
-        msg = f'Failed to write {out_path}: {e}'
-        raise OSError(msg) from e
+        # Save the modified document
+        logger.info(f'Writing redlined document to {out_path}')
+        try:
+            # Pack the modified temporary directory into the output .docx
+            new_doc.save(out_path, validate=validate)
+        except ValueError as e:
+            msg = f'Failed to write {out_path}: {e}'
+            raise OSError(msg) from e
 
-    logger.info(f'✓ Redline complete: {out_path}')
+        logger.info(f'✓ Redline complete: {out_path}')
+    finally:
+        for doc in (old_doc, new_doc):
+            if doc is not None:
+                doc.close()
 
 
 def main(argv=None) -> int:
@@ -662,22 +693,23 @@ def main(argv=None) -> int:
     p.add_argument('--date', default=None, help='ISO timestamp for changes (default: now)')
     p.add_argument('--verbose', '-v', action='store_true', help='Enable verbose logging')
     p.add_argument('--quiet', '-q', action='store_true', help='Suppress all output except errors')
+    p.add_argument('--no-validate', action='store_true', help='Skip DOCX validation on save')
 
     args = p.parse_args(argv)
 
-    if args.quiet:
-        logger.setLevel(logging.ERROR)
-    elif args.verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(levelname)s: %(message)s'
-        )
-        logger.setLevel(logging.INFO)
+    level = logging.ERROR if args.quiet else (logging.DEBUG if args.verbose else logging.INFO)
+    logging.basicConfig(level=level, format='%(levelname)s: %(message)s')
+    logger.setLevel(level)
 
     try:
-        make_redline_docx(args.old, args.new, args.out, author=args.author, date_iso=args.date)
+        make_redline_docx(
+            args.old,
+            args.new,
+            args.out,
+            author=args.author,
+            date_iso=args.date,
+            validate=not args.no_validate,
+        )
         return 0
     except (FileNotFoundError, ValueError, RuntimeError, OSError) as e:
         logger.error(f'Error: {e}')

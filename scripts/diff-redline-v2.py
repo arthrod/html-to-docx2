@@ -3,45 +3,18 @@
 
 Usage: python scripts/diff-redline-v2.py <baseline.docx> <current.docx> <output.docx>
 
-This script uses the official pack.py, unpack.py, and Document library from claude-office-skills.
+This script uses the Document library from claude_office_skills.
 """
 
-import subprocess
 import sys
-import tempfile
 from difflib import SequenceMatcher
 from pathlib import Path
 
-# Add claude-office-skills to path
-skills_path = Path(__file__).parent.parent / 'claude-office-skills'
+# Add claude_office_skills to path
+skills_path = Path(__file__).parent.parent / 'claude_office_skills'
 sys.path.insert(0, str(skills_path))
 sys.path.insert(0, str(skills_path / 'public' / 'docx'))
-
-from public.docx.ooxml.scripts.pack import pack_document
 from public.docx.scripts.document import Document
-
-
-def unpack_docx(docx_path, output_dir):
-    """Unpack DOCX using the official unpack.py script."""
-    unpack_script = skills_path / 'public' / 'docx' / 'ooxml' / 'scripts' / 'unpack.py'
-
-    result = subprocess.run(
-        [sys.executable, str(unpack_script), str(docx_path), str(output_dir)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if result.returncode != 0:
-        msg = f'Unpack failed: {result.stderr}'
-        raise RuntimeError(msg)
-
-    # Extract suggested RSID if provided
-    if 'Suggested RSID' in result.stdout:
-        return result.stdout.split('Suggested RSID for edit session: ')[1].strip()
-    return None
-
-
 def parse_runs_from_paragraph(para_elem):
     """Extract text runs with their formatting from a paragraph element.
 
@@ -188,42 +161,29 @@ def main() -> None:
     if not current_docx.exists():
         sys.exit(1)
 
-    # Create temp directories
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        baseline_unpacked = temp_path / 'baseline'
-        current_unpacked = temp_path / 'current'
-
-        # Unpack both documents using official unpack.py
-        rsid_baseline = unpack_docx(baseline_docx, baseline_unpacked)
-        unpack_docx(current_docx, current_unpacked)
-        if rsid_baseline:
-            pass
-
+    doc = None
+    current_doc = None
+    try:
         # Initialize Document with baseline (makes a copy)
-        doc = Document(baseline_unpacked, track_revisions=True)
+        doc = Document(baseline_docx, track_revisions=True)
 
         # Get paragraphs from both documents
         baseline_paras = doc['word/document.xml'].dom.getElementsByTagName('w:p')
 
         # Load current document for comparison
-        current_doc = Document(current_unpacked, track_revisions=False)
+        current_doc = Document(current_docx, track_revisions=False)
         current_paras = current_doc['word/document.xml'].dom.getElementsByTagName('w:p')
 
         # Perform comparison and apply tracked changes
         compare_paragraphs(doc, list(baseline_paras), list(current_paras))
 
-        # Save the redlined document
-        output_unpacked = temp_path / 'output'
-        doc.save(destination=output_unpacked, validate=False)
-
-        # Pack using official pack_document function
-        success = pack_document(output_unpacked, output_docx, validate=False)
-
-        if success:
-            pass
-        else:
-            sys.exit(1)
+        # Save the redlined document directly
+        doc.save(destination=output_docx)
+    finally:
+        if doc is not None:
+            doc.close()
+        if current_doc is not None:
+            current_doc.close()
 
 
 if __name__ == '__main__':

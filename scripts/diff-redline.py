@@ -8,63 +8,15 @@ changes, preserving all formatting and styles using the Document library.
 """
 
 import sys
-import tempfile
-import zipfile
 from difflib import SequenceMatcher
 from pathlib import Path
 
-import defusedxml.minidom
-
-# Add claude-office-skills to path
-skills_path = Path(__file__).parent.parent / 'claude-office-skills'
+# Add claude_office_skills to path
+skills_path = Path(__file__).parent.parent / 'claude_office_skills'
 sys.path.insert(0, str(skills_path))
 sys.path.insert(0, str(skills_path / 'public' / 'docx'))
 
 from public.docx.scripts.document import Document
-
-
-def unpack_docx(docx_path, output_dir) -> None:
-    """Unpack DOCX file to directory."""
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    with zipfile.ZipFile(docx_path, 'r') as zip_ref:
-        zip_ref.extractall(output_path)
-
-    # Pretty print XML files
-    xml_files = list(output_path.rglob('*.xml')) + list(output_path.rglob('*.rels'))
-    for xml_file in xml_files:
-        try:
-            content = xml_file.read_text(encoding='utf-8')
-            dom = defusedxml.minidom.parseString(content)
-            xml_file.write_bytes(dom.toprettyxml(indent='  ', encoding='ascii'))
-        except:
-            pass  # Skip files that can't be parsed
-
-
-def pack_docx(input_dir, output_path) -> None:
-    """Pack directory back into DOCX file without prettifying XML."""
-    input_path = Path(input_dir)
-
-    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for file_path in input_path.rglob('*'):
-            if file_path.is_file():
-                arcname = str(file_path.relative_to(input_path))
-
-                # For XML files, minify (remove prettification) before packing
-                if file_path.suffix in {'.xml', '.rels'}:
-                    try:
-                        content = file_path.read_text(encoding='utf-8')
-                        # Remove extra whitespace between tags
-                        import re
-
-                        minified = re.sub(r'>\s+<', '><', content)
-                        zipf.writestr(arcname, minified.encode('utf-8'))
-                    except:
-                        # If minification fails, write as-is
-                        zipf.write(file_path, arcname)
-                else:
-                    zipf.write(file_path, arcname)
 
 
 def parse_runs_from_paragraph(para_elem):
@@ -321,35 +273,29 @@ def main() -> None:
     if not current_docx.exists():
         sys.exit(1)
 
-    # Create temp directories
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        baseline_unpacked = temp_path / 'baseline'
-        current_unpacked = temp_path / 'current'
-
-        # Unpack both documents
-        unpack_docx(baseline_docx, baseline_unpacked)
-        unpack_docx(current_docx, current_unpacked)
-
+    doc = None
+    current_doc = None
+    try:
         # Initialize Document with baseline (makes a copy)
-        doc = Document(baseline_unpacked, track_revisions=True)
+        doc = Document(baseline_docx, track_revisions=True)
 
         # Get paragraphs from both documents
         baseline_paras = doc['word/document.xml'].dom.getElementsByTagName('w:p')
 
         # Load current document for comparison
-        current_doc = Document(current_unpacked, track_revisions=False)
+        current_doc = Document(current_docx, track_revisions=False)
         current_paras = current_doc['word/document.xml'].dom.getElementsByTagName('w:p')
 
         # Perform comparison and apply tracked changes
         compare_paragraphs(doc, list(baseline_paras), list(current_paras))
 
-        # Save the redlined document
-        output_unpacked = temp_path / 'output'
-        doc.save(destination=output_unpacked, validate=False)
-
-        # Pack into final DOCX
-        pack_docx(output_unpacked, output_docx)
+        # Save the redlined document directly to output
+        doc.save(destination=output_docx)
+    finally:
+        if doc is not None:
+            doc.close()
+        if current_doc is not None:
+            current_doc.close()
 
 
 if __name__ == '__main__':

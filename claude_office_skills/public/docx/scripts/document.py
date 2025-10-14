@@ -5,8 +5,8 @@ Usage:
     from skills.docx.scripts.document import Document
 
     # Initialize
-    doc = Document('workspace/unpacked')
-    doc = Document('workspace/unpacked', author="John Doe", initials="JD")
+    doc = Document('workspace/example.docx')
+    doc = Document('workspace/example.docx', author="John Doe", initials="JD")
 
     # Find nodes
     node = doc["word/document.xml"].get_node(tag="w:del", attrs={"w:id": "1"})
@@ -32,6 +32,7 @@ import os
 import random
 import shutil
 import tempfile
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -594,7 +595,7 @@ def _generate_rsid() -> str:
 
 
 class Document:
-    """Manages comments in unpacked Word documents."""
+    """Manages comments and tracked changes in .docx files (unpacked to a temporary workspace)."""
 
     def __init__(self, docx_path, rsid=None, track_revisions=False, author='Claude', initials='C') -> None:
         """Initialize with path to a .docx file.
@@ -608,8 +609,8 @@ class Document:
             initials: Default author initials for comments (default: "C")
         """
         self.original_path = Path(docx_path)
-        logger.info(f"CWD: {os.getcwd()}")
-        logger.info(f"Absolute path: {self.original_path.resolve()}")
+        logger.debug(f"CWD: {os.getcwd()}")
+        logger.debug(f"Absolute path: {self.original_path.resolve()}")
 
         if not self.original_path.exists() or not self.original_path.is_file():
             msg = f'File not found: {docx_path}'
@@ -618,12 +619,20 @@ class Document:
         # Create temporary directory with subdirectories for unpacked content and baseline
         self.temp_dir = tempfile.mkdtemp(prefix='docx_')
         self.unpacked_path = Path(self.temp_dir) / 'unpacked'
+        self.unpacked_path.mkdir(parents=True, exist_ok=True)
 
-        # Unpack the docx file into the temporary directory
+        # Unpack the docx file into the temporary directory (zip-slip safe)
         try:
-            shutil.unpack_archive(self.original_path, self.unpacked_path, 'zip')
-        except (shutil.ReadError, zipfile.BadZipFile) as e:
-            msg = f'Failed to unpack {docx_path}, it might be corrupted or not a valid DOCX file: {e}'
+            with zipfile.ZipFile(self.original_path) as zf:
+                for member in zf.infolist():
+                    parts = Path(member.filename).parts
+                    if member.filename.startswith(('/', '\\')) or '..' in parts:
+                        raise RuntimeError(f'Unsafe path in archive: {member.filename}')
+                zf.extractall(self.unpacked_path)
+        except Exception as e:
+            with contextlib.suppress(Exception):
+                shutil.rmtree(self.temp_dir, ignore_errors=True)
+            msg = f'Failed to unpack {docx_path}: {e}'
             raise RuntimeError(msg) from e
 
         # Pack original directory into temporary .docx for validation baseline (outside unpacked dir)
@@ -793,10 +802,19 @@ class Document:
         self.next_comment_id += 1
         return comment_id
 
+    def close(self) -> None:
+        """Clean up temporary directory."""
+        temp_dir = getattr(self, 'temp_dir', None)
+        if temp_dir:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            self.temp_dir = None
+            self.unpacked_path = None
+        if hasattr(self, '_editors'):
+            self._editors.clear()
+
     def __del__(self) -> None:
-        """Clean up temporary directory on deletion."""
-        if hasattr(self, 'temp_dir') and Path(self.temp_dir).exists():
-            shutil.rmtree(self.temp_dir)
+        with contextlib.suppress(Exception):
+            self.close()
 
     def validate(self) -> None:
         """Validate the document against XSD schema and redlining rules.
@@ -840,6 +858,8 @@ class Document:
 
         # Pack the modified document into the destination
         if destination:
+            destination = Path(destination)
+            destination.parent.mkdir(parents=True, exist_ok=True)
             pack_document(self.unpacked_path, destination, validate=False)
         else:
             # If no destination, pack back to original file
