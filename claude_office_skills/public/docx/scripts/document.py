@@ -34,9 +34,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from defusedxml import minidom
-from ooxml.scripts.pack import pack_document
-from ooxml.scripts.validation.docx import DOCXSchemaValidator
-from ooxml.scripts.validation.redlining import RedliningValidator
+from ..ooxml.scripts.pack import pack_document
+from ..ooxml.scripts.validation.docx import DOCXSchemaValidator
+from ..ooxml.scripts.validation.redlining import RedliningValidator
 
 from .utilities import XMLEditor
 
