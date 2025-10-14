@@ -82,7 +82,7 @@ class Redliner:
             raw_id = tracked.get(_qn('w:id'))
             if raw_id and raw_id.isdigit():
                 existing_ids.append(int(raw_id))
-        self.cidgen = _ChangeIdGen(start=max(existing_ids, default=0))
+        self.cidgen = _ChangeIdGen(start=max(existing_ids, default=-1) + 1)
 
         # Perform diff
         redline_body_lxml = _build_body_with_diffs(
