@@ -714,7 +714,7 @@ def main(argv=None) -> int:
             validate=not args.no_validate,
         )
         return 0
-    except (FileNotFoundError, ValueError, RuntimeError, OSError) as e:
+    except (ValueError, RuntimeError, OSError) as e:
         logger.error(f'Error: {e}')
         return 1
     except Exception as e:
