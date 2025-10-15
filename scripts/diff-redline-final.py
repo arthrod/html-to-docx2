@@ -29,8 +29,7 @@ def compare_and_redline(doc: Document, current_docx: Path) -> None:
     - suggest_paragraph() for inserted paragraphs
     - replace_node() with w:ins/w:del for inline changes
     """
-    current_doc = Document(current_docx, track_revisions=False)
-    try:
+    with contextlib.closing(Document(current_docx, track_revisions=False)) as current_doc:
         # Get paragraphs from both documents
         baseline_paras = list(doc['word/document.xml'].dom.getElementsByTagName('w:p'))
         current_paras = list(current_doc['word/document.xml'].dom.getElementsByTagName('w:p'))
@@ -130,8 +129,7 @@ def compare_and_redline(doc: Document, current_docx: Path) -> None:
                     else:
                         body = doc['word/document.xml'].get_node(tag='w:body')
                         doc['word/document.xml'].append_to(body, tracked_para_xml)
-    finally:
-        current_doc.close()
+        # contextlib.closing ensures current_doc.close() is invoked
 
 
 def _compare_paragraph_runs(doc: Document, baseline_para, current_para) -> None:
