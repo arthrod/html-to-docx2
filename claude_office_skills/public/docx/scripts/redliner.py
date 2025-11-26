@@ -84,6 +84,10 @@ class Redliner:
         # Replace the old body with the new redlined body
         self.new_doc['word/document.xml'].replace_node(body_to_replace, redline_body_str)
 
+        # Ensure styles from the old document remain available for deletions and pPrChange/rPrChange blocks
+        # so that Word can render formatting accurately in the redline output.
+        self._merge_styles_from_old()
+
         self._ensure_track_revisions()
 
     def _now_iso(self) -> str:
@@ -105,6 +109,56 @@ class Redliner:
             # Not found, so add it
             settings_root = editor.get_node(tag='w:settings')
             editor.append_to(settings_root, '<w:trackRevisions/>')
+
+    def _merge_styles_from_old(self) -> None:
+        """Merge styles from the old document into the new document if missing.
+
+        We copy over any style definitions (by w:styleId) that exist only in the old document,
+        and ensure docDefaults/latentStyles are present so that custom fonts and formatting
+        referenced by tracked changes remain resolvable.
+        """
+        try:
+            old_styles_editor = self.old_doc['word/styles.xml']
+        except ValueError:
+            return
+
+        try:
+            new_styles_editor = self.new_doc['word/styles.xml']
+        except ValueError:
+            return
+
+        old_root = old_styles_editor.dom.documentElement
+        new_root = new_styles_editor.dom.documentElement
+
+        if old_root.tagName != 'w:styles' or new_root.tagName != 'w:styles':
+            return
+
+        # Copy docDefaults if the new doc lacks them (preserves default fonts/sizes)
+        if not new_root.getElementsByTagName('w:docDefaults'):
+            old_defaults = old_root.getElementsByTagName('w:docDefaults')
+            if old_defaults:
+                new_root.insertBefore(old_defaults[0].cloneNode(deep=True), new_root.firstChild)
+
+        # Copy latentStyles if missing (keeps built-in style behaviors consistent)
+        if not new_root.getElementsByTagName('w:latentStyles'):
+            old_latent = old_root.getElementsByTagName('w:latentStyles')
+            if old_latent:
+                insertion_point = new_root.firstChild
+                if new_root.getElementsByTagName('w:docDefaults'):
+                    insertion_point = new_root.getElementsByTagName('w:docDefaults')[0].nextSibling
+                new_root.insertBefore(old_latent[0].cloneNode(deep=True), insertion_point)
+
+        existing_ids = {
+            node.getAttribute('w:styleId')
+            for node in new_root.getElementsByTagName('w:style')
+            if node.hasAttribute('w:styleId')
+        }
+
+        for style in old_root.getElementsByTagName('w:style'):
+            style_id = style.getAttribute('w:styleId')
+            if style_id and style_id not in existing_ids:
+                new_root.appendChild(style.cloneNode(deep=True))
+                existing_ids.add(style_id)
 
 
 # Diffing logic adapted from redline_docx_enhanced.py

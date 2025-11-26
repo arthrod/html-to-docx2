@@ -5,10 +5,12 @@ description = "A tool to compare two .docx files and generate a redlined version
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "defusedxml>=0.7.1",
     "graphtage>=0.3.1",
     "lxml>=6.0.2",
     "lxml-stubs>=0.5.1",
     "xmldiff>=2.7.0",
+    "python-docx>=1.1.0",
 ]
 
 [tool.setuptools]
