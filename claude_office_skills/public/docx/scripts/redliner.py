@@ -266,6 +266,55 @@ def _equal_p_style(a_pPr: Optional[etree._Element], b_pPr: Optional[etree._Eleme
     return as_c14n(a_pPr) == as_c14n(b_pPr)
 
 
+def _diff_runs_with_same_text(
+    old_tokens: list[dict], new_tokens: list[dict],
+    author: str, date_iso: str, cidgen: _ChangeIdGen
+) -> list[etree._Element]:
+    """Handle case where old and new have the same combined text but different run structures.
+
+    This aligns the old text (possibly from 1 run) with new runs (possibly multiple styled runs)
+    and tracks formatting changes with rPrChange.
+    """
+    # Get combined text and old formatting
+    old_combined_text = ''.join(t['text'] for t in old_tokens if t['kind'] in {'text', 'hyperlink'})
+    # Assume uniform old formatting (from the first text run)
+    old_rPr = None
+    for t in old_tokens:
+        if t['kind'] in {'text', 'hyperlink'}:
+            old_rPr = t['rPr']
+            break
+
+    out = []
+    char_pos = 0
+
+    # For each new run, emit the text with new formatting + rPrChange showing old formatting
+    for new_tok in new_tokens:
+        if new_tok['kind'] not in {'text', 'hyperlink'}:
+            # Handle tabs, breaks, etc.
+            r = _clone_r_special(new_tok['kind'], new_tok['rPr'])
+            out.append(r)
+            continue
+
+        run_text = new_tok['text']
+        new_rPr = new_tok['rPr']
+        hyperlink = new_tok.get('hyperlink')
+
+        # Create run with new formatting
+        r = _clone_r_with_text(run_text, new_rPr, deleted=False)
+
+        # Add rPrChange if formatting differs from old
+        if not _equal_runs_style(old_rPr, new_rPr):
+            _add_rPrChange(r, old_rPr, author, date_iso, cidgen.next())
+
+        if hyperlink is not None:
+            r = _wrap_run_in_hyperlink(r, hyperlink)
+
+        out.append(r)
+        char_pos += len(run_text)
+
+    return out
+
+
 def _diff_run_text_charlevel(
     old_text: str, new_text: str, new_rPr: Optional[etree._Element], old_rPr: Optional[etree._Element],
     author: str, date_iso: str, cidgen: _ChangeIdGen, hyperlink: Optional[etree._Element] = None
@@ -422,9 +471,21 @@ def _build_paragraph_with_diffs(
                     ins.append(deepcopy(n['run_xml']))
             out_p.append(ins)
         elif tag == 'replace':
-            if (len(old_slice) == 1 and len(new_slice) == 1 and
+            # Check if this is a case of same text with different run structure/formatting
+            old_text_runs = [t for t in old_slice if t['kind'] in {'text', 'hyperlink'}]
+            new_text_runs = [t for t in new_slice if t['kind'] in {'text', 'hyperlink'}]
+            old_combined = ''.join(t['text'] for t in old_text_runs)
+            new_combined = ''.join(t['text'] for t in new_text_runs)
+
+            if old_combined == new_combined and old_combined:
+                # Same text, different run structure/formatting - use rPrChange
+                pieces = _diff_runs_with_same_text(old_slice, new_slice, author, date_iso, cidgen)
+                for node in pieces:
+                    out_p.append(node)
+            elif (len(old_slice) == 1 and len(new_slice) == 1 and
                 old_slice[0]['kind'] in {'text', 'hyperlink'} and
                 new_slice[0]['kind'] in {'text', 'hyperlink'}):
+                # Single run to single run - use char-level diff
                 pieces = _diff_run_text_charlevel(
                     old_slice[0]['text'], new_slice[0]['text'],
                     new_slice[0]['rPr'], old_slice[0]['rPr'],
@@ -434,6 +495,7 @@ def _build_paragraph_with_diffs(
                 for node in pieces:
                     out_p.append(node)
             else:
+                # Different text - use delete + insert
                 if old_slice:
                     de = _make_del_container(author, date_iso, cidgen.next())
                     for o in old_slice:
