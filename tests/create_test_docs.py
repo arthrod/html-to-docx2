@@ -223,6 +223,58 @@ def create_hyperlink_preservation_docs():
     doc_new.save('tests/test_files/4.4_new.docx')
 
 
+def create_style_preservation_docs():
+    """Creates test documents for style preservation tests."""
+    if not os.path.exists('tests/test_files'):
+        os.makedirs('tests/test_files')
+
+    # Paragraph style change: alignment
+    doc_old_p_align = Document()
+    p_old_align = doc_old_p_align.add_paragraph('Alignment change.')
+    p_old_align.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    doc_old_p_align.save('tests/test_files/style_p_align_old.docx')
+
+    doc_new_p_align = Document()
+    p_new_align = doc_new_p_align.add_paragraph('Alignment change.')
+    p_new_align.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    doc_new_p_align.save('tests/test_files/style_p_align_new.docx')
+
+    # Run style change: bold to not bold
+    doc_old_r_bold = Document()
+    r_old_bold = doc_old_r_bold.add_paragraph().add_run('Bold to not bold.')
+    r_old_bold.bold = True
+    doc_old_r_bold.save('tests/test_files/style_r_bold_old.docx')
+
+    doc_new_r_bold = Document()
+    r_new_bold = doc_new_r_bold.add_paragraph().add_run('Bold to not bold.')
+    r_new_bold.bold = False
+    doc_new_r_bold.save('tests/test_files/style_r_bold_new.docx')
+
+    # Run style change: italic to bold
+    doc_old_r_italic = Document()
+    r_old_italic = doc_old_r_italic.add_paragraph().add_run('Italic to bold.')
+    r_old_italic.italic = True
+    doc_old_r_italic.save('tests/test_files/style_r_italic_old.docx')
+
+    doc_new_r_italic = Document()
+    r_new_italic = doc_new_r_italic.add_paragraph().add_run('Italic to bold.')
+    r_new_italic.bold = True
+    doc_new_r_italic.save('tests/test_files/style_r_italic_new.docx')
+
+    # Combined style change: bold and red to italic and blue
+    doc_old_r_combined = Document()
+    r_old_combined = doc_old_r_combined.add_paragraph().add_run('Combined style change.')
+    r_old_combined.bold = True
+    r_old_combined.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)
+    doc_old_r_combined.save('tests/test_files/style_r_combined_old.docx')
+
+    doc_new_r_combined = Document()
+    r_new_combined = doc_new_r_combined.add_paragraph().add_run('Combined style change.')
+    r_new_combined.italic = True
+    r_new_combined.font.color.rgb = RGBColor(0x00, 0x00, 0xFF)
+    doc_new_r_combined.save('tests/test_files/style_r_combined_new.docx')
+
+
 def create_style_and_formatting_docs():
     """Creates test documents for style and formatting."""
     # Test Case 5.1: Change bold text

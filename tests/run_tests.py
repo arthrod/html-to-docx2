@@ -4,6 +4,7 @@ import subprocess
 import sys
 import unittest
 from create_test_docs import create_test_docs
+from test_style_preservation import TestStyleAndFormattingPreservation
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -262,4 +263,9 @@ class TestRedlineDocx(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTests(loader.loadTestsFromTestCase(TestRedlineDocx))
+    suite.addTests(loader.loadTestsFromTestCase(TestStyleAndFormattingPreservation))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)

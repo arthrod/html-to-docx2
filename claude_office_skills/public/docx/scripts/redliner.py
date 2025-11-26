@@ -231,12 +231,23 @@ def _add_rPrChange(new_r: etree._Element, old_rPr: Optional[etree._Element], aut
     if rPr is None:
         rPr = etree.Element(_qn('w:rPr'))
         new_r.insert(0, rPr)
+
+    # Check if rPrChange already exists
+    if rPr.find(_qn('w:rPrChange')) is not None:
+        return
+
     rPrChange = etree.Element(_qn('w:rPrChange'))
     rPrChange.set(_qn('w:id'), str(cid))
     rPrChange.set(_qn('w:author'), author)
     rPrChange.set(_qn('w:date'), date_iso)
+
     prior = deepcopy(old_rPr)
     prior.tag = _qn('w:rPr')
+
+    # Remove existing rPrChange from the copied old properties to prevent nesting
+    for change in prior.findall(_qn('w:rPrChange')):
+        prior.remove(change)
+
     rPrChange.append(prior)
     rPr.append(rPrChange)
 
@@ -306,25 +317,41 @@ def _build_paragraph_with_diffs(
     out_p = etree.Element(_qn('w:p'))
     old_pPr = old_p.find(_qn('w:pPr'))
     new_pPr = new_p.find(_qn('w:pPr'))
+
+    # Create a new pPr for the output paragraph
+    out_pPr = etree.Element(_qn('w:pPr'))
+
+    # Flag to check if pPrChange has been added
+    pPrChange_added = False
+
     if new_pPr is not None:
-        out_pPr = deepcopy(new_pPr)
+        # Copy all properties from new_pPr to out_pPr
+        for child in new_pPr:
+            out_pPr.append(deepcopy(child))
+
         if not _equal_p_style(old_pPr, new_pPr):
             pPrChange = etree.Element(_qn('w:pPrChange'))
             pPrChange.set(_qn('w:id'), str(cidgen.next()))
             pPrChange.set(_qn('w:author'), author)
             pPrChange.set(_qn('w:date'), date_iso)
             if old_pPr is not None:
+                # Append a deepcopy of old_pPr to pPrChange
                 pPrChange.append(deepcopy(old_pPr))
             out_pPr.append(pPrChange)
-        out_p.append(out_pPr)
+            pPrChange_added = True
+
+    # If new_pPr is None, but old_pPr is not, it's a style deletion
     elif old_pPr is not None:
         pPrChange = etree.Element(_qn('w:pPrChange'))
         pPrChange.set(_qn('w:id'), str(cidgen.next()))
         pPrChange.set(_qn('w:author'), author)
         pPrChange.set(_qn('w:date'), date_iso)
         pPrChange.append(deepcopy(old_pPr))
-        out_pPr = etree.Element(_qn('w:pPr'))
         out_pPr.append(pPrChange)
+        pPrChange_added = True
+
+    # Only append out_pPr if it has children
+    if len(out_pPr):
         out_p.append(out_pPr)
 
     old_tokens = _paragraph_runs_tokens(old_p, preserve_hyperlinks=True)
