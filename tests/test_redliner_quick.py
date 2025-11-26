@@ -95,7 +95,7 @@ def main():
         r = p.add_run('Bold text')
         r.bold = True
 
-    def new_normal(doc):
+    def new_normal_bold(doc):
         p = doc.add_paragraph()
         r = p.add_run('Bold text')
 
@@ -103,7 +103,7 @@ def main():
         rPrChanges = doc.xpath('.//w:rPrChange', namespaces=NSMAP)
         return len(rPrChanges) > 0
 
-    if run_test("Bold to Normal formatting change", old_bold, new_normal, check_rpr_change):
+    if run_test("Bold to Normal formatting change", old_bold, new_normal_bold, check_rpr_change):
         passed += 1
     else:
         failed += 1
@@ -129,7 +129,11 @@ def main():
         r = p.add_run('Italic text')
         r.italic = True
 
-    if run_test("Italic to Normal formatting change", old_italic, new_normal, check_rpr_change):
+    def new_normal_italic(doc):
+        p = doc.add_paragraph()
+        r = p.add_run('Italic text')
+
+    if run_test("Italic to Normal formatting change", old_italic, new_normal_italic, check_rpr_change):
         passed += 1
     else:
         failed += 1
