@@ -225,19 +225,32 @@ def _make_del_container(author: str, date_iso: str, cid: int) -> etree._Element:
 
 
 def _add_rPrChange(new_r: etree._Element, old_rPr: Optional[etree._Element], author: str, date_iso: str, cid: int) -> None:
-    if old_rPr is None:
-        return
+    """Add rPrChange to track run formatting changes.
+
+    According to OOXML spec, rPrChange must be the last element in rPr and contains
+    the PREVIOUS formatting state. If old_rPr is None (no previous formatting),
+    we still record the change with an empty rPr inside rPrChange.
+    """
     rPr = new_r.find(_qn('w:rPr'))
     if rPr is None:
         rPr = etree.Element(_qn('w:rPr'))
         new_r.insert(0, rPr)
+
     rPrChange = etree.Element(_qn('w:rPrChange'))
     rPrChange.set(_qn('w:id'), str(cid))
     rPrChange.set(_qn('w:author'), author)
     rPrChange.set(_qn('w:date'), date_iso)
-    prior = deepcopy(old_rPr)
-    prior.tag = _qn('w:rPr')
-    rPrChange.append(prior)
+
+    # Store the previous formatting state (empty rPr if there was none)
+    if old_rPr is not None:
+        prior = deepcopy(old_rPr)
+        prior.tag = _qn('w:rPr')
+        rPrChange.append(prior)
+    else:
+        # No previous formatting - create empty rPr to indicate it was added
+        rPrChange.append(etree.Element(_qn('w:rPr')))
+
+    # rPrChange must be the last element in rPr per OOXML schema
     rPr.append(rPrChange)
 
 
@@ -257,18 +270,30 @@ def _diff_run_text_charlevel(
     old_text: str, new_text: str, new_rPr: Optional[etree._Element], old_rPr: Optional[etree._Element],
     author: str, date_iso: str, cidgen: _ChangeIdGen, hyperlink: Optional[etree._Element] = None
 ) -> list[etree._Element]:
+    """Create char-level diffs between old and new text, preserving formatting.
+
+    For equal text with formatting differences, we add rPrChange to track the change.
+    For insertions/deletions, we use the appropriate formatting for each part.
+    """
     out = []
+    formatting_changed = not _equal_runs_style(old_rPr, new_rPr)
+
     sm = SequenceMatcher(a=old_text, b=new_text, autojunk=False)
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == 'equal':
             if i2 > i1:
+                # Use new formatting for the preserved text
                 r = _clone_r_with_text(old_text[i1:i2], new_rPr, deleted=False)
+                # If formatting changed, track the change with rPrChange
+                if formatting_changed:
+                    _add_rPrChange(r, old_rPr, author, date_iso, cidgen.next())
                 if hyperlink is not None:
                     r = _wrap_run_in_hyperlink(r, hyperlink)
                 out.append(r)
         elif tag == 'delete':
             if i2 > i1:
                 de = _make_del_container(author, date_iso, cidgen.next())
+                # Deleted text uses OLD formatting
                 r = _clone_r_with_text(old_text[i1:i2], old_rPr, deleted=True)
                 if hyperlink is not None:
                     r = _wrap_run_in_hyperlink(r, hyperlink)
@@ -277,12 +302,14 @@ def _diff_run_text_charlevel(
         elif tag == 'insert':
             if j2 > j1:
                 ins = _make_ins_container(author, date_iso, cidgen.next())
+                # Inserted text uses NEW formatting
                 r = _clone_r_with_text(new_text[j1:j2], new_rPr, deleted=False)
                 if hyperlink is not None:
                     r = _wrap_run_in_hyperlink(r, hyperlink)
                 ins.append(r)
                 out.append(ins)
         elif tag == 'replace':
+            # Delete old text with old formatting
             if i2 > i1:
                 de = _make_del_container(author, date_iso, cidgen.next())
                 r = _clone_r_with_text(old_text[i1:i2], old_rPr, deleted=True)
@@ -290,6 +317,7 @@ def _diff_run_text_charlevel(
                     r = _wrap_run_in_hyperlink(r, hyperlink)
                 de.append(r)
                 out.append(de)
+            # Insert new text with new formatting
             if j2 > j1:
                 ins = _make_ins_container(author, date_iso, cidgen.next())
                 r = _clone_r_with_text(new_text[j1:j2], new_rPr, deleted=False)
@@ -303,9 +331,18 @@ def _diff_run_text_charlevel(
 def _build_paragraph_with_diffs(
     old_p: etree._Element, new_p: etree._Element, author: str, date_iso: str, cidgen: _ChangeIdGen
 ) -> etree._Element:
+    """Build a paragraph with tracked changes, preserving styles.
+
+    According to OOXML spec:
+    - pPrChange must be the last element in pPr
+    - pPrChange contains the PREVIOUS paragraph properties
+    - If formatting was added (no old_pPr), pPrChange contains empty pPr
+    """
     out_p = etree.Element(_qn('w:p'))
     old_pPr = old_p.find(_qn('w:pPr'))
     new_pPr = new_p.find(_qn('w:pPr'))
+
+    # Handle paragraph property changes
     if new_pPr is not None:
         out_pPr = deepcopy(new_pPr)
         if not _equal_p_style(old_pPr, new_pPr):
@@ -314,10 +351,16 @@ def _build_paragraph_with_diffs(
             pPrChange.set(_qn('w:author'), author)
             pPrChange.set(_qn('w:date'), date_iso)
             if old_pPr is not None:
+                # Store the previous paragraph properties
                 pPrChange.append(deepcopy(old_pPr))
+            else:
+                # No previous formatting - create empty pPr to indicate it was added
+                pPrChange.append(etree.Element(_qn('w:pPr')))
+            # pPrChange must be the last element in pPr per OOXML schema
             out_pPr.append(pPrChange)
         out_p.append(out_pPr)
     elif old_pPr is not None:
+        # Formatting was removed - record the previous state
         pPrChange = etree.Element(_qn('w:pPrChange'))
         pPrChange.set(_qn('w:id'), str(cidgen.next()))
         pPrChange.set(_qn('w:author'), author)
