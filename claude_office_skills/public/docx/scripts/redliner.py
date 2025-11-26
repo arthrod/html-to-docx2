@@ -85,6 +85,7 @@ class Redliner:
         self.new_doc['word/document.xml'].replace_node(body_to_replace, redline_body_str)
 
         self._ensure_track_revisions()
+        _merge_styles(self.old_doc, self.new_doc)
 
     def _now_iso(self) -> str:
         """Return current UTC timestamp in ISO 8601 format ending with 'Z'."""
@@ -542,6 +543,45 @@ def _block_text_key(elem: etree._Element, kind: str) -> str:
     if kind == 'tbl':
         return 'TABLE|' + _text_of_element(elem)
     return 'OTHER|' + (_text_of_element(elem) or '')
+
+
+def _merge_styles(old_doc: Document, new_doc: Document) -> None:
+    """Merge styles from the old document into the new document by styleId.
+
+    Track-changes output can reference styles that exist only in the old
+    document (for example, a paragraph style recorded in a <w:pPrChange> or a
+    character style preserved inside <w:rPrChange>). To prevent Word from
+    dropping formatting, copy any missing styles from ``old_doc``'s
+    ``word/styles.xml`` into ``new_doc``'s styles part.
+    """
+
+    try:
+        old_styles_editor = old_doc['word/styles.xml']
+        new_styles_editor = new_doc['word/styles.xml']
+    except ValueError:
+        # One of the documents does not declare styles; nothing to merge.
+        return
+
+    old_root = old_styles_editor.get_node(tag='w:styles')
+    new_root = new_styles_editor.get_node(tag='w:styles')
+
+    existing_ids: set[str] = set()
+    for style in new_root.getElementsByTagName('w:style'):
+        sid = style.getAttribute('w:styleId')
+        if sid:
+            existing_ids.add(sid)
+
+    appended = 0
+    for style in old_root.getElementsByTagName('w:style'):
+        sid = style.getAttribute('w:styleId')
+        if sid and sid not in existing_ids:
+            imported = new_root.ownerDocument.importNode(style, deep=True)
+            new_root.appendChild(imported)
+            existing_ids.add(sid)
+            appended += 1
+
+    if appended:
+        logger.debug('Merged %d styles from old document into new document', appended)
 
 
 def _build_body_with_diffs(

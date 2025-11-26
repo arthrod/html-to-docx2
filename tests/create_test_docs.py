@@ -1,6 +1,7 @@
 import os
 import docx
 from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
@@ -47,6 +48,7 @@ def create_test_docs():
     create_table_cell_redlining_docs()
     create_hyperlink_preservation_docs()
     create_style_and_formatting_docs()
+    create_style_preservation_docs()
 
 
 def create_basic_functionality_docs():
@@ -337,6 +339,37 @@ def create_style_and_formatting_docs():
     doc_new = Document()
     doc_new.add_paragraph('First item in a bulleted list.', style='List Bullet')
     doc_new.save('tests/test_files/5.7_new.docx')
+
+
+def create_style_preservation_docs():
+    """Creates documents that require merging custom styles during redlining."""
+    # Test Case 6.1: Paragraph style only exists in the old document
+    doc_old = Document()
+    para_style = doc_old.styles.add_style('CustomParaStyle', WD_STYLE_TYPE.PARAGRAPH)
+    para_style.font.name = 'Arial'
+    para_style.font.size = Pt(14)
+    para_style.font.bold = True
+    para_style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    doc_old.add_paragraph('Styled paragraph with unique style.', style='CustomParaStyle')
+    doc_old.save('tests/test_files/6.1_old.docx')
+
+    doc_new = Document()
+    doc_new.add_paragraph('Styled paragraph with unique style.')
+    doc_new.save('tests/test_files/6.1_new.docx')
+
+    # Test Case 6.2: Character style only exists in the old document
+    doc_old = Document()
+    char_style = doc_old.styles.add_style('CustomCharStyle', WD_STYLE_TYPE.CHARACTER)
+    char_style.font.bold = True
+    char_style.font.underline = True
+    p = doc_old.add_paragraph()
+    run = p.add_run('Styled run with unique character style.')
+    run.style = char_style
+    doc_old.save('tests/test_files/6.2_old.docx')
+
+    doc_new = Document()
+    doc_new.add_paragraph('Styled run with unique character style.')
+    doc_new.save('tests/test_files/6.2_new.docx')
 
 
 if __name__ == '__main__':

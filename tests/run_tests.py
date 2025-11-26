@@ -3,10 +3,16 @@ import shutil
 import subprocess
 import sys
 import unittest
-from create_test_docs import create_test_docs
+import zipfile
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from lxml import etree
+
+# Add the project root and tests folder to the Python path
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, os.path.join(BASE_DIR, 'tests'))
+
+from create_test_docs import create_test_docs
 
 class TestRedlineDocx(unittest.TestCase):
     """Test cases for redline_docx_enhanced.py."""
@@ -24,7 +30,7 @@ class TestRedlineDocx(unittest.TestCase):
     def run_script(self, old_file, new_file, out_file, author=None, date=None, extra_args=None):
         """Helper function to run the script."""
         command = [
-            'python',
+            sys.executable,
             self.script_path,
             os.path.join(self.test_files_dir, old_file),
             os.path.join(self.test_files_dir, new_file),
@@ -120,6 +126,52 @@ class TestRedlineDocx(unittest.TestCase):
         result = self.run_script('3.4_old.docx', '3.4_new.docx', '3.4_out.docx')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(os.path.exists(os.path.join(self.output_dir, '3.4_out.docx')))
+
+    def test_style_definitions_are_merged(self):
+        """Custom paragraph styles from the old doc should remain usable after redlining."""
+        out_path = os.path.join(self.output_dir, '6.1_out.docx')
+        result = self.run_script('6.1_old.docx', '6.1_new.docx', '6.1_out.docx')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(os.path.exists(out_path))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(out_path) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='CustomParaStyle']", namespaces=ns),
+                'Custom paragraph style missing from merged styles.xml'
+            )
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath('//w:pPrChange//w:pStyle[@w:val="CustomParaStyle"]', namespaces=ns),
+                'Paragraph style change should reference the original custom style'
+            )
+
+    def test_character_style_preserved_with_format_change(self):
+        """Character styles used only in the old doc should still be referenced in rPrChange nodes."""
+        out_path = os.path.join(self.output_dir, '6.2_out.docx')
+        result = self.run_script('6.2_old.docx', '6.2_new.docx', '6.2_out.docx')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(os.path.exists(out_path))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(out_path) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='CustomCharStyle']", namespaces=ns),
+                'Custom character style missing from merged styles.xml'
+            )
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath(
+                    "//w:r[w:t='Styled run with unique character style.']"
+                    '/w:rPr/w:rPrChange/w:rPr/w:rStyle[@w:val="CustomCharStyle"]',
+                    namespaces=ns,
+                ),
+                'Run-level style change should retain the original custom character style',
+            )
 
         # Test Case 3.5: Delete a column from a table
         result = self.run_script('3.5_old.docx', '3.5_new.docx', '3.5_out.docx')
