@@ -3,10 +3,19 @@ import shutil
 import subprocess
 import sys
 import unittest
-from create_test_docs import create_test_docs
+import zipfile
+from pathlib import Path
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from lxml import etree
+from typer.testing import CliRunner
+
+# Add the project root and tests folder to the Python path
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, os.path.join(BASE_DIR, 'tests'))
+
+from create_test_docs import create_test_docs
+from claude_office_skills.public.docx.scripts import typer_redline_cli
 
 class TestRedlineDocx(unittest.TestCase):
     """Test cases for redline_docx_enhanced.py."""
@@ -21,13 +30,19 @@ class TestRedlineDocx(unittest.TestCase):
         os.makedirs(self.output_dir)
         create_test_docs()
 
+    def _resolve_path(self, candidate: str) -> str:
+        """Return an absolute path for docx inputs/outputs used by the script."""
+        if os.path.isabs(candidate) or os.path.exists(candidate):
+            return candidate
+        return os.path.join(self.test_files_dir, candidate)
+
     def run_script(self, old_file, new_file, out_file, author=None, date=None, extra_args=None):
         """Helper function to run the script."""
         command = [
-            'python',
+            sys.executable,
             self.script_path,
-            os.path.join(self.test_files_dir, old_file),
-            os.path.join(self.test_files_dir, new_file),
+            self._resolve_path(old_file),
+            self._resolve_path(new_file),
             os.path.join(self.output_dir, out_file),
         ]
         if author:
@@ -121,6 +136,105 @@ class TestRedlineDocx(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(os.path.exists(os.path.join(self.output_dir, '3.4_out.docx')))
 
+    def test_style_definitions_are_merged(self):
+        """Custom paragraph styles from the old doc should remain usable after redlining."""
+        out_path = os.path.join(self.output_dir, '6.1_out.docx')
+        result = self.run_script('6.1_old.docx', '6.1_new.docx', '6.1_out.docx')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(os.path.exists(out_path))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(out_path) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='CustomParaStyle']", namespaces=ns),
+                'Custom paragraph style missing from merged styles.xml'
+            )
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath('//w:pPrChange//w:pStyle[@w:val="CustomParaStyle"]', namespaces=ns),
+                'Paragraph style change should reference the original custom style'
+            )
+
+    def test_character_style_preserved_with_format_change(self):
+        """Character styles used only in the old doc should still be referenced in rPrChange nodes."""
+        out_path = os.path.join(self.output_dir, '6.2_out.docx')
+        result = self.run_script('6.2_old.docx', '6.2_new.docx', '6.2_out.docx')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(os.path.exists(out_path))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(out_path) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='CustomCharStyle']", namespaces=ns),
+                'Custom character style missing from merged styles.xml'
+            )
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath(
+                    "//w:r[w:t='Styled run with unique character style.']"
+                    '/w:rPr/w:rPrChange/w:rPr/w:rStyle[@w:val="CustomCharStyle"]',
+                    namespaces=ns,
+                ),
+                'Run-level style change should retain the original custom character style',
+            )
+
+    def test_paragraph_style_persists_across_sequential_runs(self):
+        """Redlining twice should keep custom paragraph styles available for new changes."""
+        first_out = os.path.join(self.output_dir, '6.3_first_redline.docx')
+        result_first = self.run_script('6.1_old.docx', '6.1_new.docx', '6.3_first_redline.docx')
+        self.assertEqual(result_first.returncode, 0, result_first.stderr)
+        self.assertTrue(os.path.exists(first_out))
+
+        chained_out = os.path.join(self.output_dir, '6.3_second_redline.docx')
+        result_second = self.run_script(first_out, '6.3_new.docx', '6.3_second_redline.docx')
+        self.assertEqual(result_second.returncode, 0, result_second.stderr)
+        self.assertTrue(os.path.exists(chained_out))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(chained_out) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            para_styles = styles_root.xpath("//w:style[@w:styleId='CustomParaStyle']", namespaces=ns)
+            self.assertTrue(para_styles, 'Custom paragraph style missing after second redline run')
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath('//w:pPrChange//w:pStyle[@w:val="CustomParaStyle"]', namespaces=ns),
+                'Sequential redline should retain paragraph style references in change records',
+            )
+
+    def test_character_styles_persist_through_chained_runs(self):
+        """Character styles merged once should continue to exist after another redline."""
+        first_out = os.path.join(self.output_dir, '6.4_first_redline.docx')
+        result_first = self.run_script('6.2_old.docx', '6.2_new.docx', '6.4_first_redline.docx')
+        self.assertEqual(result_first.returncode, 0, result_first.stderr)
+        self.assertTrue(os.path.exists(first_out))
+
+        chained_out = os.path.join(self.output_dir, '6.4_second_redline.docx')
+        result_second = self.run_script(first_out, '6.4_new.docx', '6.4_second_redline.docx')
+        self.assertEqual(result_second.returncode, 0, result_second.stderr)
+        self.assertTrue(os.path.exists(chained_out))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(chained_out) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='CustomCharStyle']", namespaces=ns),
+                'Custom character style missing after chained redline runs',
+            )
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath(
+                    "//w:rPrChange//w:rPr/w:rStyle[@w:val='CustomCharStyle']",
+                    namespaces=ns,
+                ),
+                'Run-level change tracking should continue to reference the merged character style',
+            )
+
         # Test Case 3.5: Delete a column from a table
         result = self.run_script('3.5_old.docx', '3.5_new.docx', '3.5_out.docx')
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -189,6 +303,133 @@ class TestRedlineDocx(unittest.TestCase):
         result = self.run_script('5.7_old.docx', '5.7_new.docx', '5.7_out.docx')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(os.path.exists(os.path.join(self.output_dir, '5.7_out.docx')))
+
+    def test_multi_run_formatting_layers(self):
+        """Verify multiple styled runs retain formatting in tracked changes."""
+        out_path = os.path.join(self.output_dir, '10.1_out.docx')
+        result = self.run_script('10.1_old.docx', '10.1_new.docx', '10.1_out.docx')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(os.path.exists(out_path))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(out_path) as docx_zip:
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(doc_root.xpath('//w:ins//w:rPr/w:b', namespaces=ns))
+            self.assertTrue(doc_root.xpath('//w:ins//w:rPr/w:i', namespaces=ns))
+            self.assertTrue(doc_root.xpath('//w:del//w:rPr/w:u', namespaces=ns))
+
+    def test_progressive_style_merge_with_tables_and_lists(self):
+        """Custom styles should merge even when tables and lists are present."""
+        out_path = os.path.join(self.output_dir, '15.1_out.docx')
+        result = self.run_script('15.1_old.docx', '15.1_new.docx', '15.1_out.docx')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(os.path.exists(out_path))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(out_path) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='DensePara']", namespaces=ns),
+                'DensePara style should be merged from the original document',
+            )
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='AccentChar']", namespaces=ns),
+                'AccentChar style should be merged from the original document',
+            )
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath('//w:tbl//w:tr', namespaces=ns),
+                'Table rows should persist after redlining complex styles',
+            )
+            numbering_nodes = doc_root.xpath('//w:numPr', namespaces=ns)
+            list_styles = doc_root.xpath("//w:pStyle[@w:val='ListNumber']", namespaces=ns)
+            self.assertTrue(
+                numbering_nodes or list_styles,
+                'List numbering should remain present alongside merged styles',
+            )
+
+    def test_high_complexity_style_chain(self):
+        """Sequential redlines with complex styles should keep merged definitions."""
+        first_out = os.path.join(self.output_dir, '20.1_first_out.docx')
+        result_first = self.run_script('20.1_old.docx', '20.1_new.docx', '20.1_first_out.docx')
+        self.assertEqual(result_first.returncode, 0, result_first.stderr)
+        self.assertTrue(os.path.exists(first_out))
+
+        chained_out = os.path.join(self.output_dir, '20.2_second_out.docx')
+        result_second = self.run_script(first_out, '20.2_new.docx', '20.2_second_out.docx')
+        self.assertEqual(result_second.returncode, 0, result_second.stderr)
+        self.assertTrue(os.path.exists(chained_out))
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(chained_out) as docx_zip:
+            styles_root = etree.fromstring(docx_zip.read('word/styles.xml'))
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='SequencePara']", namespaces=ns),
+                'SequencePara should still be present after chained runs',
+            )
+            self.assertTrue(
+                styles_root.xpath("//w:style[@w:styleId='SequenceAccent']", namespaces=ns),
+                'SequenceAccent should still be present after chained runs',
+            )
+
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(
+                doc_root.xpath('//w:rStyle[@w:val="SequenceAccent"]', namespaces=ns),
+                'Run-level content should continue to use the merged accent style',
+            )
+            self.assertTrue(
+                doc_root.xpath('//w:pStyle[@w:val="SequencePara"]', namespaces=ns),
+                'Paragraph content should keep the custom paragraph style reference after chaining',
+            )
+
+    def test_typer_cli_generates_redline(self):
+        """Typer CLI should wrap unpack, redline, and pack helpers."""
+        runner = CliRunner()
+        out_path = Path(self.output_dir) / 'cli_redline.docx'
+        result = runner.invoke(
+            typer_redline_cli.app,
+            [
+                '--original', self._resolve_path('1.1_old.docx'),
+                '--modified', self._resolve_path('1.1_new.docx'),
+                '--destination-file', str(out_path),
+                '--author', 'TyperTest',
+            ],
+        )
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertTrue(out_path.exists())
+
+        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+        with zipfile.ZipFile(out_path) as docx_zip:
+            doc_root = etree.fromstring(docx_zip.read('word/document.xml'))
+            self.assertTrue(doc_root.xpath('//w:ins', namespaces=ns))
+            settings_root = etree.fromstring(docx_zip.read('word/settings.xml'))
+            self.assertTrue(settings_root.xpath('//w:trackRevisions', namespaces=ns))
+
+    def test_typer_cli_default_destination(self):
+        """When destination is omitted, a *_redlined.docx file should be created."""
+        runner = CliRunner()
+        source_old = Path(self._resolve_path('1.2_old.docx')).resolve()
+        source_new = Path(self._resolve_path('1.2_new.docx')).resolve()
+        with runner.isolated_filesystem():
+            old_copy = Path('local_old.docx')
+            new_copy = Path('local_new.docx')
+            shutil.copy(source_old, old_copy)
+            shutil.copy(source_new, new_copy)
+
+            result = runner.invoke(
+                typer_redline_cli.app,
+                [
+                    '--original', str(old_copy),
+                    '--modified', str(new_copy),
+                ],
+            )
+
+            self.assertEqual(result.exit_code, 0, result.output)
+            default_out = Path('local_new_redlined.docx')
+            self.assertTrue(default_out.exists(), 'Default destination should be alongside modified doc')
+
 
     def test_error_handling(self):
         """Test error handling."""
