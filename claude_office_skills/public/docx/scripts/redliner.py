@@ -275,14 +275,20 @@ def _diff_runs_with_same_text(
     This aligns the old text (possibly from 1 run) with new runs (possibly multiple styled runs)
     and tracks formatting changes with rPrChange.
     """
-    # Get combined text and old formatting
+    # Get combined text and old formatting spans
     old_combined_text = ''.join(t['text'] for t in old_tokens if t['kind'] in {'text', 'hyperlink'})
-    # Assume uniform old formatting (from the first text run)
-    old_rPr = None
+
+    # Build a mapping of character ranges to their original rPr so we can preserve
+    # per-run formatting even when the new paragraph merges runs together.
+    old_style_spans: list[tuple[int, int, Optional[etree._Element]]] = []
+    char_pos = 0
     for t in old_tokens:
-        if t['kind'] in {'text', 'hyperlink'}:
-            old_rPr = t['rPr']
-            break
+        if t['kind'] not in {'text', 'hyperlink'}:
+            continue
+        text_len = len(t['text'])
+        if text_len:
+            old_style_spans.append((char_pos, char_pos + text_len, t['rPr']))
+            char_pos += text_len
 
     out = []
     char_pos = 0
@@ -299,18 +305,36 @@ def _diff_runs_with_same_text(
         new_rPr = new_tok['rPr']
         hyperlink = new_tok.get('hyperlink')
 
-        # Create run with new formatting
-        r = _clone_r_with_text(run_text, new_rPr, deleted=False)
+        # Break the new text run into segments aligned with the old style spans so
+        # each segment can carry an rPrChange that reflects the exact prior styling.
+        consumed = 0
+        while consumed < len(run_text):
+            # Find the old style span that covers the current character position
+            old_rPr = None
+            span_end = None
+            for start, end, span_rPr in old_style_spans:
+                if start <= char_pos < end:
+                    old_rPr = span_rPr
+                    span_end = end
+                    break
 
-        # Add rPrChange if formatting differs from old
-        if not _equal_runs_style(old_rPr, new_rPr):
-            _add_rPrChange(r, old_rPr, author, date_iso, cidgen.next())
+            remaining_text_len = len(run_text) - consumed
+            segment_len = remaining_text_len if span_end is None else min(remaining_text_len, span_end - char_pos)
+            segment_text = run_text[consumed:consumed + segment_len]
 
-        if hyperlink is not None:
-            r = _wrap_run_in_hyperlink(r, hyperlink)
+            # Create run with new formatting
+            r = _clone_r_with_text(segment_text, new_rPr, deleted=False)
 
-        out.append(r)
-        char_pos += len(run_text)
+            # Add rPrChange if formatting differs from old
+            if not _equal_runs_style(old_rPr, new_rPr):
+                _add_rPrChange(r, old_rPr, author, date_iso, cidgen.next())
+
+            if hyperlink is not None:
+                r = _wrap_run_in_hyperlink(r, hyperlink)
+
+            out.append(r)
+            char_pos += segment_len
+            consumed += segment_len
 
     return out
 
