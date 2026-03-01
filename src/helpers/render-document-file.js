@@ -162,12 +162,12 @@ export const buildList = async (vNode, docxDocumentInstance, xmlFragment) => {
           } else {
             const properties = {
               attributes: {
-                ...(parentVNodeProperties?.attributes || {}),
-                ...(childVNode?.properties?.attributes || {}),
+                ...parentVNodeProperties?.attributes,
+                ...childVNode?.properties?.attributes,
               },
               style: {
-                ...(parentVNodeProperties?.style || {}),
-                ...(childVNode?.properties?.style || {}),
+                ...parentVNodeProperties?.style,
+                ...childVNode?.properties?.style,
               },
             };
             const paragraphVNode = new VNode(
