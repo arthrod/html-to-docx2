@@ -1,108 +1,121 @@
-/// <reference types="node" />
+/* biome-ignore-all lint: legacy code */
+/**
+ * Type declarations for html-to-docx
+ *
+ * TURBODOCX WILL ALSO (1) WORK DIRECTLY WITH REACT AND (2) WITHOUT NODE, NOR MHT.
+ * IF I DOUBT THIS, I WILL OVERTHINK THE REASONS AND THEN COMPARE WITH THE EXAMPLES
+ * CONTAINED IN THE FOLDER HTML-TO-DOCX. IF EVEN AFTER THAT I DISAGREE WITH THE ABOVE,
+ * I'D CONDUCT AN EXTENSIVE RESEARCH UNTIL I FIND A PACKAGE THAT CAN PROVE I'M WRONG.
+ */
 
 declare namespace HTMLtoDOCX {
-    interface Margins {
-        top?: number;
-        right?: number;
-        bottom?: number;
-        left?: number;
-        header?: number;
-        footer?: number;
-        gutter?: number;
-    }
+  type Margins = {
+    top?: number;
+    right?: number;
+    bottom?: number;
+    left?: number;
+    header?: number;
+    footer?: number;
+    gutter?: number;
+  };
 
-    interface PageSize {
-        width?: number;
-        height?: number;
-    }
+  type PageSize = {
+    width?: number;
+    height?: number;
+  };
 
-    interface Row {
-        cantSplit?: boolean;
-    }
+  type Row = {
+    cantSplit?: boolean;
+  };
 
-    interface Table {
-        row?: Row;
-        borderOptions?: {
-            size?: number;
-            stroke?: string;
-            color?: string;
-        };
-        addSpacingAfter?: boolean;
-    }
+  type BorderOptions = {
+    size?: number;
+    color?: string;
+  };
 
-    interface LineNumberOptions {
-        start: number;
-        countBy: number;
-        restart: "continuous" | "newPage" | "newSection";
-    }
+  type Table = {
+    row?: Row;
+    borderOptions?: BorderOptions;
+  };
 
-    interface HeadingSpacing {
-        before?: number;
-        after?: number;
-    }
+  type LineNumberOptions = {
+    countBy?: number;
+    start?: number;
+    restart?: 'continuous' | 'newPage' | 'newSection';
+    distance?: number;
+  };
 
-    interface HeadingStyle {
-        font?: string;
-        fontSize?: number;
-        bold?: boolean;
-        spacing?: HeadingSpacing;
-        keepLines?: boolean;
-        keepNext?: boolean;
-        outlineLevel?: number;
-    }
+  type HeadingSpacing = {
+    before?: number;
+    after?: number;
+    line?: number;
+    lineRule?: 'auto' | 'exact' | 'atLeast';
+  };
 
-    interface HeadingConfig {
-        heading1?: HeadingStyle;
-        heading2?: HeadingStyle;
-        heading3?: HeadingStyle;
-        heading4?: HeadingStyle;
-        heading5?: HeadingStyle;
-        heading6?: HeadingStyle;
-    }
+  type HeadingStyle = {
+    font?: string;
+    fontSize?: number;
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    color?: string;
+    spacing?: HeadingSpacing;
+  };
 
-    interface DocumentOptions {
-        orientation?: "portrait" | "landscape";
-        pageSize?: PageSize;
-        margins?: Margins;
-        title?: string;
-        subject?: string;
-        creator?: string;
-        keywords?: string[];
-        description?: string;
-        lastModifiedBy?: string;
-        revision?: number;
-        createdAt?: Date;
-        modifiedAt?: Date;
-        headerType?: "default" | "first" | "even";
-        header?: boolean;
-        footerType?: "default" | "first" | "even";
-        footer?: boolean;
-        font?: string;
-        fontSize?: number;
-        complexScriptFontSize?: number;
-        table?: Table;
-        pageNumber?: boolean;
-        skipFirstHeaderFooter?: boolean;
-        lineNumber?: boolean;
-        lineNumberOptions?: LineNumberOptions;
-        numbering?: {
-            defaultOrderedListStyleType?: string;
-        };
-        heading?: HeadingConfig;
-        decodeUnicode?: boolean;
-        lang?: string;
-        direction?: "ltr" | "rtl";
-        preprocessing?: {
-            skipHTMLMinify?: boolean;
-        };
-    }
+  type HeadingConfig = {
+    heading1?: HeadingStyle;
+    heading2?: HeadingStyle;
+    heading3?: HeadingStyle;
+    heading4?: HeadingStyle;
+    heading5?: HeadingStyle;
+    heading6?: HeadingStyle;
+  };
+
+  type ImageProcessing = {
+    svgHandling?: 'convert' | 'native';
+  };
+
+  type DocumentOptions = {
+    orientation?: 'portrait' | 'landscape';
+    pageSize?: PageSize;
+    margins?: Margins;
+    title?: string;
+    subject?: string;
+    creator?: string;
+    keywords?: string[];
+    description?: string;
+    lastModifiedBy?: string;
+    revision?: number;
+    createdAt?: Date;
+    modifiedAt?: Date;
+    font?: string;
+    fontSize?: number;
+    heading?: HeadingConfig;
+    table?: Table;
+    lineNumber?: LineNumberOptions;
+    lineNumberOptions?: LineNumberOptions;
+    header?: boolean;
+    footer?: boolean;
+    pageNumber?: boolean;
+    imageProcessing?: ImageProcessing;
+  };
 }
 
+/**
+ * Convert HTML to DOCX format.
+ *
+ * @param htmlString - The HTML content to convert
+ * @param headerHTMLString - Optional HTML for the document header
+ * @param documentOptions - Optional document configuration
+ * @param footerHTMLString - Optional HTML for the document footer
+ * @returns A Promise that resolves to a Buffer (Node.js) or Blob (browser)
+ */
 declare function HTMLtoDOCX(
-    htmlString: string,
-    headerHTMLstring?: string | null,
-    documentOptions?: HTMLtoDOCX.DocumentOptions,
-    footerHtmlString?: string | null,
-): Promise<ArrayBuffer | Blob | Buffer>;
+  htmlString: string,
+  headerHTMLString?: string | null,
+  documentOptions?: HTMLtoDOCX.DocumentOptions,
+  footerHTMLString?: string | null
+): Promise<Blob | Buffer>;
 
 export = HTMLtoDOCX;
+export as namespace HTMLtoDOCX;
