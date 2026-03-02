@@ -1,5 +1,9 @@
 import { create, fragment } from 'xmlbuilder2';
 import { nanoid } from 'nanoid';
+import { parseDataUrl, isSVG, convertSVGtoPNG, parseSVGDimensions } from './utils/image';
+
+// Track if we've already warned about missing sharp (show once per process)
+let sharpMissingWarningShown = false;
 
 import {
   generateCoreXML,
@@ -192,6 +196,7 @@ class DocxDocument {
         ? properties.table.addSpacingAfter
         : defaultDocumentOptions.table.addSpacingAfter;
     this.heading = properties.heading || defaultDocumentOptions.heading;
+    this.imageProcessing = properties.imageProcessing || defaultDocumentOptions.imageProcessing;
     this.lastNumberingId = 0;
     this.lastMediaId = 0;
     this.lastHeaderId = 0;
@@ -505,17 +510,69 @@ class DocxDocument {
     return fontTableObject.fontName;
   }
 
-  createMediaFile(base64String) {
-    // eslint-disable-next-line no-useless-escape
-    const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    if (matches.length !== 3) {
+  async createMediaFile(base64String) {
+    const parsed = parseDataUrl(base64String);
+    if (!parsed) {
       throw new Error('Invalid base64 string');
     }
 
-    const base64FileContent = matches[2];
-    // matches array contains file type in base64 format - image/jpeg and base64 stringified data
-    const fileExtension =
-      matches[1].match(/\/(.*?)$/)[1] === 'octet-stream' ? 'png' : matches[1].match(/\/(.*?)$/)[1];
+    let base64FileContent = parsed.base64;
+    let mimeType = parsed.mimeType;
+
+    // Extract file extension from MIME type (e.g., image/jpeg -> jpeg)
+    const mimeTypePart = mimeType.match(/\/(.*?)$/);
+    let fileExtension =
+      !mimeTypePart || mimeTypePart[1] === 'octet-stream' ? 'png' : mimeTypePart[1];
+
+    // Handle SVG images based on svgHandling option
+    const svgHandling =
+      this.imageProcessing?.svgHandling ||
+      defaultDocumentOptions.imageProcessing.svgHandling;
+
+    if (isSVG(mimeType) && svgHandling === 'convert') {
+      try {
+        // Convert SVG to PNG for backward compatibility with older Word versions
+        // Decode base64 to get SVG string for dimension extraction
+        const svgString = Buffer.from(base64FileContent, 'base64').toString('utf-8');
+
+        // Extract dimensions from SVG using improved parser that handles:
+        // - Decimal values (100.5)
+        // - Units (100px, 10cm, 5in, etc.)
+        // - ViewBox as fallback
+        const { width, height } = parseSVGDimensions(svgString);
+
+        const pngBuffer = await convertSVGtoPNG(base64FileContent, { width, height });
+        base64FileContent = pngBuffer.toString('base64');
+        fileExtension = 'png';
+        mimeType = 'image/png';
+      } catch (error) {
+        // Sharp not available - fall back to native SVG mode
+        if (error.message.includes('Sharp is not installed')) {
+          // Only show the warning once per process to avoid spam (unless suppressed)
+          const suppressWarning =
+            this.imageProcessing?.suppressSharpWarning ||
+            defaultDocumentOptions.imageProcessing.suppressSharpWarning;
+
+          if (!sharpMissingWarningShown && !suppressWarning) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              '\n[INFO] Sharp not installed - SVG images will be embedded natively (requires Office 2019+ or Microsoft 365).\n' +
+                'For maximum compatibility with all Word versions, install sharp: npm install sharp\n' +
+                'Learn more: https://github.com/TurboDocx/html-to-docx#svg-image-support\n'
+            );
+            sharpMissingWarningShown = true;
+          }
+        } else {
+          // eslint-disable-next-line no-console
+          console.error(`[ERROR] Failed to convert SVG to PNG: ${error.message}`);
+        }
+        // Fall back to using SVG directly if conversion fails
+        fileExtension = 'svg';
+      }
+    } else if (isSVG(mimeType)) {
+      // Use SVG natively (Office 2019+ support)
+      fileExtension = 'svg';
+    }
 
     // Use deterministic IDs when deterministicIds option is enabled (for CI diff testing)
     const imageId = this.deterministicIds ? this.lastMediaId.toString() : nanoid();
@@ -523,7 +580,12 @@ class DocxDocument {
 
     this.lastMediaId += 1;
 
-    return { id: this.lastMediaId, fileContent: base64FileContent, fileNameWithExtension };
+    return {
+      id: this.lastMediaId,
+      fileContent: base64FileContent,
+      fileNameWithExtension,
+      isSVG: fileExtension === 'svg',
+    };
   }
 
   createDocumentRelationships(fileName = 'document', type, target, targetMode = 'External') {

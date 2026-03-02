@@ -15,6 +15,19 @@ Convert HTML to Word, Google Docs, and DOCX files with the fastest, most reliabl
 
 Based on the original work and assisted by the original contributors of [privateOmega/html-to-docx](https://github.com/privateOmega/html-to-docx), this library is now actively maintained and enhanced by TurboDocx, ensuring continuous improvements and long-term support for production environments.
 
+## 🌐 Explore the TurboDocx Ecosystem
+
+| Package | Links | Description |
+|---------|-------|-------------|
+| API & SDK | [![Website](https://img.shields.io/badge/Website-TurboDocx-8A2BE2)](https://www.turbodocx.com/products/api-and-sdk) | Production-ready SDK for e-signature, document generation, template processing, and more |
+| TurboSign | [![Website](https://img.shields.io/badge/Website-TurboDocx-8A2BE2)](https://www.turbodocx.com/products/api-and-sdk) | Digital signature API for seamless e-signature workflows |
+| sdk | [![GitHub](https://img.shields.io/github/stars/turbodocx/sdk?style=social)](https://github.com/TurboDocx/sdk) | Official TurboDocx SDK for seamless API integration |
+| next-plugin-llms | [![GitHub](https://img.shields.io/github/stars/turbodocx/next-plugin-llms?style=social)](https://github.com/TurboDocx/next-plugin-llms) | Next.js plugin for automatic llms.txt generation |
+| n8n-nodes-turbodocx | [![npm](https://img.shields.io/npm/v/@turbodocx/n8n-nodes-turbodocx?logo=npm&logoColor=white&label=npm)](https://www.npmjs.com/package/@turbodocx/n8n-nodes-turbodocx) [![GitHub](https://img.shields.io/github/stars/turbodocx/n8n-nodes-turbodocx?style=social)](https://github.com/turbodocx/n8n-nodes-turbodocx) | n8n community node for TurboDocx API & TurboSign |
+<!-- | turbodocx | [![npm](https://img.shields.io/npm/v/turbodocx?logo=npm&logoColor=white&label=npm)](https://www.npmjs.com/package/turbodocx) | TurboDocx Node.js SDK | -->
+<!-- | turbodocx-python | [![PyPI](https://img.shields.io/pypi/v/turbodocx?logo=python&logoColor=white&label=pypi)](https://pypi.org/project/turbodocx/) | TurboDocx Python SDK | -->
+<!-- | turbodocx-ruby | [![Gem](https://img.shields.io/gem/v/turbodocx?logo=ruby&logoColor=white&label=gem)](https://rubygems.org/gems/turbodocx) | TurboDocx Ruby SDK | -->
+
 ## Why @turbodocx/html-to-docx?
 
 🚀 **Lightning Fast Performance** - Pure JavaScript implementation with no dependencies on headless browsers or external binaries. Perfect for AI applications that need rapid document generation.
@@ -89,6 +102,22 @@ async function withOptions() {
   });
 }
 
+// With image processing options
+async function withImageOptions() {
+  const htmlWithImages = `<div>
+    <img src="https://example.com/image.jpg" alt="Example">
+  </div>`;
+  
+  const docx = await HtmlToDocx(htmlWithImages, null, {
+    imageProcessing: {
+      maxRetries: 3,          // Retry failed image downloads up to 3 times
+      verboseLogging: true,   // Enable detailed logging for debugging
+      downloadTimeout: 10000, // 10 second timeout per download attempt
+      maxImageSize: 5242880   // 5MB max image size
+    }
+  });
+}
+
 // With all parameters
 async function complete() {
   const headerHtml = "<p>Document Header</p>";
@@ -145,6 +174,148 @@ ts-node typescript-example.ts
 This will generate two DOCX files in the `example/typescript` directory:
 - `basic-example.docx` - A simple document with minimal configuration
 - `advanced-example.docx` - A document with headers, footers, and advanced formatting options
+
+## Browser Standalone Build
+
+The library provides a standalone browser build that bundles all dependencies into a single file. This allows you to use the library directly in HTML pages without any build tools or module bundlers.
+
+### Build Outputs
+
+When you run `npm run build`, three distribution files are generated:
+
+| File | Format | Size | Dependencies | Use Case |
+|------|--------|------|--------------|----------|
+| `dist/html-to-docx.esm.js` | ES Module | ~1.6 MB | External | Modern bundlers (Webpack, Vite, Rollup) |
+| `dist/html-to-docx.umd.js` | UMD | ~1.6 MB | External | Node.js, AMD, or manual dependency management |
+| `dist/html-to-docx.browser.js` | IIFE | ~2.4 MB | **All bundled** | Direct browser usage, CDN, quick prototypes |
+
+### Build Commands
+
+```bash
+# Build all versions (ESM + UMD + Browser)
+npm run build
+
+# Build only the browser standalone version (development)
+npm run build:browser
+
+# Build only the browser standalone version (production, minified)
+npm run build:browser:prod
+```
+
+### Browser Usage
+
+Include the standalone browser build directly in your HTML:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HTML to DOCX Demo</title>
+</head>
+<body>
+  <!-- 
+    Polyfills for Node.js globals (required)
+    Note: While rollup-plugin-polyfill-node bundles most Node.js polyfills,
+    these runtime globals must be set before the library loads because
+    some dependencies check for them synchronously during initialization.
+  -->
+  <script>
+    if (typeof global === 'undefined') window.global = window;
+    if (typeof process === 'undefined') window.process = { env: {} };
+    if (typeof Buffer === 'undefined') {
+      window.Buffer = {
+        from: function(data, encoding) {
+          if (typeof data === 'string') {
+            // Handle base64 and utf-8 encoding
+            if (encoding === 'base64') {
+              var binary = atob(data);
+              var bytes = new Uint8Array(binary.length);
+              for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              return bytes;
+            }
+            return new TextEncoder().encode(data);
+          }
+          return new Uint8Array(data);
+        },
+        isBuffer: function() { return false; }
+      };
+    }
+  </script>
+  
+  <!-- Include the standalone browser build -->
+  <script src="path/to/html-to-docx.browser.js"></script>
+  
+  <script>
+    async function generateDocument() {
+      const htmlContent = `
+        <h1>Hello World</h1>
+        <p>This is a <strong>test document</strong> generated in the browser.</p>
+      `;
+      
+      try {
+        const result = await HTMLToDOCX(htmlContent, null, {
+          title: 'My Document',
+          creator: 'Browser App'
+        });
+        
+        // Convert result to Blob for download
+        let blob;
+        if (result instanceof Blob) {
+          blob = result;
+        } else if (result instanceof ArrayBuffer || result instanceof Uint8Array) {
+          blob = new Blob([result], { 
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+          });
+        }
+        
+        // Trigger download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'document.docx';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error generating DOCX:', error);
+      }
+    }
+  </script>
+  
+  <button onclick="generateDocument()">Generate DOCX</button>
+</body>
+</html>
+```
+
+### Testing the Browser Build
+
+A test page is included to verify the browser build works correctly:
+
+```bash
+# Build and start the test server
+npm run test:browser
+```
+
+Then open http://localhost:8080/tests/test_browser.html in your browser.
+
+The test page allows you to:
+- Edit HTML content in a textarea
+- Click "Generate DOCX" to create and download a Word document
+- See status messages for success or errors
+
+### CDN Usage
+
+You can also host the browser build on a CDN for easy inclusion:
+
+```html
+<!-- Example: Self-hosted or CDN -->
+<script src="https://your-cdn.com/html-to-docx/1.18.1/html-to-docx.browser.js"></script>
+```
+
+### Limitations in Browser Environment
+
+- **Sharp (SVG conversion)**: The `sharp` image processing library is not available in browsers. SVG images will be embedded natively (requires Office 2019+).
+- **File System**: No direct file system access. Documents are returned as Blob/ArrayBuffer for download.
+- **Image URLs**: Remote images must be CORS-enabled or converted to base64 data URLs.
 
 ## Usage
 
@@ -220,6 +391,20 @@ full fledged examples can be found under `example/`
   - `direction` <?[String]> text direction for RTL (right-to-left) languages. Set to `'rtl'` for Arabic, Hebrew, etc. Defaults to `'ltr'`.
   - `preProcessing` <?[Object]>
     - `skipHTMLMinify` <?[Boolean]> flag to skip minification of HTML. Defaults to `false`.
+  - `imageProcessing` <?[Object]>
+    - `maxRetries` <?[Number]> maximum number of retry attempts for failed image downloads. Defaults to `2`.
+    - `verboseLogging` <?[Boolean]> flag to enable detailed logging of image processing operations. Defaults to `false`.
+    - `downloadTimeout` <?[Number]> timeout in milliseconds for each image download attempt. Defaults to `5000` (5 seconds).
+    - `maxImageSize` <?[Number]> maximum allowed image size in bytes. Defaults to `10485760` (10MB).
+    - `retryDelayBase` <?[Number]> base delay in milliseconds for exponential backoff between retries. Defaults to `500` (500ms).
+    - `minTimeout` <?[Number]> minimum timeout in milliseconds. Defaults to `1000` (1 second).
+    - `maxTimeout` <?[Number]> maximum timeout in milliseconds. Defaults to `30000` (30 seconds).
+    - `minImageSize` <?[Number]> minimum image size in bytes. Defaults to `1024` (1KB).
+    - `maxCacheSize` <?[Number]> maximum total cache size in bytes (LRU cache limit to prevent OOM). Defaults to `20971520` (20MB).
+    - `maxCacheEntries` <?[Number]> maximum number of unique images in cache (LRU eviction). Defaults to `100`.
+    - `svgHandling` <?[String]> strategy for handling SVG images. Defaults to `'convert'`. Options:
+      - `'convert'` - Converts SVG to PNG for maximum compatibility with all Word versions (requires `sharp` package)
+      - `'native'` - Embeds SVG natively for Office 2019+ (preserves vector quality)
 - `footerHTMLString` <[String]> clean html string equivalent of footer. Defaults to `<p></p>` if footer flag is `true`.
 
 ### Returns
@@ -252,6 +437,130 @@ Also you could add attribute `data-start="n"` to start the numbering from the n-
 
 `<ol data-start="2">` will start the numbering from ( B. b. II. ii. 2. )
 
+
+## SVG Image Support
+
+The library provides comprehensive SVG image support with two strategies to fit your needs:
+
+### Installation & Package Size
+
+The library supports SVG images with [`sharp`](https://sharp.pixelplumbing.com/) as an optional peer dependency for high-quality SVG→PNG conversion.
+
+**Basic Installation** (Lightweight):
+```bash
+npm install @turbodocx/html-to-docx
+```
+- **Package size**: ~2.8MB (sharp not included)
+- **Compatibility**: SVGs embedded natively - requires Office 2019+ or Microsoft 365
+- **Best for**: Modern-only environments or size-constrained deployments (Lambda, Edge)
+- **Auto-fallback**: Library automatically uses native SVG mode when sharp is unavailable
+
+**Full Installation** (Maximum Compatibility - Recommended):
+```bash
+npm install @turbodocx/html-to-docx sharp
+```
+- **Base package**: ~2.8MB
+- **With sharp**: Additional ~34MB (platform-specific native binaries)
+- **Compatibility**: Converts SVGs to PNG - works with all Word versions (2007+)
+- **Best for**: Production applications requiring broad compatibility
+
+#### Why is sharp optional?
+
+Sharp is a native Node.js module that provides the best SVG to PNG conversion quality, but adds ~34MB of platform-specific native binaries to your `node_modules`. We've made it an optional peer dependency so you can choose:
+
+| Configuration | Install Command | Size | SVG Handling | Word Compatibility | Use Case |
+|--------------|-----------------|------|--------------|-------------------|----------|
+| **Without sharp** (default) | `npm install @turbodocx/html-to-docx` | 2.8MB | Native SVG | Office 2019+ only | Modern environments, Lambda/edge functions |
+| **With sharp** (recommended) | `npm install @turbodocx/html-to-docx sharp` | 2.8MB + 34MB binaries | PNG conversion | All versions (2007+) | Production apps, broad compatibility |
+
+The library **gracefully handles both scenarios** - if sharp is unavailable, SVGs are automatically embedded in native format.
+
+### 1. Convert to PNG (Default - Maximum Compatibility)
+
+By default, SVG images are automatically converted to PNG format for maximum compatibility with all Word versions (requires `sharp`):
+
+```javascript
+const htmlWithSVG = `
+  <div>
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iIzM0OThkYiIvPjwvc3ZnPg==" alt="Circle">
+  </div>
+`;
+
+// Default behavior - SVG converted to PNG
+const docx = await HTMLtoDOCX(htmlWithSVG);
+
+// Or explicitly set to convert
+const docx = await HTMLtoDOCX(htmlWithSVG, null, {
+  imageProcessing: {
+    svgHandling: 'convert'  // Converts SVG to PNG (default)
+  }
+});
+```
+
+**Benefits:**
+- ✅ Works with all Word versions (2007+)
+- ✅ Compatible with Word Online, Google Docs, LibreOffice
+- ✅ No compatibility warnings or errors
+
+### 2. Native SVG (Office 2019+ Only)
+
+For modern Office environments, you can embed SVG images natively to preserve vector quality:
+
+```javascript
+const htmlWithSVG = `
+  <div>
+    <img src="data:image/svg+xml;base64,..." alt="Vector Graphic">
+  </div>
+`;
+
+const docx = await HTMLtoDOCX(htmlWithSVG, null, {
+  imageProcessing: {
+    svgHandling: 'native'  // Embed SVG natively (Office 2019+)
+  }
+});
+```
+
+**Benefits:**
+- ✅ Perfect vector quality at any zoom level
+- ✅ Smaller file sizes for complex graphics
+- ✅ Editable in modern Office applications
+
+**Requirements:**
+- Microsoft Office 2019 or later
+- Microsoft 365
+- Word for Mac 2019+
+
+**Note:** Older Word versions will show an "unreadable content" error with native SVG. Use `'convert'` mode for backwards compatibility.
+
+### Handling SVG Without Sharp
+
+If `sharp` is not installed (e.g., using `--no-optional`), the library automatically falls back to native SVG embedding:
+
+```javascript
+// Even with svgHandling: 'convert', if sharp unavailable → uses native SVG
+const docx = await HTMLtoDOCX(htmlWithSVG, null, {
+  imageProcessing: {
+    svgHandling: 'convert',         // Tries to convert, falls back to native
+    suppressSharpWarning: false,    // Set to true to suppress warning when sharp is missing
+    verboseLogging: true            // Shows: "Sharp not available, using native SVG"
+  }
+});
+```
+
+**No crashes, no errors** - the library detects sharp availability at runtime and adjusts automatically:
+
+```bash
+# With sharp installed
+✅ SVG → PNG conversion → Works in Word 2007+
+
+# Without sharp (--no-optional)
+ℹ️  SVG → Native embedding → Works in Office 2019+ only
+
+# Suppress the warning (if intentionally using native SVG mode)
+imageProcessing: { suppressSharpWarning: true }
+```
+
+**Pro tip**: For serverless/Lambda deployments with size constraints, install without sharp and set `suppressSharpWarning: true` to avoid console warnings. Document that generated files require Office 2019+.
 
 ## RTL (Right-to-Left) Language Support
 
@@ -324,4 +633,8 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 ---
 
-**Note:** Currently optimized for Node.js environments. Browser support is planned for future releases.
+<div align="center">
+
+[![TurboDocx](./footer.png)](https://www.turbodocx.com)
+
+</div>

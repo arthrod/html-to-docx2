@@ -1,6 +1,6 @@
 {
   "name": "@turbodocx/html-to-docx",
-  "version": "1.16.0",
+  "version": "1.20.1",
   "description": "HTML to DOCX converter",
   "keywords": [
     "html-to-docx",
@@ -44,6 +44,7 @@
   ],
   "main": "dist/html-to-docx.umd.js",
   "module": "dist/html-to-docx.esm.js",
+  "browser": "dist/html-to-docx.browser.js",
   "types": "index.d.ts",
   "files": [
     "dist",
@@ -55,6 +56,8 @@
   ],
   "scripts": {
     "test": "npm run build && node example/example-node.js",
+    "test:comprehensive-svg": "npm run build && node example/comprehensive-svg-test.js",
+    "test:example-inline-svg": "npm run build && node example/example-inline-svg.js",
     "test:rtl": "npm run build && node example/example-rtl.js",
     "test:headings": "npm run build && node example/example-heading-styles.js",
     "test:ts": "npm run build && cross-env TS_NODE_PROJECT=example/typescript/tsconfig.json ts-node -r tsconfig-paths/register example/typescript/typescript-example.ts",
@@ -63,6 +66,7 @@
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
+    "test:browser": "npm run build && npx -y serve . -l 8080 --no-clipboard",
     "prerelease": "npm run build:prod",
     "release": "standard-version",
     "lint": "eslint --fix .",
@@ -71,6 +75,8 @@
     "build": "rollup -c",
     "build:dev": "NODE_ENV=development rollup -c",
     "build:prod": "NODE_ENV=production rollup -c",
+    "build:browser": "cross-env BUILD_TARGET=browser rollup -c",
+    "build:browser:prod": "cross-env NODE_ENV=production BUILD_TARGET=browser rollup -c",
     "diff:docx": "node scripts/diff-docx.js",
     "prepare": "husky install",
     "postinstall": "node scripts/postinstall.js",
@@ -107,7 +113,8 @@
     "adymo",
     "Srajan-Sanjay-Saxena",
     "jcasner",
-    "demomacro"
+    "demomacro",
+    "29217321"
   ],
   "license": "MIT",
   "bugs": {
@@ -138,6 +145,7 @@
     "rollup": "^2.62.0",
     "rollup-plugin-cleaner": "^1.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-polyfill-node": "^0.13.0",
     "rollup-plugin-terser": "^7.0.2",
     "standard-version": "^9.3.1",
     "ts-node": "^10.9.2",
@@ -145,26 +153,29 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "axios": "^1.12.2",
     "color-name": "^1.1.4",
     "html-entities": "^2.3.3",
     "html-minifier-terser": "^7.2.0",
-    "html-to-vdom": "^0.7.0",
+    "htmlparser2": "^10.0.0",
     "image-size": "^2.0.2",
-    "image-to-base64": "^2.2.0",
     "jszip": "^3.7.1",
     "lodash": "^4.17.21",
+    "lru-cache": "^10.4.3",
     "mime-types": "^2.1.35",
     "nanoid": "^3.1.25",
-    "virtual-dom": "^2.1.1",
     "xmlbuilder2": "2.1.2"
   },
   "overrides": {
     "bl": "^1.2.3",
-    "semver": "^5.7.2"
+    "semver": "^7.6.0",
+    "sharp": {
+      "semver": "^7.6.0"
+    }
   },
   "resolutions": {
     "bl": "^1.2.3",
-    "semver": "^5.7.2"
+    "semver": "^7.6.0"
   },
   "lint-staged": {
     "src/**/*.js": [
