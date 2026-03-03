@@ -11,7 +11,10 @@ const smokeRoot = path.resolve(__dirname, 'example/vite-smoke');
 const shouldAnalyze = process.env.BUNDLE_ANALYZE === '1';
 const analyzerReportName =
   process.env.BUNDLE_ANALYZE_NAME || 'stats-baseline';
-const requiredNodePolyfills = [
+
+// Keep this explicit and minimal. We intentionally avoid the plugin default
+// (which injects a very broad Node stdlib set) to control bundle size.
+const nodePolyfillsInclude = [
   'assert',
   'buffer',
   'crypto',
@@ -27,12 +30,15 @@ const requiredNodePolyfills = [
   'url',
   'util',
 ];
+// Intentionally not in `include`:
+// - `zlib`: mapped to local browser shim via alias
+// - `vm`: mapped to local browser shim via alias
 
 export default defineConfig({
   root: smokeRoot,
   plugins: [
     nodePolyfills({
-      include: requiredNodePolyfills,
+      include: nodePolyfillsInclude,
       globals: {
         Buffer: true,
         global: true,

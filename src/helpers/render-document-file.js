@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-case-declarations */
 import { fragment } from 'xmlbuilder2';
-import * as lruCache from 'lru-cache';
-import { cloneDeep } from 'lodash';
+import { LRUCache } from 'lru-cache';
+import { cloneDeep } from 'lodash-es';
 
 import createHTMLToVDOM from './html-parser';
 import { VNode, isVNode, isVText } from '../vdom/index';
@@ -12,8 +12,6 @@ import { defaultDocumentOptions } from '../constants';
 import { buildImage } from '../utils/image';
 import { vNodeHasChildren } from '../utils/vnode';
 import { buildSVGElement } from '../utils/svg';
-
-const LRUCache = lruCache.default || lruCache.LRUCache || lruCache; // Support both ESM and CommonJS imports
 
 const convertHTML = createHTMLToVDOM();
 

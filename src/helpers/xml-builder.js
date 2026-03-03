@@ -6,7 +6,7 @@
 /* eslint-disable no-else-return */
 import { fragment } from 'xmlbuilder2';
 import colorNames from 'color-name';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import sizeOf from 'image-size';
 import { isVNode, isVText } from '../vdom/index';
 import { parseDataUrl, downloadAndCacheImage, buildImage } from '../utils/image';

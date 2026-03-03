@@ -3,7 +3,7 @@
 /* biome-ignore-all lint/performance/useTopLevelRegex: legacy code */
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 // @ts-expect-error - JS module without declarations
 import { isVNode, isVText } from '../vdom/index.js';
 import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
