@@ -5,8 +5,8 @@ import {
   defaultLang,
   type HeadingOptions,
   type HeadingStyleOptions,
-} from '../constants';
-import namespaces from '../namespaces';
+} from '../constants'
+import namespaces from '../namespaces'
 
 const escapeXml = (value: string): string =>
   value
@@ -14,57 +14,52 @@ const escapeXml = (value: string): string =>
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/'/g, '&apos;')
 
 const generateHeadingStyleXML = (
   headingId: string,
   heading: HeadingStyleOptions
 ): string => {
-  const headingNumber = Number.parseInt(headingId.replace('Heading', ''), 10);
+  const headingNumber = Number.parseInt(headingId.replace('Heading', ''), 10)
 
   const fontXml =
     heading.font && heading.font !== defaultFont
       ? `<w:rFonts w:ascii="${escapeXml(
           heading.font
         )}" w:eastAsiaTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorBidi" />`
-      : '';
+      : ''
 
   const fontSizeXml =
     heading.fontSize !== undefined &&
     heading.fontSize !== defaultFontSize &&
     heading.fontSize > 0
       ? `<w:sz w:val="${heading.fontSize}" /><w:szCs w:val="${heading.fontSize}" />`
-      : '';
+      : ''
 
-  const boldXml = heading.bold ? '<w:b />' : '';
+  const boldXml = heading.bold ? '<w:b />' : ''
 
-  const keepLinesXml = heading.keepLines ? '<w:keepLines />' : '';
-  const keepNextXml = heading.keepNext ? '<w:keepNext />' : '';
+  const keepLinesXml = heading.keepLines ? '<w:keepLines />' : ''
+  const keepNextXml = heading.keepNext ? '<w:keepNext />' : ''
 
-  let spacingAfterXml = '';
-  let spacingXml = '';
+  let spacingAfterXml = ''
+  let spacingXml = ''
   if (heading.spacing) {
     const spacingBeforeXml =
-      heading.spacing.before !== undefined
-        ? `w:before="${heading.spacing.before}"`
-        : '';
+      heading.spacing.before !== undefined ? `w:before="${heading.spacing.before}"` : ''
     spacingAfterXml =
-      heading.spacing.after !== undefined
-        ? `w:after="${heading.spacing.after}"`
-        : '';
+      heading.spacing.after !== undefined ? `w:after="${heading.spacing.after}"` : ''
     spacingXml =
       spacingBeforeXml || spacingAfterXml
         ? `<w:spacing ${spacingBeforeXml} ${spacingAfterXml} />`
-        : '';
+        : ''
   }
 
-  const validOutlineLevel = Math.max(0, Math.min(5, heading.outlineLevel || 0));
-  const outlineXml = `<w:outlineLvl w:val="${validOutlineLevel}" />`;
+  const validOutlineLevel = Math.max(0, Math.min(5, heading.outlineLevel || 0))
+  const outlineXml = `<w:outlineLvl w:val="${validOutlineLevel}" />`
 
   const additionalPropsXml =
-    headingNumber >= 3 ? '<w:semiHidden /><w:unhideWhenUsed />' : '';
-  const unhideWhenUsedXml =
-    headingNumber === 2 ? '<w:unhideWhenUsed />' : '';
+    headingNumber >= 3 ? '<w:semiHidden /><w:unhideWhenUsed />' : ''
+  const unhideWhenUsedXml = headingNumber === 2 ? '<w:unhideWhenUsed />' : ''
 
   return `
 		<w:style w:type="paragraph" w:styleId="${headingId}">
@@ -86,8 +81,8 @@ const generateHeadingStyleXML = (
 			${boldXml}
 			${fontSizeXml}
 		  </w:rPr>
-		</w:style>`;
-};
+		</w:style>`
+}
 
 const generateStylesXML = (
   font: string = defaultFont,
@@ -103,14 +98,10 @@ const generateStylesXML = (
         ? {
             ...defaultValue,
             ...headingConfig[key as keyof HeadingOptions],
-            spacing: {
-              ...defaultValue.spacing,
-              ...headingConfig[key as keyof HeadingOptions]?.spacing,
-            },
           }
         : defaultValue,
     ])
-  ) as HeadingOptions;
+  ) as HeadingOptions
 
   return `
   <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -152,7 +143,7 @@ const generateStylesXML = (
       )
       .join('')}
   </w:styles>
-  `;
-};
+  `
+}
 
-export default generateStylesXML;
+export default generateStylesXML

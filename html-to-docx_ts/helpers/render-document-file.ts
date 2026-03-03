@@ -14,6 +14,7 @@ import { defaultDocumentOptions, imageType, internalRelationship } from '../cons
 import namespaces from '../namespaces'
 import { getImageDimensions } from '../utils/image-dimensions'
 import { downloadAndCacheImage } from '../utils/image-to-base64'
+import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
 import { vNodeHasChildren } from '../utils/vnode'
 // FIXME: remove the cyclic dependency
 import * as xmlBuilder from './xml-builder'
@@ -76,7 +77,7 @@ type DocxDocumentInstance = {
     targetMode?: string
   ) => number
   createFont: (fontFamily: string) => string
-  createMediaFile: (base64Uri: string) => MediaFileResponse
+  createMediaFile: (base64Uri: string) => Promise<MediaFileResponse>
   createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number
   htmlString: string
   imageProcessing?: typeof defaultDocumentOptions.imageProcessing
@@ -183,17 +184,17 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
   let svg = `<${vNode.tagName}`
 
   if (isRoot && vNode.tagName === 'svg' && !attributes.xmlns) {
-    svg += ' xmlns=\"http://www.w3.org/2000/svg\"'
+    svg += ' xmlns="http://www.w3.org/2000/svg"'
   }
 
   Object.entries(attributes).forEach(([key, value]) => {
     if (value) {
       const escapedValue = String(value)
         .replace(/&/g, '&amp;')
-        .replace(/\"/g, '&quot;')
+        .replace(/"/g, '&quot;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-      svg += ` ${key}=\"${escapedValue}\"`
+      svg += ` ${key}="${escapedValue}"`
     }
   })
 
@@ -201,7 +202,7 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
     const styleString = Object.entries(style)
       .map(([key, value]) => `${key}:${value}`)
       .join(';')
-    svg += ` style=\"${styleString}\"`
+    svg += ` style="${styleString}"`
   }
 
   const children = vNode.children || []
@@ -220,6 +221,59 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
 }
 
 const convertHTML = createHTMLToVDOM()
+
+// Per-document cache helpers exposed for tests and advanced consumers.
+export const clearImageCache = (docxDocumentInstance?: DocxDocumentInstance): number => {
+  if (!docxDocumentInstance || !docxDocumentInstance._imageCache) {
+    return 0
+  }
+
+  const cacheSize = docxDocumentInstance._imageCache.size
+  docxDocumentInstance._imageCache.clear()
+  docxDocumentInstance._retryStats = {
+    totalAttempts: 0,
+    successAfterRetry: 0,
+    finalFailures: 0,
+  }
+
+  return cacheSize
+}
+
+export const getImageCacheStats = (docxDocumentInstance?: DocxDocumentInstance) => {
+  if (!docxDocumentInstance || !docxDocumentInstance._imageCache) {
+    return {
+      size: 0,
+      urls: [],
+      successCount: 0,
+      failureCount: 0,
+      retryStats: { totalAttempts: 0, successAfterRetry: 0, finalFailures: 0 },
+    }
+  }
+
+  const cacheValues = Array.from(docxDocumentInstance._imageCache.values())
+  let successCount = 0
+  let failureCount = 0
+
+  cacheValues.forEach((value) => {
+    if (value === 'FAILED' || value === null) {
+      failureCount += 1
+    } else {
+      successCount += 1
+    }
+  })
+
+  return {
+    size: docxDocumentInstance._imageCache.size,
+    urls: Array.from(docxDocumentInstance._imageCache.keys()),
+    successCount,
+    failureCount,
+    retryStats: docxDocumentInstance._retryStats || {
+      totalAttempts: 0,
+      successAfterRetry: 0,
+      finalFailures: 0,
+    },
+  }
+}
 
 export const buildImage = async (
   docxDocumentInstance: DocxDocumentInstance,
@@ -249,7 +303,7 @@ export const buildImage = async (
       base64Uri = decodeURIComponent(imageSource)
     }
     if (base64Uri) {
-      response = docxDocumentInstance.createMediaFile(base64Uri)
+      response = await docxDocumentInstance.createMediaFile(base64Uri)
     }
   } catch (_error) {
     // NOOP
@@ -838,9 +892,32 @@ async function findXMLEquivalent(
       return
     }
     case 'svg': {
-      const svgString = serializeVNodeToSVG(vNode, true)
+      const svgSanitization =
+        docxDocumentInstance.imageProcessing?.svgSanitization ??
+        defaultDocumentOptions.imageProcessing.svgSanitization
+      const verboseLogging =
+        docxDocumentInstance.imageProcessing?.verboseLogging ??
+        defaultDocumentOptions.imageProcessing.verboseLogging
+
+      const sanitizedVNode = svgSanitization
+        ? sanitizeSVGVNode(vNode, { enabled: true, verboseLogging })
+        : vNode
+
+      if (!sanitizedVNode) {
+        return
+      }
+
+      const svgString = serializeVNodeToSVG(sanitizedVNode as VNodeType, true)
       if (!svgString.trim()) {
         return
+      }
+
+      if (svgSanitization && verboseLogging) {
+        const validation = validateSVGString(svgString)
+        if (!validation.valid) {
+          // eslint-disable-next-line no-console
+          console.warn('[SVG] Validation warnings:', validation.warnings)
+        }
       }
 
       const base64SVG =

@@ -127,7 +127,7 @@ type DocxDocumentInstance = Partial<TrackingDocumentInstance> & {
     targetMode?: string
   ) => number
   createFont: (fontFamily: string) => string
-  createMediaFile: (base64Uri: string) => MediaFileResponse
+  createMediaFile: (base64Uri: string) => Promise<MediaFileResponse>
   createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number
   htmlString: string
   imageProcessing?: {
@@ -1182,7 +1182,7 @@ const buildRun = async (
     }
 
     if (mediaSource && docxDocumentInstance) {
-      response = docxDocumentInstance.createMediaFile(mediaSource)
+      response = await docxDocumentInstance.createMediaFile(mediaSource)
     }
 
     if (response && docxDocumentInstance) {
@@ -1552,6 +1552,26 @@ const computeImageDimensions = (
   let modifiedHeight: number | undefined
   let modifiedWidth: number | undefined
 
+  const attributeWidth =
+    vNode.properties?.attributes?.width ??
+    (vNode.properties?.width as string | number | undefined)
+  const attributeHeight =
+    vNode.properties?.attributes?.height ??
+    (vNode.properties?.height as string | number | undefined)
+
+  if (attributeWidth !== undefined) {
+    const parsedWidth = Number.parseFloat(String(attributeWidth))
+    if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
+      modifiedWidth = pixelToEMU(parsedWidth)
+    }
+  }
+  if (attributeHeight !== undefined) {
+    const parsedHeight = Number.parseFloat(String(attributeHeight))
+    if (!Number.isNaN(parsedHeight) && parsedHeight > 0) {
+      modifiedHeight = pixelToEMU(parsedHeight)
+    }
+  }
+
   if (vNode.properties?.style) {
     const style = vNode.properties.style
     if (style.width) {
@@ -1604,14 +1624,92 @@ const computeImageDimensions = (
     } else if (modifiedHeight && !modifiedWidth) {
       modifiedWidth = Math.round(modifiedHeight * aspectRatio)
     }
-  } else {
+  } else if (!modifiedWidth && !modifiedHeight) {
     modifiedWidth = originalWidthInEMU
     modifiedHeight = originalHeightInEMU
+  }
+
+  if (modifiedWidth && !modifiedHeight) {
+    modifiedHeight = Math.round(modifiedWidth / aspectRatio)
+  } else if (modifiedHeight && !modifiedWidth) {
+    modifiedWidth = Math.round(modifiedHeight * aspectRatio)
   }
 
   attributes.width = modifiedWidth
 
   attributes.height = modifiedHeight
+}
+
+type ProcessImageSourceResult = {
+  base64String: string
+  imageProperties: {
+    height: number
+    type?: string
+    width: number
+  }
+}
+
+/**
+ * Compatibility helper kept for external tests and consumers.
+ * Resolves image source to validated base64 data and dimensions.
+ */
+const processImageSource = async (
+  docxDocumentInstance: DocxDocumentInstance,
+  vNode: VNodeType,
+  imageSource: string,
+  _logContext = 'XML-BUILDER'
+): Promise<ProcessImageSourceResult | null> => {
+  if (!imageSource) {
+    return null
+  }
+
+  let dataUri = imageSource.startsWith('data:')
+    ? imageSource
+    : decodeURIComponent(imageSource)
+
+  if (imageSource.startsWith('http://') || imageSource.startsWith('https://')) {
+    const cachedImage = await downloadAndCacheImage(
+      docxDocumentInstance,
+      imageSource,
+      docxDocumentInstance.imageProcessing
+    )
+    if (!cachedImage) {
+      return null
+    }
+
+    dataUri = cachedImage
+    if (vNode.properties) {
+      vNode.properties.src = dataUri
+    }
+  }
+
+  const parsedDataUrl = parseDataUrl(dataUri)
+  if (!parsedDataUrl || !parsedDataUrl.base64) {
+    return null
+  }
+
+  const normalizedBase64 = parsedDataUrl.base64.replace(/\s+/g, '')
+  const isBase64 =
+    normalizedBase64.length > 0 &&
+    normalizedBase64.length % 4 === 0 &&
+    /^[A-Za-z0-9+/]+={0,2}$/.test(normalizedBase64)
+  if (!isBase64) {
+    return null
+  }
+
+  const imageProperties = getImageDimensions(base64ToUint8Array(normalizedBase64))
+  if (!imageProperties.width || !imageProperties.height) {
+    return null
+  }
+
+  return {
+    base64String: normalizedBase64,
+    imageProperties: {
+      width: imageProperties.width,
+      height: imageProperties.height,
+      type: imageProperties.type,
+    },
+  }
 }
 
 // Track bookmark IDs globally to ensure unique IDs across the document
@@ -3241,6 +3339,7 @@ const buildDrawing = (
 export {
   buildParagraph,
   buildTable,
+  processImageSource,
   buildNumberingInstances,
   buildLineBreak,
   buildIndentation,

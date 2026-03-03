@@ -93,17 +93,21 @@ const browserConfig = {
       compress: isProduction,
     }),
   ],
-  output: {
-    file: 'dist/html-to-docx.browser.js',
-    format: 'iife',
-    name: 'HTMLToDOCX',
-    sourcemap: !isProduction,
-    banner,
-    // Provide empty implementation for sharp in browser environment
-    globals: {
-      sharp: '(() => null)',
+  output: [
+    {
+      file: 'dist/html-to-docx.browser.js',
+      format: 'iife',
+      name: 'HTMLToDOCX',
+      sourcemap: !isProduction,
+      banner,
     },
-  },
+    {
+      file: 'dist/html-to-docx.browser.esm.js',
+      format: 'es',
+      sourcemap: !isProduction,
+      banner,
+    },
+  ],
 }
 
 export default browserOnly ? [browserConfig] : [libraryConfig, browserConfig]
