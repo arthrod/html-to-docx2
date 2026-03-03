@@ -66,6 +66,8 @@
     "test:unit": "jest",
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
+    "test:vite:build": "npm run build && vite build --config example/vite-smoke/vite.config.mjs",
+    "test:vite:dev": "vite --config example/vite-smoke/vite.config.mjs",
     "test:browser": "npm run build && npx -y serve . -l 8080 --no-clipboard",
     "prerelease": "npm run build:prod",
     "release": "standard-version",
@@ -151,7 +153,10 @@
     "standard-version": "^9.3.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^7.3.1",
+    "vite-plugin-console-pipe": "^2.1.0",
+    "vite-plugin-node-polyfills": "^0.25.0"
   },
   "dependencies": {
     "axios": "^1.12.2",
