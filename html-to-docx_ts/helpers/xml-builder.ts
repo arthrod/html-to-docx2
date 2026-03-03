@@ -4,12 +4,8 @@
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { cloneDeep } from 'lodash';
-// @ts-expect-error - no types available
-import mimeTypes from 'mime-types';
-// @ts-expect-error - no types available
-import isVNode from 'virtual-dom/vnode/is-vnode';
-// @ts-expect-error - no types available
-import isVText from 'virtual-dom/vnode/is-vtext';
+// @ts-expect-error - JS module without declarations
+import { isVNode, isVText } from '../vdom/index.js';
 import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { fragment } from 'xmlbuilder2';
 
@@ -65,7 +61,10 @@ import {
   rgbToHex,
 } from '../utils/color-conversion';
 import { getImageDimensions } from '../utils/image-dimensions';
-import imageToBase64 from '../utils/image-to-base64';
+import {
+  downloadAndCacheImage,
+  parseDataUrl,
+} from '../utils/image-to-base64';
 import {
   cmRegex,
   cmToTWIP,
@@ -84,7 +83,6 @@ import {
   pointToTWIP,
   TWIPToEMU,
 } from '../utils/unit-conversion';
-import { isValidUrl } from '../utils/url';
 import { vNodeHasChildren } from '../utils/vnode';
 // FIXME: remove the cyclic dependency
 // eslint-disable-next-line import/no-cycle
@@ -119,6 +117,7 @@ type MediaFileResponse = {
   fileContent: string;
   fileNameWithExtension: string;
   id: number;
+  isSVG?: boolean;
 };
 
 type DocxDocumentInstance = Partial<TrackingDocumentInstance> & {
@@ -133,6 +132,19 @@ type DocxDocumentInstance = Partial<TrackingDocumentInstance> & {
   createMediaFile: (base64Uri: string) => MediaFileResponse;
   createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number;
   htmlString: string;
+  imageProcessing?: {
+    downloadTimeout?: number;
+    maxImageSize?: number;
+    maxRetries?: number;
+    retryDelayBase?: number;
+    verboseLogging?: boolean;
+  };
+  _imageCache?: Map<string, string | null>;
+  _retryStats?: {
+    finalFailures: number;
+    successAfterRetry: number;
+    totalAttempts: number;
+  };
   relationshipFilename: string;
   tableRowCantSplit: boolean;
   zip: {
@@ -211,6 +223,7 @@ interface ParagraphAttributes extends RunAttributes {
   fileNameWithExtension?: string;
   height?: number;
   id?: number;
+  isSVG?: boolean;
   indentation?: Indentation;
   inlineOrAnchored?: boolean;
   maximumWidth?: number;
@@ -1180,9 +1193,30 @@ const buildRun = async (
     let response: MediaFileResponse | null = null;
 
     const vn = vNode as VNodeType;
-    const base64Uri = decodeURIComponent(vn.properties?.src || '');
-    if (base64Uri && docxDocumentInstance) {
-      response = docxDocumentInstance.createMediaFile(base64Uri);
+    let mediaSource = decodeURIComponent(vn.properties?.src || '');
+
+    if (
+      docxDocumentInstance &&
+      mediaSource &&
+      (mediaSource.startsWith('http://') || mediaSource.startsWith('https://'))
+    ) {
+      const cachedImage = await downloadAndCacheImage(
+        docxDocumentInstance,
+        mediaSource,
+        docxDocumentInstance.imageProcessing
+      );
+      if (!cachedImage) {
+        runFragment.up();
+        return runFragment;
+      }
+      mediaSource = cachedImage;
+      if (vn.properties) {
+        vn.properties.src = mediaSource;
+      }
+    }
+
+    if (mediaSource && docxDocumentInstance) {
+      response = docxDocumentInstance.createMediaFile(mediaSource);
     }
 
     if (response && docxDocumentInstance) {
@@ -1209,6 +1243,7 @@ const buildRun = async (
       attributes.id = response.id;
       attributes.fileContent = response.fileContent;
       attributes.fileNameWithExtension = response.fileNameWithExtension;
+      attributes.isSVG = response.isSVG;
     }
 
     const { type, inlineOrAnchored, ...otherAttributes } = attributes;
@@ -1731,7 +1766,6 @@ const buildParagraph = async (
       for (let index = 0; index < (vn.children || []).length; index++) {
         const childVNode = (vn.children || [])[index] as VNodeType;
         if (childVNode.tagName === 'img') {
-          let base64String: string | undefined;
           const imageSource = childVNode.properties?.src;
 
           // Skip WebP images - Word doesn't support WebP format
@@ -1743,87 +1777,36 @@ const buildParagraph = async (
             continue;
           }
 
-          if (imageSource && isValidUrl(imageSource)) {
-            base64String = (await imageToBase64(imageSource).catch(() => {})) as
-              | string
-              | undefined;
-
-            if (base64String) {
-              // Try to get MIME type from URL extension first
-              let mimeType: string | false = mimeTypes.lookup(imageSource);
-
-              // Skip WebP images even if detected from extension
-              if (mimeType === 'image/webp') {
-                continue;
-              }
-
-              // If no extension, detect MIME type from base64 data
-              if (!mimeType) {
-                const binaryStr = atob(base64String.substring(0, 16));
-                const bytes = new Uint8Array(binaryStr.length);
-                for (let i = 0; i < binaryStr.length; i++) {
-                  bytes[i] = binaryStr.charCodeAt(i);
-                }
-                // Check magic bytes
-                if (
-                  bytes[0] === 0xff &&
-                  bytes[1] === 0xd8 &&
-                  bytes[2] === 0xff
-                ) {
-                  mimeType = 'image/jpeg';
-                } else if (
-                  bytes[0] === 0x89 &&
-                  bytes[1] === 0x50 &&
-                  bytes[2] === 0x4e &&
-                  bytes[3] === 0x47
-                ) {
-                  mimeType = 'image/png';
-                } else if (
-                  bytes[0] === 0x47 &&
-                  bytes[1] === 0x49 &&
-                  bytes[2] === 0x46
-                ) {
-                  mimeType = 'image/gif';
-                } else if (
-                  bytes[0] === 0x52 &&
-                  bytes[1] === 0x49 &&
-                  bytes[2] === 0x46 &&
-                  bytes[3] === 0x46
-                ) {
-                  // WebP detected - skip it as Word doesn't support WebP
-                  continue;
-                } else {
-                  // Default to JPEG for unknown formats
-                  mimeType = 'image/jpeg';
-                }
-              }
-
-              if (childVNode.properties) {
-                childVNode.properties.src = `data:${mimeType};base64,${base64String}`;
-              }
-            } else {
-              break;
-            }
-          } else if (imageSource?.startsWith('data:')) {
-            const match = imageSource.match(
-              /^data:([A-Za-z-+/]+);base64,(.+)$/
+          let dataUri = imageSource ? decodeURIComponent(imageSource) : '';
+          if (
+            docxDocumentInstance &&
+            imageSource &&
+            (imageSource.startsWith('http://') ||
+              imageSource.startsWith('https://'))
+          ) {
+            const cachedImage = await downloadAndCacheImage(
+              docxDocumentInstance,
+              imageSource,
+              docxDocumentInstance.imageProcessing
             );
-            if (match) {
-              base64String = match[2];
-            } else {
-              break;
+            if (!cachedImage) {
+              continue;
             }
-          } else {
-            break;
+            dataUri = cachedImage;
           }
 
-          // Convert base64 to Uint8Array for browser compatibility
-          const binaryString = atob(decodeURIComponent(base64String!));
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
+          const parsedDataUrl = parseDataUrl(dataUri);
+          if (!parsedDataUrl) {
+            continue;
           }
-          const imageProperties = getImageDimensions(bytes);
+
+          if (childVNode.properties) {
+            childVNode.properties.src = dataUri;
+          }
+
+          const imageProperties = getImageDimensions(
+            base64ToUint8Array(parsedDataUrl.base64)
+          );
 
           modifiedAttributes.maximumWidth =
             modifiedAttributes.maximumWidth ||
@@ -1876,82 +1859,32 @@ const buildParagraph = async (
         return paragraphFragment;
       }
 
-      let base64String: string | undefined = imageSource;
-      if (imageSource && isValidUrl(imageSource)) {
-        base64String = (await imageToBase64(imageSource).catch(() => {})) as
-          | string
-          | undefined;
-
-        if (base64String) {
-          // Try to get MIME type from URL extension first
-          let mimeType: string | false = mimeTypes.lookup(imageSource);
-
-          // Skip WebP images even if detected from extension
-          if (mimeType === 'image/webp') {
-            paragraphFragment.up();
-            return paragraphFragment;
-          }
-
-          // If no extension or couldn't determine MIME type, detect from magic bytes
-          if (!mimeType) {
-            const binaryStr = atob(base64String.substring(0, 16));
-            const bytes = new Uint8Array(binaryStr.length);
-            for (let i = 0; i < binaryStr.length; i++) {
-              bytes[i] = binaryStr.charCodeAt(i);
-            }
-            // Check magic bytes
-            if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-              mimeType = 'image/jpeg';
-            } else if (
-              bytes[0] === 0x89 &&
-              bytes[1] === 0x50 &&
-              bytes[2] === 0x4e &&
-              bytes[3] === 0x47
-            ) {
-              mimeType = 'image/png';
-            } else if (
-              bytes[0] === 0x47 &&
-              bytes[1] === 0x49 &&
-              bytes[2] === 0x46
-            ) {
-              mimeType = 'image/gif';
-            } else if (
-              bytes[0] === 0x52 &&
-              bytes[1] === 0x49 &&
-              bytes[2] === 0x46 &&
-              bytes[3] === 0x46
-            ) {
-              // WebP detected - skip it
-              paragraphFragment.up();
-              return paragraphFragment;
-            } else {
-              // Default to JPEG for unknown formats
-              mimeType = 'image/jpeg';
-            }
-          }
-
-          if (vn.properties) {
-            vn.properties.src = `data:${mimeType};base64,${base64String}`;
-          }
-        } else {
+      let dataUri = imageSource ? decodeURIComponent(imageSource) : '';
+      if (
+        docxDocumentInstance &&
+        imageSource &&
+        (imageSource.startsWith('http://') || imageSource.startsWith('https://'))
+      ) {
+        const cachedImage = await downloadAndCacheImage(
+          docxDocumentInstance,
+          imageSource,
+          docxDocumentInstance.imageProcessing
+        );
+        if (!cachedImage) {
           paragraphFragment.up();
           return paragraphFragment;
         }
-      } else if (base64String) {
-        const match = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-        if (match) {
-          base64String = match[2];
-        }
+        dataUri = cachedImage;
       }
 
-      if (base64String) {
-        // Convert base64 to Uint8Array for browser compatibility
-        const binaryString = atob(decodeURIComponent(base64String));
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
+      const parsedDataUrl = parseDataUrl(dataUri);
+      if (parsedDataUrl) {
+        if (vn.properties) {
+          vn.properties.src = dataUri;
         }
-        const imageProperties = getImageDimensions(bytes);
+        const imageProperties = getImageDimensions(
+          base64ToUint8Array(parsedDataUrl.base64)
+        );
 
         modifiedAttributes.maximumWidth =
           modifiedAttributes.maximumWidth ||
@@ -3038,6 +2971,7 @@ const buildTable = async (
 
 // Common namespace aliases for all drawing-related elements
 const drawingNamespaces = {
+  asvg: 'http://schemas.microsoft.com/office/drawing/2016/SVG/main',
   w: namespaces.w,
   wp: namespaces.wp,
   a: namespaces.a,
@@ -3145,25 +3079,47 @@ const buildSrcRectFragment = (): XMLBuilderType =>
     .up();
 
 const buildBinaryLargeImageOrPicture = (
-  relationshipId: number
-): XMLBuilderType =>
-  fragment({
+  relationshipId: number,
+  isSVG = false
+): XMLBuilderType => {
+  const blipFragment = fragment({
     namespaceAlias: drawingNamespaces,
   })
     .ele(namespaces.a, 'blip')
     .att(namespaces.r, 'embed', `rId${relationshipId}`)
     // FIXME: possible values 'email', 'none', 'print', 'hqprint', 'screen'
-    .att('cstate', 'print')
-    .up();
+    .att('cstate', 'print');
+
+  if (isSVG) {
+    const svgBlipExtension = fragment({
+      namespaceAlias: drawingNamespaces,
+    })
+      .ele(namespaces.a, 'extLst')
+      .ele(namespaces.a, 'ext')
+      .att('uri', '{96DAC541-7B7A-43C3-8B79-37D633B846F1}')
+      .ele(drawingNamespaces.asvg, 'svgBlip')
+      .att('xmlns:asvg', drawingNamespaces.asvg)
+      .att(namespaces.r, 'embed', `rId${relationshipId}`)
+      .up()
+      .up()
+      .up();
+    blipFragment.import(svgBlipExtension);
+  }
+
+  return blipFragment.up();
+};
 
 const buildBinaryLargeImageOrPictureFill = (
-  relationshipId: number
+  relationshipId: number,
+  isSVG = false
 ): XMLBuilderType => {
   const binaryLargeImageOrPictureFillFragment = fragment({
     namespaceAlias: drawingNamespaces,
   }).ele(namespaces.pic, 'blipFill');
-  const binaryLargeImageOrPictureFragment =
-    buildBinaryLargeImageOrPicture(relationshipId);
+  const binaryLargeImageOrPictureFragment = buildBinaryLargeImageOrPicture(
+    relationshipId,
+    isSVG
+  );
   binaryLargeImageOrPictureFillFragment.import(
     binaryLargeImageOrPictureFragment
   );
@@ -3224,6 +3180,7 @@ type PictureAttributes = {
   fileNameWithExtension?: string;
   height?: number;
   id?: number;
+  isSVG?: boolean;
   relationshipId?: number;
   width?: number;
 };
@@ -3235,6 +3192,7 @@ const buildPicture = ({
   relationshipId,
   width,
   height,
+  isSVG,
 }: PictureAttributes): XMLBuilderType => {
   const pictureFragment = fragment({
     namespaceAlias: drawingNamespaces,
@@ -3246,7 +3204,8 @@ const buildPicture = ({
   );
   pictureFragment.import(nonVisualPicturePropertiesFragment);
   const binaryLargeImageOrPictureFill = buildBinaryLargeImageOrPictureFill(
-    relationshipId || 0
+    relationshipId || 0,
+    isSVG
   );
   pictureFragment.import(binaryLargeImageOrPictureFill);
   const shapeProperties = buildShapeProperties({ width, height });

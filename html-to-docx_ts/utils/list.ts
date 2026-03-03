@@ -1,10 +1,13 @@
 export type ListStyleType =
+  | 'circle'
   | 'decimal'
   | 'decimal-bracket'
   | 'decimal-bracket-end'
+  | 'disc'
   | 'lower-alpha'
   | 'lower-alpha-bracket-end'
   | 'lower-roman'
+  | 'square'
   | 'upper-alpha'
   | 'upper-alpha-bracket-end'
   | 'upper-roman';
@@ -76,6 +79,19 @@ class ListStyleBuilder {
         return `(%${lvl + 1})`;
       default:
         return `%${lvl + 1}.`;
+    }
+  }
+
+  getUnorderedListPrefixSuffix(style: ListStyle | null | undefined): string {
+    const listType = style?.['list-style-type'] || '';
+
+    switch (listType) {
+      case 'square':
+        return '';
+      case 'circle':
+        return 'o';
+      default:
+        return '';
     }
   }
 }

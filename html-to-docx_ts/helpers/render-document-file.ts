@@ -1,29 +1,20 @@
 /* biome-ignore-all lint/complexity/useOptionalChain: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
 /* biome-ignore-all lint/nursery/useMaxParams: legacy code */
-// @ts-expect-error - no types available
-import { default as HTMLToVDOM } from 'html-to-vdom';
-// @ts-expect-error - no types available
-import isVNode from 'virtual-dom/vnode/is-vnode';
-// @ts-expect-error - no types available
-import isVText from 'virtual-dom/vnode/is-vtext';
-// @ts-expect-error - no types available
-import VNode from 'virtual-dom/vnode/vnode';
-// @ts-expect-error - no types available
-import VText from 'virtual-dom/vnode/vtext';
 import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { fragment } from 'xmlbuilder2';
+import createHTMLToVDOM from './html-parser.js';
+// @ts-expect-error - JS module without declarations
+import { VNode, isVNode, isVText } from '../vdom/index.js';
 
 type XMLBuilderType = XMLBuilder;
 
-// @ts-expect-error - no types available
-import mimeTypes from 'mime-types';
-
-import { imageType, internalRelationship } from '../constants';
+import { defaultDocumentOptions, imageType, internalRelationship } from '../constants';
 import namespaces from '../namespaces';
 import { getImageDimensions } from '../utils/image-dimensions';
-import imageToBase64 from '../utils/image-to-base64';
-import { isValidUrl } from '../utils/url';
+import {
+  downloadAndCacheImage,
+} from '../utils/image-to-base64';
 import { vNodeHasChildren } from '../utils/vnode';
 // FIXME: remove the cyclic dependency
 import * as xmlBuilder from './xml-builder';
@@ -74,6 +65,7 @@ type MediaFileResponse = {
   fileContent: string;
   fileNameWithExtension: string;
   id: number;
+  isSVG?: boolean;
 };
 
 type DocxDocumentInstance = {
@@ -88,7 +80,14 @@ type DocxDocumentInstance = {
   createMediaFile: (base64Uri: string) => MediaFileResponse;
   createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number;
   htmlString: string;
+  imageProcessing?: typeof defaultDocumentOptions.imageProcessing;
   relationshipFilename: string;
+  _imageCache?: Map<string, string | null>;
+  _retryStats?: {
+    finalFailures: number;
+    successAfterRetry: number;
+    totalAttempts: number;
+  };
   tableRowCantSplit: boolean;
   zip: {
     folder: (name: string) => {
@@ -170,10 +169,64 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
   return false;
 };
 
-const convertHTML = HTMLToVDOM({
-  VNode,
-  VText,
-});
+const serializeVNodeToSVG = (
+  node: VNodeType | VTextType,
+  isRoot = false
+): string => {
+  if ((node as VTextType).text) {
+    return (node as VTextType).text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  const vNode = node as VNodeType;
+  if (!vNode.tagName) {
+    return '';
+  }
+
+  const attributes = vNode.properties?.attributes || {};
+  const style = vNode.properties?.style || {};
+  let svg = `<${vNode.tagName}`;
+
+  if (isRoot && vNode.tagName === 'svg' && !attributes.xmlns) {
+    svg += ' xmlns=\"http://www.w3.org/2000/svg\"';
+  }
+
+  Object.entries(attributes).forEach(([key, value]) => {
+    if (value) {
+      const escapedValue = String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/\"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      svg += ` ${key}=\"${escapedValue}\"`;
+    }
+  });
+
+  if (Object.keys(style).length > 0) {
+    const styleString = Object.entries(style)
+      .map(([key, value]) => `${key}:${value}`)
+      .join(';');
+    svg += ` style=\"${styleString}\"`;
+  }
+
+  const children = vNode.children || [];
+  if (children.length === 0) {
+    svg += ' />';
+    return svg;
+  }
+
+  svg += '>';
+  children.forEach((child) => {
+    svg += serializeVNodeToSVG(child as VNodeType | VTextType, false);
+  });
+  svg += `</${vNode.tagName}>`;
+
+  return svg;
+};
+
+const convertHTML = createHTMLToVDOM();
 
 export const buildImage = async (
   docxDocumentInstance: DocxDocumentInstance,
@@ -193,59 +246,12 @@ export const buildImage = async (
       return null;
     }
 
-    if (imageSource && isValidUrl(imageSource)) {
-      const base64String = (await imageToBase64(imageSource).catch(() => {})) as
-        | string
-        | undefined;
-
-      if (base64String) {
-        // Try to get MIME type from URL extension first
-        let mimeType: string | false = mimeTypes.lookup(imageSource);
-
-        // Skip WebP images even if detected from extension
-        if (mimeType === 'image/webp') {
-          return null;
-        }
-
-        // If no extension or couldn't determine MIME type, detect from magic bytes
-        if (!mimeType) {
-          const binaryStr = atob(base64String.substring(0, 16));
-          const bytes = new Uint8Array(binaryStr.length);
-          for (let i = 0; i < binaryStr.length; i++) {
-            bytes[i] = binaryStr.charCodeAt(i);
-          }
-          // Check magic bytes
-          if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-            mimeType = 'image/jpeg';
-          } else if (
-            bytes[0] === 0x89 &&
-            bytes[1] === 0x50 &&
-            bytes[2] === 0x4e &&
-            bytes[3] === 0x47
-          ) {
-            mimeType = 'image/png';
-          } else if (
-            bytes[0] === 0x47 &&
-            bytes[1] === 0x49 &&
-            bytes[2] === 0x46
-          ) {
-            mimeType = 'image/gif';
-          } else if (
-            bytes[0] === 0x52 &&
-            bytes[1] === 0x49 &&
-            bytes[2] === 0x46 &&
-            bytes[3] === 0x46
-          ) {
-            // WebP detected - skip it as Word doesn't support WebP
-            return null;
-          } else {
-            // Default to JPEG for unknown formats
-            mimeType = 'image/jpeg';
-          }
-        }
-
-        base64Uri = `data:${mimeType};base64,${base64String}`;
-      }
+    if (imageSource?.startsWith('http://') || imageSource?.startsWith('https://')) {
+      base64Uri = await downloadAndCacheImage(
+        docxDocumentInstance,
+        imageSource,
+        docxDocumentInstance.imageProcessing
+      );
     } else if (imageSource) {
       base64Uri = decodeURIComponent(imageSource);
     }
@@ -876,6 +882,29 @@ async function findXMLEquivalent(
       }
       return;
     }
+    case 'svg': {
+      const svgString = serializeVNodeToSVG(vNode, true);
+      if (!svgString.trim()) {
+        return;
+      }
+
+      const base64SVG =
+        typeof Buffer !== 'undefined'
+          ? Buffer.from(svgString, 'utf-8').toString('base64')
+          : globalThis.btoa(svgString);
+      const imageVNode = {
+        tagName: 'img',
+        properties: {
+          alt: vNode.properties?.attributes?.title || 'SVG image',
+          src: `data:image/svg+xml;base64,${base64SVG}`,
+        },
+      } as VNodeType;
+      const imageFragment = await buildImage(docxDocumentInstance, imageVNode);
+      if (imageFragment) {
+        xmlFragment.import(imageFragment);
+      }
+      return;
+    }
     case 'br': {
       const linebreakFragment = await xmlBuilder.buildParagraph(null, {});
       xmlFragment.import(linebreakFragment);
@@ -990,6 +1019,17 @@ async function renderDocumentFile(
 ): Promise<XMLBuilderType> {
   // Reset list tracking at the start of each document render
   resetListTracking();
+
+  if (!docxDocumentInstance._imageCache) {
+    docxDocumentInstance._imageCache = new Map();
+  }
+  if (!docxDocumentInstance._retryStats) {
+    docxDocumentInstance._retryStats = {
+      finalFailures: 0,
+      successAfterRetry: 0,
+      totalAttempts: 0,
+    };
+  }
 
   const vTree = convertHTML(docxDocumentInstance.htmlString);
 

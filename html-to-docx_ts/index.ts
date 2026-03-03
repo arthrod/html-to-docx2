@@ -89,7 +89,19 @@ export type HeadingOptions = {
 };
 
 export type ImageProcessing = {
+  downloadTimeout?: number;
+  maxCacheEntries?: number;
+  maxCacheSize?: number;
+  maxImageSize?: number;
+  maxRetries?: number;
+  maxTimeout?: number;
+  minImageSize?: number;
+  minTimeout?: number;
+  retryDelayBase?: number;
+  suppressSharpWarning?: boolean;
   svgHandling?: 'convert' | 'native';
+  svgSanitization?: boolean;
+  verboseLogging?: boolean;
 };
 
 export type NumberingOptions = {
@@ -110,6 +122,7 @@ export type DocumentOptions = {
   decodeUnicode?: boolean;
   defaultLang?: string;
   description?: string;
+  direction?: 'ltr' | 'rtl';
   font?: string;
   fontSize?: number | string;
   footer?: boolean;

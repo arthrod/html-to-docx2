@@ -2,13 +2,6 @@
 import type JSZip from 'jszip';
 
 import { decode } from 'html-entities';
-// eslint-disable-next-line import/no-named-default
-// @ts-expect-error - no types available
-import { default as HTMLToVDOM } from 'html-to-vdom';
-// @ts-expect-error - no types available
-import VNode from 'virtual-dom/vnode/vnode';
-// @ts-expect-error - no types available
-import VText from 'virtual-dom/vnode/vtext';
 import { create } from 'xmlbuilder2';
 
 import {
@@ -36,6 +29,7 @@ import {
   wordFolder,
 } from './constants';
 import DocxDocument from './docx-document';
+import createHTMLToVDOM from './helpers/html-parser.js';
 import { renderDocumentFile } from './helpers';
 import type { DocumentOptions, Margins, PageSize } from './index';
 import { relsXML } from './schemas';
@@ -64,12 +58,15 @@ interface NormalizedDocumentOptions {
   decodeUnicode?: boolean;
   defaultLang?: string;
   description?: string;
+  direction?: 'ltr' | 'rtl';
   font?: string;
   fontSize?: number | null;
   footer?: boolean;
   footerType?: 'default' | 'even' | 'first';
   header?: boolean;
   headerType?: 'default' | 'even' | 'first';
+  heading?: DocumentOptions['heading'];
+  imageProcessing?: DocumentOptions['imageProcessing'];
   keywords?: string[];
   lastModifiedBy?: string;
   lineNumber?: boolean | LineNumberOptions;
@@ -118,10 +115,7 @@ interface NormalizedPageSize {
   width?: number;
 }
 
-const convertHTML = HTMLToVDOM({
-  VNode,
-  VText,
-});
+const convertHTML = createHTMLToVDOM();
 
 const mergeOptions = <T extends object>(options: T, patch: Partial<T>): T => ({
   ...options,
@@ -228,6 +222,8 @@ const normalizeDocumentOptions = (
     result.defaultLang = documentOptions.defaultLang;
   if (documentOptions.description !== undefined)
     result.description = documentOptions.description;
+  if (documentOptions.direction !== undefined)
+    result.direction = documentOptions.direction;
   if (documentOptions.font !== undefined) result.font = documentOptions.font;
   if (documentOptions.footer !== undefined)
     result.footer = documentOptions.footer;
@@ -237,6 +233,9 @@ const normalizeDocumentOptions = (
     result.header = documentOptions.header;
   if (documentOptions.headerType !== undefined)
     result.headerType = documentOptions.headerType;
+  if (documentOptions.heading !== undefined) result.heading = documentOptions.heading;
+  if (documentOptions.imageProcessing !== undefined)
+    result.imageProcessing = documentOptions.imageProcessing;
   if (documentOptions.keywords !== undefined)
     result.keywords = documentOptions.keywords;
   if (documentOptions.lastModifiedBy !== undefined)

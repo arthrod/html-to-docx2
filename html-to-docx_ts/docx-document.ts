@@ -32,6 +32,7 @@ import {
   commentsIdsRelationshipType,
   commentsIdsType,
   commentsType,
+  defaultDirection,
   defaultDocumentOptions,
   defaultFont,
   defaultFontSize,
@@ -72,20 +73,6 @@ import ListStyleBuilder, {
   type ListStyleDefaults,
   type ListStyleType,
 } from './utils/list';
-
-/**
- * Get bullet character for unordered list based on level.
- * Uses Symbol font characters for consistent rendering in Word.
- */
-const getBulletChar = (level: number): string => {
-  // Symbol font bullet characters for different levels
-  const bullets = [
-    '\uF0B7', // Level 0: Bullet (•)
-    'o', // Level 1: Circle (will render as ○ with Symbol font)
-    '\uF0A7', // Level 2: Square bullet (■)
-  ];
-  return bullets[level % bullets.length];
-};
 
 /** Virtual DOM tree node */
 export interface VTree {
@@ -177,6 +164,7 @@ export interface NumberingObject {
 /** Numbering properties */
 export interface NumberingProperties {
   attributes?: Record<string, string | undefined>;
+  start?: number;
   style?: {
     'list-style-type'?: ListStyleType;
     [key: string]: string | undefined;
@@ -194,6 +182,7 @@ export interface MediaFileInfo {
   fileContent: string;
   fileNameWithExtension: string;
   id: number;
+  isSVG?: boolean;
 }
 
 /** Style object */
@@ -218,6 +207,7 @@ export interface DocxDocumentProperties {
   complexScriptFontSize?: number | null;
   createdAt?: Date;
   creator?: string;
+  direction?: string;
   description?: string;
   font?: string;
   fontSize?: number | null;
@@ -225,7 +215,9 @@ export interface DocxDocumentProperties {
   footerType?: string;
   header?: boolean;
   headerType?: string;
+  heading?: typeof defaultDocumentOptions.heading;
   htmlString: string | null;
+  imageProcessing?: typeof defaultDocumentOptions.imageProcessing;
   keywords?: string[];
   lang?: string;
   lastModifiedBy?: string;
@@ -295,11 +287,31 @@ function generateSectionReferenceXML(
   }
 }
 
-function generateXMLString(xmlString: string): string {
+function generateXMLString(xmlString: string, direction?: string): string {
   const xmlDocumentString = create(
     { encoding: 'UTF-8', standalone: true },
     xmlString
   );
+
+  if (direction === 'rtl') {
+    const rtlStyle = fragment({ namespaceAlias: { w: namespaces.w } })
+      .ele('@w', 'style')
+      .att('@w', 'type', 'paragraph')
+      .att('@w', 'styleId', 'RTLDefault')
+      .ele('@w', 'name')
+      .att('@w', 'val', 'RTL Default')
+      .up()
+      .ele('@w', 'pPr')
+      .ele('@w', 'jc')
+      .att('@w', 'val', 'right')
+      .up()
+      .ele('@w', 'bidi')
+      .up()
+      .up()
+      .up();
+
+    xmlDocumentString.root().import(rtlStyle);
+  }
 
   return xmlDocumentString.toString({ prettyPrint: true });
 }
@@ -367,6 +379,7 @@ class DocxDocument {
   createdAt: Date;
   creator: string;
   description: string;
+  direction: string;
   documentXML: XMLBuilder | null;
   font: string;
   fontSize: number;
@@ -376,8 +389,10 @@ class DocxDocument {
   header: boolean;
   headerObjects: HeaderObject[];
   headerType: string;
+  heading: typeof defaultDocumentOptions.heading;
   height: number;
   htmlString: string | null;
+  imageProcessing: typeof defaultDocumentOptions.imageProcessing;
   keywords: string[];
   lang: string;
   lastFooterId: number;
@@ -405,6 +420,12 @@ class DocxDocument {
   title: string;
   width: number;
   zip: JSZip;
+  _imageCache?: Map<string, string | null>;
+  _retryStats?: {
+    finalFailures: number;
+    successAfterRetry: number;
+    totalAttempts: number;
+  };
 
   // Tracking support for comments and suggestions
   _trackingState?: TrackingState;
@@ -461,6 +482,10 @@ class DocxDocument {
     this.complexScriptFontSize =
       properties.complexScriptFontSize ?? defaultFontSize;
     this.lang = properties.lang || defaultLang;
+    this.direction = properties.direction || defaultDirection;
+    this.heading = properties.heading || defaultDocumentOptions.heading;
+    this.imageProcessing =
+      properties.imageProcessing || defaultDocumentOptions.imageProcessing;
     this.tableRowCantSplit = properties.table?.row?.cantSplit || false;
     this.pageNumber = properties.pageNumber || false;
     this.skipFirstHeaderFooter = properties.skipFirstHeaderFooter || false;
@@ -704,6 +729,10 @@ class DocxDocument {
       );
     });
 
+    xmlString = xmlString
+      .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
+      .replace(/<\/w:svgBlip>/g, '</asvg:svgBlip>');
+
     const deadTokens = findDocxTrackingTokens(xmlString);
     if (deadTokens.length > 0) {
       const uniqueTokens = Array.from(new Set(deadTokens));
@@ -750,8 +779,10 @@ class DocxDocument {
         this.font,
         this.fontSize,
         this.complexScriptFontSize,
-        this.lang
-      )
+        this.lang,
+        this.heading
+      ),
+      this.direction
     );
   }
 
@@ -826,7 +857,14 @@ class DocxDocument {
         .ele('@w', 'abstractNum')
         .att('@w', 'abstractNumId', String(numberingId));
 
-      Array.from({ length: 8 }, (_, level) => level).forEach((level) => {
+      let startValue = 1;
+      if (properties.attributes?.['data-start']) {
+        startValue = Number.parseInt(properties.attributes['data-start'], 10);
+      } else if (properties.start) {
+        startValue = properties.start;
+      }
+
+      Array.from({ length: 9 }, (_, level) => level).forEach((level) => {
         const levelFragment = fragment({ namespaceAlias: { w: namespaces.w } })
           .ele('@w', 'lvl')
           .att('@w', 'ilvl', String(level))
@@ -834,7 +872,7 @@ class DocxDocument {
           .att(
             '@w',
             'val',
-            type === 'ol' ? properties.attributes?.['data-start'] || '1' : '1'
+            String(type === 'ol' ? startValue : 1)
           )
           .up()
           .ele('@w', 'numFmt')
@@ -857,7 +895,9 @@ class DocxDocument {
                   properties.style,
                   level
                 )
-              : getBulletChar(level)
+              : this.ListStyleBuilder.getUnorderedListPrefixSuffix(
+                  properties.style
+                )
           )
           .up()
           .ele('@w', 'lvlJc')
@@ -867,11 +907,11 @@ class DocxDocument {
           .ele('@w', 'tabs')
           .ele('@w', 'tab')
           .att('@w', 'val', 'num')
-          .att('@w', 'pos', String(level * 360 + 360))
+          .att('@w', 'pos', String((level + 1) * 720))
           .up()
           .up()
           .ele('@w', 'ind')
-          .att('@w', 'left', String(level * 360 + 360))
+          .att('@w', 'left', String((level + 1) * 720))
           .att('@w', 'hanging', '360')
           .up()
           .up()
@@ -969,19 +1009,20 @@ class DocxDocument {
   }
 
   createMediaFile(base64String: string): MediaFileInfo {
-    // eslint-disable-next-line no-useless-escape
-    const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+    const matches = base64String.match(/^data:([A-Za-z-+./]+);base64,(.+)$/);
 
     if (!matches || matches.length !== 3) {
       throw new Error('Invalid base64 string');
     }
 
     const base64FileContent = matches[2];
-    // matches array contains file type in base64 format - image/jpeg and base64 stringified data
-    const extensionMatch = matches[1].match(/\/(.*?)$/);
+    const mimeType = matches[1];
+    const extensionMatch = mimeType.match(/\/(.*?)$/);
     const fileExtension =
       extensionMatch && extensionMatch[1] === 'octet-stream'
         ? 'png'
+        : mimeType.toLowerCase().includes('svg')
+          ? 'svg'
         : extensionMatch
           ? extensionMatch[1]
           : 'png';
@@ -994,6 +1035,7 @@ class DocxDocument {
       id: this.lastMediaId,
       fileContent: base64FileContent,
       fileNameWithExtension,
+      isSVG: fileExtension === 'svg',
     };
   }
 

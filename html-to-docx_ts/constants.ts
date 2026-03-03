@@ -2,6 +2,8 @@ import { cloneDeep } from 'lodash';
 
 export type Orientation = 'landscape' | 'portrait';
 
+export type Direction = 'ltr' | 'rtl';
+
 export type HeaderFooterType = 'default' | 'even' | 'first';
 
 export type LineNumberRestart = 'continuous' | 'newPage' | 'newSection';
@@ -31,11 +33,48 @@ export type PageSize = {
   width: number;
 };
 
+export type HeadingSpacing = {
+  after: number;
+  before: number;
+};
+
+export type HeadingStyleOptions = {
+  bold: boolean;
+  font: string;
+  fontSize: number;
+  keepLines: boolean;
+  keepNext: boolean;
+  outlineLevel: number;
+  spacing: HeadingSpacing;
+};
+
+export type HeadingOptions = {
+  heading1: HeadingStyleOptions;
+  heading2: HeadingStyleOptions;
+  heading3: HeadingStyleOptions;
+  heading4: HeadingStyleOptions;
+  heading5: HeadingStyleOptions;
+  heading6: HeadingStyleOptions;
+};
+
 export type TableRowOptions = {
   cantSplit: boolean;
 };
 
+export type TableBorderOptions = {
+  color: string;
+  size: number;
+  stroke: string;
+};
+
+export type TableBorderAttributeOptions = {
+  size: number;
+  stroke: string;
+};
+
 export type TableOptions = {
+  addSpacingAfter: boolean;
+  borderOptions: TableBorderOptions;
   row: TableRowOptions;
 };
 
@@ -47,6 +86,22 @@ export type LineNumberOptions = {
 
 export type NumberingOptions = {
   defaultOrderedListStyleType: ListStyleType;
+};
+
+export type ImageProcessingOptions = {
+  downloadTimeout: number;
+  maxCacheEntries: number;
+  maxCacheSize: number;
+  maxImageSize: number;
+  maxRetries: number;
+  maxTimeout: number;
+  minImageSize: number;
+  minTimeout: number;
+  retryDelayBase: number;
+  suppressSharpWarning: boolean;
+  svgHandling: 'convert' | 'native';
+  svgSanitization: boolean;
+  verboseLogging: boolean;
 };
 
 export type BorderSide = {
@@ -69,12 +124,15 @@ export type DocumentOptions = {
   decodeUnicode: boolean;
   defaultLang: string;
   description: string;
+  direction: Direction;
   font: string;
   fontSize: number;
   footer: boolean;
   footerType: HeaderFooterType;
   header: boolean;
   headerType: HeaderFooterType;
+  heading: HeadingOptions;
+  imageProcessing: ImageProcessingOptions;
   keywords: string[];
   lastModifiedBy: string;
   lineNumber: boolean;
@@ -117,6 +175,86 @@ const portraitMargins: Margins = {
 const defaultFont = 'Times New Roman';
 const defaultFontSize = 22;
 const defaultLang = 'en-US';
+const defaultDirection: Direction = 'ltr';
+const defaultTableBorderOptions: TableBorderOptions = {
+  color: '000000',
+  size: 0,
+  stroke: 'nil',
+};
+const defaultTableBorderAttributeOptions: TableBorderAttributeOptions = {
+  size: 1,
+  stroke: 'single',
+};
+
+const SVG_UNIT_TO_PIXEL_CONVERSIONS: Record<string, number> = {
+  '%': 1,
+  cm: 37.7952755906,
+  em: 16,
+  in: 96,
+  mm: 3.77952755906,
+  pc: 16,
+  pt: 1.33333333333,
+  px: 1,
+  rem: 16,
+};
+
+const defaultHeadingOptions: HeadingOptions = {
+  heading1: {
+    bold: true,
+    font: defaultFont,
+    fontSize: 48,
+    keepLines: true,
+    keepNext: true,
+    outlineLevel: 0,
+    spacing: { before: 480, after: 0 },
+  },
+  heading2: {
+    bold: true,
+    font: defaultFont,
+    fontSize: 36,
+    keepLines: true,
+    keepNext: true,
+    outlineLevel: 1,
+    spacing: { before: 360, after: 80 },
+  },
+  heading3: {
+    bold: true,
+    font: defaultFont,
+    fontSize: 28,
+    keepLines: true,
+    keepNext: true,
+    outlineLevel: 2,
+    spacing: { before: 280, after: 80 },
+  },
+  heading4: {
+    bold: true,
+    font: defaultFont,
+    fontSize: 24,
+    keepLines: true,
+    keepNext: true,
+    outlineLevel: 3,
+    spacing: { before: 240, after: 40 },
+  },
+  heading5: {
+    bold: true,
+    font: defaultFont,
+    fontSize: defaultFontSize,
+    keepLines: true,
+    keepNext: true,
+    outlineLevel: 4,
+    spacing: { before: 220, after: 40 },
+  },
+  heading6: {
+    bold: true,
+    font: defaultFont,
+    fontSize: 20,
+    keepLines: true,
+    keepNext: true,
+    outlineLevel: 5,
+    spacing: { before: 200, after: 40 },
+  },
+};
+
 const defaultDocumentOptions: DocumentOptions = {
   complexScriptFontSize: defaultFontSize,
   createdAt: new Date(),
@@ -124,12 +262,29 @@ const defaultDocumentOptions: DocumentOptions = {
   decodeUnicode: false,
   defaultLang,
   description: '',
+  direction: defaultDirection,
   font: defaultFont,
   fontSize: defaultFontSize,
   footer: false,
   footerType: 'default',
   header: false,
   headerType: 'default',
+  heading: defaultHeadingOptions,
+  imageProcessing: {
+    downloadTimeout: 5000,
+    maxCacheEntries: 100,
+    maxCacheSize: 20 * 1024 * 1024,
+    maxImageSize: 10 * 1024 * 1024,
+    maxRetries: 2,
+    maxTimeout: 30000,
+    minImageSize: 1024,
+    minTimeout: 1000,
+    retryDelayBase: 500,
+    suppressSharpWarning: false,
+    svgHandling: 'convert',
+    svgSanitization: true,
+    verboseLogging: false,
+  },
   keywords: [applicationName],
   lastModifiedBy: applicationName,
   lineNumber: false,
@@ -153,6 +308,8 @@ const defaultDocumentOptions: DocumentOptions = {
   skipFirstHeaderFooter: false,
   subject: '',
   table: {
+    addSpacingAfter: true,
+    borderOptions: defaultTableBorderOptions,
     row: {
       cantSplit: false,
     },
@@ -237,12 +394,16 @@ export {
   commentsIdsRelationshipType,
   commentsIdsType,
   commentsType,
+  defaultDirection,
   defaultDocumentOptions,
   defaultFont,
   defaultFontSize,
+  defaultHeadingOptions,
   defaultHTMLString,
   defaultLang,
   defaultOrientation,
+  defaultTableBorderAttributeOptions,
+  defaultTableBorderOptions,
   documentFileName,
   footerFileName,
   footerType,
@@ -260,6 +421,7 @@ export {
   peopleType,
   portraitMargins,
   relsFolderName,
+  SVG_UNIT_TO_PIXEL_CONVERSIONS,
   themeFileName,
   themeFolder,
   themeType,
