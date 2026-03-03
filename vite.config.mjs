@@ -7,15 +7,32 @@ import consolePipe from 'vite-plugin-console-pipe';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const smokeRoot = path.resolve(__dirname, 'example/vite-smoke');
 const shouldAnalyze = process.env.BUNDLE_ANALYZE === '1';
 const analyzerReportName =
   process.env.BUNDLE_ANALYZE_NAME || 'stats-baseline';
+const requiredNodePolyfills = [
+  'assert',
+  'buffer',
+  'crypto',
+  'events',
+  'fs',
+  'http',
+  'https',
+  'os',
+  'path',
+  'process',
+  'stream',
+  'tty',
+  'url',
+  'util',
+];
 
 export default defineConfig({
-  root: __dirname,
+  root: smokeRoot,
   plugins: [
     nodePolyfills({
-      exclude: ['zlib'],
+      include: requiredNodePolyfills,
       globals: {
         Buffer: true,
         global: true,
@@ -37,17 +54,19 @@ export default defineConfig({
   ].filter(Boolean),
   resolve: {
     alias: {
-      '@turbodocx/html-to-docx': path.resolve(__dirname, '../../dist/html-to-docx.esm.js'),
-      sharp: path.resolve(__dirname, './shims/sharp.js'),
-      'node:zlib': path.resolve(__dirname, './shims/zlib.js'),
-      zlib: path.resolve(__dirname, './shims/zlib.js'),
+      '@turbodocx/html-to-docx': path.resolve(__dirname, 'dist/html-to-docx.esm.js'),
+      sharp: path.resolve(smokeRoot, 'shims/sharp.js'),
+      vm: path.resolve(smokeRoot, 'shims/vm.js'),
+      'node:vm': path.resolve(smokeRoot, 'shims/vm.js'),
+      'node:zlib': path.resolve(smokeRoot, 'shims/zlib.js'),
+      zlib: path.resolve(smokeRoot, 'shims/zlib.js'),
     },
   },
   optimizeDeps: {
     exclude: ['zlib', 'node:zlib', 'browserify-zlib'],
   },
   build: {
-    outDir: path.resolve(__dirname, 'dist'),
+    outDir: path.resolve(smokeRoot, 'dist'),
     emptyOutDir: true,
   },
   server: {
