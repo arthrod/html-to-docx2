@@ -2,10 +2,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vite';
+import { analyzer } from 'vite-bundle-analyzer';
 import consolePipe from 'vite-plugin-console-pipe';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const shouldAnalyze = process.env.BUNDLE_ANALYZE === '1';
+const analyzerReportName =
+  process.env.BUNDLE_ANALYZE_NAME || 'stats-baseline';
 
 export default defineConfig({
   root: __dirname,
@@ -19,8 +23,18 @@ export default defineConfig({
       },
       protocolImports: true,
     }),
+    shouldAnalyze
+      ? analyzer({
+          analyzerMode: 'static',
+          defaultSizes: 'gzip',
+          fileName: analyzerReportName,
+          openAnalyzer: false,
+          reportTitle: 'Vite Smoke Analyzer (baseline)',
+          summary: true,
+        })
+      : null,
     consolePipe(),
-  ],
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@turbodocx/html-to-docx': path.resolve(__dirname, '../../dist/html-to-docx.esm.js'),

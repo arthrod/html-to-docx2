@@ -67,6 +67,7 @@
     "test:unit:watch": "jest --watch",
     "test:unit:coverage": "jest --coverage",
     "test:vite:build": "npm run build && vite build --config example/vite-smoke/vite.config.mjs",
+    "test:vite:analyze:baseline": "npm run build && cross-env BUNDLE_ANALYZE=1 BUNDLE_ANALYZE_NAME=stats-baseline vite build --config example/vite-smoke/vite.config.mjs",
     "test:vite:dev": "vite --config example/vite-smoke/vite.config.mjs",
     "test:browser": "npm run build && npx -y serve . -l 8080 --no-clipboard",
     "prerelease": "npm run build:prod",
@@ -155,6 +156,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3",
     "vite": "^7.3.1",
+    "vite-bundle-analyzer": "^1.3.6",
     "vite-plugin-console-pipe": "^2.1.0",
     "vite-plugin-node-polyfills": "^0.25.0"
   },
