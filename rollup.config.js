@@ -1,6 +1,7 @@
 import { nodeResolve as resolve } from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
 import commonjs from '@rollup/plugin-commonjs';
+import { babel } from '@rollup/plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 import cleaner from 'rollup-plugin-cleaner';
 import builtins from 'rollup-plugin-node-builtins';
@@ -13,6 +14,33 @@ const browserOnly = process.env.BUILD_TARGET === 'browser';
 
 const banner = `// ${meta.homepage} v${meta.version} Copyright ${new Date().getFullYear()} ${meta.author}`;
 
+// Keep syntax deterministic across bundles, including bundled dependencies.
+const transpileTargets = {
+  chrome: '80',
+  edge: '80',
+  firefox: '78',
+  safari: '14',
+};
+
+const createBabelPlugin = () =>
+  babel({
+    babelHelpers: 'bundled',
+    babelrc: false,
+    configFile: false,
+    exclude: [/node_modules\/core-js/, /node_modules\/regenerator-runtime/],
+    extensions: ['.js', '.mjs', '.cjs'],
+    presets: [
+      [
+        '@babel/preset-env',
+        {
+          bugfixes: true,
+          modules: false,
+          targets: transpileTargets,
+        },
+      ],
+    ],
+  });
+
 // Node.js / Library build configuration (ESM and UMD)
 const libraryConfig = {
   input: 'index.js',
@@ -22,6 +50,7 @@ const libraryConfig = {
     json(),
     commonjs(),
     builtins(),
+    createBabelPlugin(),
     terser({
       mangle: false,
     }),
@@ -67,6 +96,7 @@ const browserConfig = {
     json(),
     commonjs(),
     nodePolyfills(),
+    createBabelPlugin(),
     terser({
       mangle: isProduction,
       compress: isProduction,
