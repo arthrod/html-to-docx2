@@ -9,9 +9,10 @@
  * Based on React's HTML DOM property configuration and HTML parser libraries.
  */
 
-import * as htmlparser2 from 'htmlparser2';
-import { decode } from 'html-entities';
-import { VNode, VText } from '../vdom/index.js';
+import { decode } from 'html-entities'
+import * as htmlparser2 from 'htmlparser2'
+
+import { VNode, VText } from '../vdom/index'
 
 // ============================================================================
 // Property Info System
@@ -21,12 +22,12 @@ import { VNode, VText } from '../vdom/index.js';
 
 // Property masks for attribute/property classification
 /* eslint-disable no-bitwise */
-const MUST_USE_ATTRIBUTE = 0x1;
-const MUST_USE_PROPERTY = 0x2;
-const HAS_BOOLEAN_VALUE = 0x4;
-const HAS_NUMERIC_VALUE = 0x8;
-const HAS_POSITIVE_NUMERIC_VALUE = 0x10 | 0x8;
-const HAS_OVERLOADED_BOOLEAN_VALUE = 0x20;
+const MUST_USE_ATTRIBUTE = 0x1
+const MUST_USE_PROPERTY = 0x2
+const HAS_BOOLEAN_VALUE = 0x4
+const HAS_NUMERIC_VALUE = 0x8
+const HAS_POSITIVE_NUMERIC_VALUE = 0x10 | 0x8
+const HAS_OVERLOADED_BOOLEAN_VALUE = 0x20
 /* eslint-enable no-bitwise */
 
 // HTML DOM properties configuration
@@ -153,7 +154,7 @@ const Properties = {
   itemRef: MUST_USE_ATTRIBUTE,
   property: null,
   unselectable: MUST_USE_ATTRIBUTE,
-};
+}
 /* eslint-enable no-bitwise */
 
 const PropertyToAttributeMapping = {
@@ -161,18 +162,18 @@ const PropertyToAttributeMapping = {
   htmlFor: 'for',
   httpEquiv: 'http-equiv',
   acceptCharset: 'accept-charset',
-};
+}
 
 function checkMask(value, bitmask) {
   // eslint-disable-next-line no-bitwise
-  return (value & bitmask) === bitmask;
+  return (value & bitmask) === bitmask
 }
 
 // Build property info lookup table
-const propInfoByAttributeName = {};
+const propInfoByAttributeName = {}
 Object.keys(Properties).forEach((propName) => {
-  const propConfig = Properties[propName];
-  const attributeName = PropertyToAttributeMapping[propName] || propName.toLowerCase();
+  const propConfig = Properties[propName]
+  const attributeName = PropertyToAttributeMapping[propName] || propName.toLowerCase()
 
   const propertyInfo = {
     attributeName,
@@ -183,16 +184,16 @@ Object.keys(Properties).forEach((propName) => {
     hasNumericValue: checkMask(propConfig, HAS_NUMERIC_VALUE),
     hasPositiveNumericValue: checkMask(propConfig, HAS_POSITIVE_NUMERIC_VALUE),
     hasOverloadedBooleanValue: checkMask(propConfig, HAS_OVERLOADED_BOOLEAN_VALUE),
-  };
+  }
 
-  propInfoByAttributeName[attributeName] = propertyInfo;
-});
+  propInfoByAttributeName[attributeName] = propertyInfo
+})
 
 function getPropertyInfo(attributeName) {
-  const lowerCased = attributeName.toLowerCase();
+  const lowerCased = attributeName.toLowerCase()
 
   if (Object.prototype.hasOwnProperty.call(propInfoByAttributeName, lowerCased)) {
-    return propInfoByAttributeName[lowerCased];
+    return propInfoByAttributeName[lowerCased]
   }
 
   // Custom attribute
@@ -200,7 +201,7 @@ function getPropertyInfo(attributeName) {
     attributeName,
     mustUseAttribute: true,
     isCustomAttribute: true,
-  };
+  }
 }
 
 // ============================================================================
@@ -211,15 +212,15 @@ function getPropertyInfo(attributeName) {
  * Parse CSS style string into object
  */
 function parseStyles(input) {
-  const attributes = input.split(';');
+  const attributes = input.split(';')
   const styles = attributes.reduce((object, attribute) => {
-    const entry = attribute.split(/:(.*)/);
+    const entry = attribute.split(/:(.*)/)
     if (entry[0] && entry[1]) {
-      object[entry[0].trim()] = entry[1].trim();
+      object[entry[0].trim()] = entry[1].trim()
     }
-    return object;
-  }, {});
-  return styles;
+    return object
+  }, {})
+  return styles
 }
 
 const propertyValueConversions = {
@@ -227,79 +228,82 @@ const propertyValueConversions = {
   placeholder: decode,
   title: decode,
   alt: decode,
-};
+}
 
 function propertyIsTrue(propInfo, value) {
   if (propInfo.hasBooleanValue) {
-    return value === '' || value.toLowerCase() === propInfo.attributeName;
+    return value === '' || value.toLowerCase() === propInfo.attributeName
   }
   if (propInfo.hasOverloadedBooleanValue) {
-    return value === '';
+    return value === ''
   }
-  return false;
+  return false
 }
 
 function getPropertyValue(propInfo, value) {
-  const isTrue = propertyIsTrue(propInfo, value);
+  const isTrue = propertyIsTrue(propInfo, value)
   if (propInfo.hasBooleanValue) {
-    return !!isTrue;
+    return !!isTrue
   }
   if (propInfo.hasOverloadedBooleanValue) {
-    return isTrue ? true : value;
+    return isTrue ? true : value
   }
   if (propInfo.hasNumericValue || propInfo.hasPositiveNumericValue) {
-    return Number(value);
+    return Number(value)
   }
-  return value;
+  return value
 }
 
 function setVNodeProperty(properties, propInfo, value) {
-  const propName = propInfo.propertyName;
-  let valueConverter;
+  const propName = propInfo.propertyName
+  let valueConverter
 
-  if (propName && Object.prototype.hasOwnProperty.call(propertyValueConversions, propName)) {
-    valueConverter = propertyValueConversions[propInfo.propertyName];
-    value = valueConverter(value);
+  if (
+    propName &&
+    Object.prototype.hasOwnProperty.call(propertyValueConversions, propName)
+  ) {
+    valueConverter = propertyValueConversions[propInfo.propertyName]
+    value = valueConverter(value)
   }
 
-  properties[propInfo.propertyName] = getPropertyValue(propInfo, value);
+  properties[propInfo.propertyName] = getPropertyValue(propInfo, value)
 }
 
 function getAttributeValue(propInfo, value) {
   if (propInfo.hasBooleanValue) {
-    return '';
+    return ''
   }
-  return value;
+  return value
 }
 
 function setVNodeAttribute(properties, propInfo, value) {
-  properties.attributes[propInfo.attributeName] = getAttributeValue(propInfo, value);
+  properties.attributes[propInfo.attributeName] = getAttributeValue(propInfo, value)
 }
 
 function getPropertySetter(propInfo) {
   if (propInfo.mustUseAttribute) {
-    return { set: setVNodeAttribute };
+    return { set: setVNodeAttribute }
   }
-  return { set: setVNodeProperty };
+  return { set: setVNodeProperty }
 }
 
 /**
  * Convert tag attributes to VNode properties
  */
 function convertTagAttributes(tag) {
-  const attributes = tag.attribs;
+  const attributes = tag.attribs
   const vNodeProperties = {
     attributes: {},
-  };
+  }
 
   Object.keys(attributes).forEach((attributeName) => {
-    const value = attributes[attributeName];
-    const propInfo = getPropertyInfo(attributeName);
-    const propertySetter = getPropertySetter(propInfo);
-    propertySetter.set(vNodeProperties, propInfo, value);
-  });
+    const value = attributes[attributeName]
+    const propInfo = getPropertyInfo(attributeName)
+    const propertySetter = getPropertySetter(propInfo)
+    propertySetter.set(vNodeProperties, propInfo, value)
+  })
 
-  return vNodeProperties;
+  return vNodeProperties
 }
 
 // ============================================================================
@@ -310,31 +314,31 @@ function createConverter(VNodeClass, VTextClass) {
   const converter = {
     convert(node, getVNodeKey) {
       if (node.type === 'tag' || node.type === 'script' || node.type === 'style') {
-        return converter.convertTag(node, getVNodeKey);
+        return converter.convertTag(node, getVNodeKey)
       }
       if (node.type === 'text') {
-        return new VTextClass(decode(node.data));
+        return new VTextClass(decode(node.data))
       }
       // Converting an unsupported node, return an empty text node instead
-      return new VTextClass('');
+      return new VTextClass('')
     },
 
     convertTag(tag, getVNodeKey) {
-      const attributes = convertTagAttributes(tag);
-      let key;
+      const attributes = convertTagAttributes(tag)
+      let key
 
       if (getVNodeKey) {
-        key = getVNodeKey(attributes);
+        key = getVNodeKey(attributes)
       }
 
       const children = Array.prototype.map.call(tag.children || [], (node) =>
         converter.convert(node, getVNodeKey)
-      );
+      )
 
-      return new VNodeClass(tag.name, attributes, children, key);
+      return new VNodeClass(tag.name, attributes, children, key)
     },
-  };
-  return converter;
+  }
+  return converter
 }
 
 /**
@@ -345,13 +349,13 @@ function createConverter(VNodeClass, VTextClass) {
  * then manually decode using html-entities.
  */
 function parseHTML(html) {
-  const handler = new htmlparser2.DomHandler();
+  const handler = new htmlparser2.DomHandler()
   const parser = new htmlparser2.Parser(handler, {
     lowerCaseAttributeNames: false,
     decodeEntities: false, // Required for htmlparser2 v10.0.0 compatibility
-  });
-  parser.parseComplete(html);
-  return handler.dom;
+  })
+  parser.parseComplete(html)
+  return handler.dom
 }
 
 /**
@@ -359,33 +363,33 @@ function parseHTML(html) {
  */
 function convertHTML(options, html) {
   // Support both (options, html) and (html) signatures
-  let opts = options;
-  let htmlString = html;
+  let opts = options
+  let htmlString = html
 
   if (typeof options === 'string') {
-    htmlString = options;
-    opts = {};
+    htmlString = options
+    opts = {}
   }
 
-  const converter = createConverter(VNode, VText);
-  const tags = parseHTML(htmlString);
+  const converter = createConverter(VNode, VText)
+  const tags = parseHTML(htmlString)
 
-  let convertedHTML;
+  let convertedHTML
   if (tags.length === 0) {
     // Empty HTML
-    convertedHTML = new VText('');
+    convertedHTML = new VText('')
   } else if (tags.length > 1) {
-    convertedHTML = tags.map((tag) => converter.convert(tag, opts.getVNodeKey));
+    convertedHTML = tags.map((tag) => converter.convert(tag, opts.getVNodeKey))
   } else {
-    convertedHTML = converter.convert(tags[0], opts.getVNodeKey);
+    convertedHTML = converter.convert(tags[0], opts.getVNodeKey)
   }
 
-  return convertedHTML;
+  return convertedHTML
 }
 
 /**
  * Factory function for HTML to VNode conversion
  */
 export default function createHTMLtoVDOM() {
-  return convertHTML;
+  return convertHTML
 }

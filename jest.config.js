@@ -2,8 +2,8 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/tests/**/*.test.js'],
   collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/**/*.test.js',
+    'html-to-docx_ts/**/*.ts',
+    '!html-to-docx_ts/**/*.spec.ts',
     '!**/node_modules/**',
   ],
   coverageDirectory: 'coverage',
@@ -15,4 +15,4 @@ module.exports = {
   transformIgnorePatterns: ['/node_modules/(?!(lodash-es)/)'],
   moduleFileExtensions: ['js', 'json'],
   testTimeout: 10000,
-};
+}

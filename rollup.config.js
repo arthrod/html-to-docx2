@@ -1,25 +1,41 @@
-import { nodeResolve as resolve } from '@rollup/plugin-node-resolve';
-import json from '@rollup/plugin-json';
-import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
-import cleaner from 'rollup-plugin-cleaner';
-import builtins from 'rollup-plugin-node-builtins';
-import nodePolyfills from 'rollup-plugin-polyfill-node';
+import commonjs from '@rollup/plugin-commonjs'
+import json from '@rollup/plugin-json'
+import { nodeResolve as resolve } from '@rollup/plugin-node-resolve'
+import typescript from '@rollup/plugin-typescript'
+import cleaner from 'rollup-plugin-cleaner'
+import builtins from 'rollup-plugin-node-builtins'
+import nodePolyfills from 'rollup-plugin-polyfill-node'
+import { terser } from 'rollup-plugin-terser'
 
-import * as meta from './package.json';
+import * as meta from './package.json'
 
-const isProduction = process.env.NODE_ENV === 'production';
-const browserOnly = process.env.BUILD_TARGET === 'browser';
+const isProduction = process.env.NODE_ENV === 'production'
+const browserOnly = process.env.BUILD_TARGET === 'browser'
 
-const banner = `// ${meta.homepage} v${meta.version} Copyright ${new Date().getFullYear()} ${meta.author}`;
+const banner = `// ${meta.homepage} v${meta.version} Copyright ${new Date().getFullYear()} ${meta.author}`
 
 // Node.js / Library build configuration (ESM and UMD)
 const libraryConfig = {
-  input: 'index.js',
-  external: ['color-name', 'jszip', 'xmlbuilder2', 'html-entities', 'lru-cache', 'htmlparser2', 'sharp'],
+  input: 'index.ts',
+  external: [
+    'color-name',
+    'jszip',
+    'xmlbuilder2',
+    'html-entities',
+    'lru-cache',
+    'htmlparser2',
+    'sharp',
+  ],
   plugins: [
-    resolve(),
+    resolve({
+      extensions: ['.mjs', '.js', '.json', '.node', '.ts'],
+      preferBuiltins: false,
+    }),
     json(),
+    typescript({
+      tsconfig: './tsconfig.build.json',
+      exclude: ['**/*.spec.ts'],
+    }),
     commonjs(),
     builtins(),
     terser({
@@ -50,11 +66,11 @@ const libraryConfig = {
       banner,
     },
   ],
-};
+}
 
 // Standalone browser build configuration (all dependencies bundled)
 const browserConfig = {
-  input: 'index.js',
+  input: 'index.ts',
   // Only exclude sharp (Node.js native module, not supported in browser)
   external: ['sharp'],
   plugins: [
@@ -63,8 +79,13 @@ const browserConfig = {
     resolve({
       browser: true,
       preferBuiltins: false,
+      extensions: ['.mjs', '.js', '.json', '.node', '.ts'],
     }),
     json(),
+    typescript({
+      tsconfig: './tsconfig.build.json',
+      exclude: ['**/*.spec.ts'],
+    }),
     commonjs(),
     nodePolyfills(),
     terser({
@@ -83,6 +104,6 @@ const browserConfig = {
       sharp: '(() => null)',
     },
   },
-};
+}
 
-export default browserOnly ? [browserConfig] : [libraryConfig, browserConfig];
+export default browserOnly ? [browserConfig] : [libraryConfig, browserConfig]
