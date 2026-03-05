@@ -3,18 +3,15 @@
 
 import axios from 'axios'
 
-import {
-  clearImageCache,
-  getImageCacheStats,
-} from '../html-to-docx_ts/helpers/render-document-file'
-import { processImageSource } from '../html-to-docx_ts/helpers/xml-builder'
+import HTMLtoDOCX from '../index.ts'
+import { clearImageCache, getImageCacheStats } from '../src/helpers/render-document-file'
+import { processImageSource } from '../src/helpers/xml-builder'
 import {
   getMimeType,
   guessMimeTypeFromBase64,
   downloadImageToBase64,
   parseDataUrl,
-} from '../html-to-docx_ts/utils/image'
-import HTMLtoDOCX from '../index.ts'
+} from '../src/utils/image'
 import {
   PNG_1x1_BASE64,
   JPEG_1x1_BASE64,

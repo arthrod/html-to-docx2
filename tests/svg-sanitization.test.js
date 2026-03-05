@@ -1,5 +1,5 @@
-import { sanitizeSVGVNode, validateSVGString } from '../html-to-docx_ts/utils/svg-sanitizer'
-import { VNode } from '../html-to-docx_ts/vdom/index'
+import { sanitizeSVGVNode, validateSVGString } from '../src/utils/svg-sanitizer'
+import { VNode } from '../src/vdom/index'
 
 describe('SVG Sanitization - Security Tests', () => {
   describe('sanitizeSVGVNode - Blocking Dangerous Elements', () => {

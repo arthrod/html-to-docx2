@@ -9,8 +9,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "sourceMap": true,
-    "types": ["node"]
+    "types": ["node", "bun", "json"]
   },
-  "include": ["index.ts", "html-to-docx_ts/**/*.ts"],
+  "include": ["index.ts", "src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts", "dist", "node_modules"]
 }

@@ -12,7 +12,7 @@ export default defineConfig({
         'dist/**',
         'coverage/**',
       ],
-      include: ['html-to-docx_ts/**/*.ts', 'index.ts'],
+      include: ['src/**/*.ts', 'index.ts'],
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
     },

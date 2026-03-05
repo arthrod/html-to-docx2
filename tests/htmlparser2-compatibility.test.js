@@ -7,12 +7,12 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import createHTMLtoVDOM from '../html-to-docx_ts/helpers/html-parser'
+import createHTMLtoVDOM from '../src/helpers/html-parser'
 
 const convertHTML = createHTMLtoVDOM()
 const currentFile = fileURLToPath(import.meta.url)
 const currentDir = path.dirname(currentFile)
-const htmlParserPath = path.resolve(currentDir, '../html-to-docx_ts/helpers/html-parser.ts')
+const htmlParserPath = path.resolve(currentDir, '../src/helpers/html-parser.ts')
 
 describe('htmlparser2 v10.0.0 Compatibility', () => {
   describe('Entity decoding behavior (decodeEntities: false)', () => {

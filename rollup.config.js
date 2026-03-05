@@ -7,7 +7,7 @@ import builtins from 'rollup-plugin-node-builtins'
 import nodePolyfills from 'rollup-plugin-polyfill-node'
 import { terser } from 'rollup-plugin-terser'
 
-import * as meta from './package.json'
+import meta from './package.json' with { type: 'json' }
 
 const isProduction = process.env.NODE_ENV === 'production'
 const browserOnly = process.env.BUILD_TARGET === 'browser'

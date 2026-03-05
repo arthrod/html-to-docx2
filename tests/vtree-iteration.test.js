@@ -6,10 +6,10 @@
 
 import HTMLtoDOCX from '../index.ts'
 import {
-  parseDOCX,
+  assertParagraphAlignment,
   assertParagraphCount,
   assertParagraphText,
-  assertParagraphAlignment,
+  parseDOCX,
 } from './helpers/docx-assertions.js'
 
 describe('vTree iteration and property inheritance', () => {
@@ -18,6 +18,7 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = '<p>First paragraph</p><p>Second paragraph</p>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       // Validate that 2 paragraphs were created (array vTree case)
       assertParagraphCount(parsed, 2)
@@ -62,6 +63,7 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = '<p style="text-align: center;">Single paragraph</p>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       // Validate that only 1 paragraph was created (single vTree case)
       assertParagraphCount(parsed, 1)
@@ -77,6 +79,7 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = '<p>Plain paragraph</p>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       assertParagraphCount(parsed, 1)
       assertParagraphText(parsed, 0, 'Plain paragraph')
@@ -86,6 +89,7 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = 'Plain text'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       // Plain text should be wrapped in a paragraph
       assertParagraphCount(parsed, 1)
@@ -99,6 +103,7 @@ describe('vTree iteration and property inheritance', () => {
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
 
+      expect(parsed.paragraphs).toBeDefined()
       assertParagraphCount(parsed, 1)
       assertParagraphText(parsed, 0, 'Outer inner text')
     })
@@ -107,6 +112,7 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = '<div><h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li></ul></div>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       // Should have heading, paragraph, and list item
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(3)
@@ -123,10 +129,11 @@ describe('vTree iteration and property inheritance', () => {
         '<p style="color: blue; font-size: 14px; text-align: justify;">Styled text</p>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
-      assertParagraphCount(parsed, 1)
-      assertParagraphText(parsed, 0, 'Styled text')
-      assertParagraphAlignment(parsed, 0, 'both') // justify maps to 'both' in OOXML
+      expect(parsed.paragraphs.length).toBe(1)
+      expect(parsed.paragraphs[0].text).toBe('Styled text')
+      expect(parsed.paragraphs[0].properties.alignment).toBe('both') // justify maps to 'both' in OOXML
     })
   })
 
@@ -137,6 +144,7 @@ describe('vTree iteration and property inheritance', () => {
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
 
+      expect(parsed.paragraphs).toBeDefined()
       assertParagraphCount(parsed, 2)
 
       // Both paragraphs should exist with correct text (validates array vTree handling)
@@ -157,6 +165,7 @@ describe('vTree iteration and property inheritance', () => {
         '<div style="text-align: left;"><p style="text-align: center;">Override</p></div>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       assertParagraphCount(parsed, 1)
       assertParagraphText(parsed, 0, 'Override')
@@ -169,6 +178,8 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = '<p style="margin-left: 20px;">Indented paragraph</p>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+
+      expect(parsed.paragraphs).toBeDefined()
 
       assertParagraphCount(parsed, 1)
       assertParagraphText(parsed, 0, 'Indented paragraph')
@@ -184,6 +195,7 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = '<p>First</p><p>Second</p><p>Third</p>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       // Array case: Should create exactly 3 paragraphs
       assertParagraphCount(parsed, 3)
@@ -197,6 +209,7 @@ describe('vTree iteration and property inheritance', () => {
       const htmlString = '<div><p>Only one top level</p></div>'
       const docx = await HTMLtoDOCX(htmlString)
       const parsed = await parseDOCX(docx)
+      expect(parsed.paragraphs).toBeDefined()
 
       // Single object case: Should create 1 paragraph
       assertParagraphCount(parsed, 1)

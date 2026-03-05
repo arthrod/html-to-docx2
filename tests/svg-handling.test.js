@@ -1,12 +1,13 @@
 // Unit tests for SVG handling functionality
 // Tests SVG to PNG conversion, native SVG support, and configuration options
 
-import { isSVG, convertSVGtoPNG, parseSVGDimensions } from '../html-to-docx_ts/utils/image'
 import HTMLtoDOCX from '../index.ts'
-import { SVG_BASE64, SVG_FIXTURE, PNG_FIXTURE } from './fixtures/index.js'
+import { convertSVGtoPNG, isSVG, parseSVGDimensions } from '../src/utils/image'
+import { PNG_FIXTURE, SVG_BASE64, SVG_FIXTURE } from './fixtures/index.js'
 import { parseDOCX } from './helpers/docx-assertions.js'
 
 let sharpAvailable = true
+const SHARP_NOT_INSTALLED_MESSAGE = 'Sharp is not installed'
 
 beforeAll(async () => {
   try {
@@ -15,6 +16,32 @@ beforeAll(async () => {
     sharpAvailable = false
   }
 })
+
+async function settleConversion(conversionPromise) {
+  try {
+    return { ok: true, value: await conversionPromise }
+  } catch (error) {
+    return { ok: false, error }
+  }
+}
+
+function assertConversionResult(result) {
+  expect(result.ok).toBe(sharpAvailable)
+
+  const buffer = result.ok ? result.value : null
+  const errorMessage = result.ok ? '' : String(result.error?.message)
+  expect(Buffer.isBuffer(buffer)).toBe(sharpAvailable)
+  expect(
+    result.ok ? buffer.length > 0 : errorMessage.includes(SHARP_NOT_INSTALLED_MESSAGE)
+  ).toBe(true)
+}
+
+function assertPngSignature(result, expectedSignature) {
+  const actualSignature = result.ok
+    ? Array.from(result.value.subarray(0, expectedSignature.length))
+    : []
+  expect(actualSignature).toEqual(sharpAvailable ? expectedSignature : [])
+}
 
 describe('SVG Handling', () => {
   describe('isSVG utility', () => {
@@ -185,110 +212,59 @@ describe('SVG Handling', () => {
 
   describe('convertSVGtoPNG utility', () => {
     test('should convert SVG string to PNG buffer', async () => {
-      if (!sharpAvailable) {
-        await expect(convertSVGtoPNG(SVG_FIXTURE)).rejects.toThrow('Sharp is not installed')
-        return
-      }
-
-      const pngBuffer = await convertSVGtoPNG(SVG_FIXTURE)
-      expect(Buffer.isBuffer(pngBuffer)).toBe(true)
-      expect(pngBuffer.length).toBeGreaterThan(0)
-
-      // Check PNG magic bytes (89 50 4E 47)
-      expect(pngBuffer[0]).toBe(0x89)
-      expect(pngBuffer[1]).toBe(0x50)
-      expect(pngBuffer[2]).toBe(0x4e)
-      expect(pngBuffer[3]).toBe(0x47)
+      const result = await settleConversion(convertSVGtoPNG(SVG_FIXTURE))
+      expect(result.ok).toBe(sharpAvailable)
+      assertConversionResult(result)
+      assertPngSignature(result, [0x89, 0x50, 0x4e, 0x47])
     })
 
     test('should convert SVG base64 to PNG buffer', async () => {
-      if (!sharpAvailable) {
-        await expect(convertSVGtoPNG(SVG_BASE64)).rejects.toThrow('Sharp is not installed')
-        return
-      }
-
-      const pngBuffer = await convertSVGtoPNG(SVG_BASE64)
-      expect(Buffer.isBuffer(pngBuffer)).toBe(true)
-      expect(pngBuffer.length).toBeGreaterThan(0)
-
-      // Check PNG magic bytes
-      expect(pngBuffer[0]).toBe(0x89)
-      expect(pngBuffer[1]).toBe(0x50)
+      const result = await settleConversion(convertSVGtoPNG(SVG_BASE64))
+      expect(result.ok).toBe(sharpAvailable)
+      assertConversionResult(result)
+      assertPngSignature(result, [0x89, 0x50])
     })
 
     test('should convert SVG buffer to PNG buffer', async () => {
-      if (!sharpAvailable) {
-        await expect(convertSVGtoPNG(Buffer.from(SVG_FIXTURE, 'utf-8'))).rejects.toThrow(
-          'Sharp is not installed'
-        )
-        return
-      }
-
       const svgBuffer = Buffer.from(SVG_FIXTURE, 'utf-8')
-      const pngBuffer = await convertSVGtoPNG(svgBuffer)
-
-      expect(Buffer.isBuffer(pngBuffer)).toBe(true)
-      expect(pngBuffer.length).toBeGreaterThan(0)
+      const result = await settleConversion(convertSVGtoPNG(svgBuffer))
+      expect(result.ok).toBe(sharpAvailable)
+      assertConversionResult(result)
     })
 
     test('should respect width option', async () => {
-      if (!sharpAvailable) {
-        await expect(convertSVGtoPNG(SVG_FIXTURE, { width: 200 })).rejects.toThrow(
-          'Sharp is not installed'
-        )
-        return
-      }
-
-      const pngBuffer = await convertSVGtoPNG(SVG_FIXTURE, { width: 200 })
-
-      expect(Buffer.isBuffer(pngBuffer)).toBe(true)
-      expect(pngBuffer.length).toBeGreaterThan(0)
+      const result = await settleConversion(convertSVGtoPNG(SVG_FIXTURE, { width: 200 }))
+      expect(result.ok).toBe(sharpAvailable)
+      assertConversionResult(result)
     })
 
     test('should respect height option', async () => {
-      if (!sharpAvailable) {
-        await expect(convertSVGtoPNG(SVG_FIXTURE, { height: 200 })).rejects.toThrow(
-          'Sharp is not installed'
-        )
-        return
-      }
-
-      const pngBuffer = await convertSVGtoPNG(SVG_FIXTURE, { height: 200 })
-
-      expect(Buffer.isBuffer(pngBuffer)).toBe(true)
-      expect(pngBuffer.length).toBeGreaterThan(0)
+      const result = await settleConversion(convertSVGtoPNG(SVG_FIXTURE, { height: 200 }))
+      expect(result.ok).toBe(sharpAvailable)
+      assertConversionResult(result)
     })
 
     test('should respect both width and height options', async () => {
-      if (!sharpAvailable) {
-        await expect(
-          convertSVGtoPNG(SVG_FIXTURE, { width: 150, height: 150 })
-        ).rejects.toThrow('Sharp is not installed')
-        return
-      }
-
-      const pngBuffer = await convertSVGtoPNG(SVG_FIXTURE, { width: 150, height: 150 })
-
-      expect(Buffer.isBuffer(pngBuffer)).toBe(true)
-      expect(pngBuffer.length).toBeGreaterThan(0)
+      const result = await settleConversion(
+        convertSVGtoPNG(SVG_FIXTURE, {
+          width: 150,
+          height: 150,
+        })
+      )
+      expect(result.ok).toBe(sharpAvailable)
+      assertConversionResult(result)
     })
 
     test('should respect density option', async () => {
-      if (!sharpAvailable) {
-        await expect(convertSVGtoPNG(SVG_FIXTURE, { density: 144 })).rejects.toThrow(
-          'Sharp is not installed'
-        )
-        return
-      }
-
-      const pngBuffer = await convertSVGtoPNG(SVG_FIXTURE, { density: 144 })
-
-      expect(Buffer.isBuffer(pngBuffer)).toBe(true)
-      expect(pngBuffer.length).toBeGreaterThan(0)
+      const result = await settleConversion(convertSVGtoPNG(SVG_FIXTURE, { density: 144 }))
+      expect(result.ok).toBe(sharpAvailable)
+      assertConversionResult(result)
     })
 
     test('should throw error for invalid SVG input', async () => {
-      await expect(convertSVGtoPNG('not valid svg')).rejects.toThrow()
+      await expect(convertSVGtoPNG('not valid svg')).rejects.toThrow(
+        'Failed to convert SVG to PNG:'
+      )
     })
 
     test('should throw error for unsupported input type', async () => {
@@ -312,11 +288,7 @@ describe('SVG Handling', () => {
       // Should have generated a paragraph with image
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
 
-      if (sharpAvailable) {
-        expect(parsed.xml).toMatch(/image-.*\.png/)
-      } else {
-        expect(parsed.xml).toMatch(/image-.*\.svg/)
-      }
+      expect(parsed.xml).toMatch(new RegExp(`image-.*\\.${sharpAvailable ? 'png' : 'svg'}`))
     })
 
     test('should convert inline SVG to PNG by default', async () => {
@@ -495,13 +467,8 @@ describe('SVG Handling', () => {
 
       const parsed = await parseDOCX(docx)
 
-      if (sharpAvailable) {
-        expect(parsed.xml).toMatch(/image-.*\.png/)
-        expect(parsed.xml).not.toMatch(/svgBlip/)
-      } else {
-        expect(parsed.xml).toMatch(/image-.*\.svg/)
-        expect(parsed.xml).toMatch(/svgBlip/)
-      }
+      expect(parsed.xml).toMatch(new RegExp(`image-.*\\.${sharpAvailable ? 'png' : 'svg'}`))
+      expect(parsed.xml.includes('svgBlip')).toBe(!sharpAvailable)
     })
 
     test('should respect svgHandling option from imageProcessing config', async () => {
@@ -525,13 +492,8 @@ describe('SVG Handling', () => {
       })
 
       const parsedConvert = await parseDOCX(docxConvert)
-      if (sharpAvailable) {
-        expect(parsedConvert.xml).toMatch(/\.png/)
-        expect(parsedConvert.xml).not.toMatch(/svgBlip/)
-      } else {
-        expect(parsedConvert.xml).toMatch(/\.svg/)
-        expect(parsedConvert.xml).toMatch(/svgBlip/)
-      }
+      expect(parsedConvert.xml).toMatch(new RegExp(`\\.${sharpAvailable ? 'png' : 'svg'}`))
+      expect(parsedConvert.xml.includes('svgBlip')).toBe(!sharpAvailable)
     })
 
     test('should handle invalid svgHandling option gracefully', async () => {
