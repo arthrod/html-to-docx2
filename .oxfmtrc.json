@@ -5,19 +5,13 @@
   "semi": false,
   "trailingComma": "es5",
   "experimentalTailwindcss": {},
-  "experimentalSortImports": {
-    "internalPattern": ["html-to-docx_ts/", "tests/", "example/"],
-    "partitionByComment": true,
-    "customGroups": [{ "groupName": "oxide", "elementNamePattern": ["@oxide/**"] }],
-    "groups": [
-      "builtin",
-      "external",
-      "oxide",
-      "internal",
-      ["parent", "sibling", "index"],
-      "unknown"
-    ]
-  },
+  "experimentalSortImports": null,
   "experimentalSortPackageJson": false,
-  "ignorePatterns": ["dist/**", "coverage/**", "templates/**", "mockServiceWorker.js"]
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    "templates/**",
+    "mockServiceWorker.js",
+    "tsconfig.build.json"
+  ]
 }

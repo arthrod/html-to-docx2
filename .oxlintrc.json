@@ -21,5 +21,11 @@
   "env": {
     "builtin": true
   },
-  "ignorePatterns": ["dist/**", "coverage/**", "templates/**", "mockServiceWorker.js"]
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    "templates/**",
+    "mockServiceWorker.js",
+    "tsconfig.build.json"
+  ]
 }
