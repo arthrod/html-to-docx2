@@ -1,6 +1,5 @@
-import HTMLtoDOCX from "@turbodocx/html-to-docx";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from 'fs'
+import * as path from 'path'
 
 /**
  * RTL (Right-to-Left) Language Support Example
@@ -49,7 +48,7 @@ const arabicHtmlString = `<!DOCTYPE html>
             </tr>
         </table>
     </body>
-</html>`;
+</html>`
 
 const hebrewHtmlString = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -81,7 +80,7 @@ const hebrewHtmlString = `<!DOCTYPE html>
             </tr>
         </table>
     </body>
-</html>`;
+</html>`
 
 const mixedContentHtml = `<!DOCTYPE html>
 <html>
@@ -108,90 +107,81 @@ const mixedContentHtml = `<!DOCTYPE html>
             <p>זהו טקסט עברי במסמך מעורב.</p>
         </div>
     </body>
-</html>`;
+</html>`
 
-async function saveDocxFile(docResult: Buffer | ArrayBuffer | Blob, fileName: string, docType: string) {
-    let docData: Buffer;
-    if (docResult instanceof Buffer) {
-        docData = docResult;
-    } else if (docResult instanceof ArrayBuffer) {
-        docData = Buffer.from(docResult);
-    } else if (typeof Blob !== 'undefined' && docResult instanceof Blob) {
-        console.log(`Received Blob for ${docType}, converting to ArrayBuffer then Buffer...`);
-        const arrayBuffer = await docResult.arrayBuffer();
-        docData = Buffer.from(arrayBuffer);
-    } else {
-        console.error(`Unexpected result type for ${docType}:`, typeof docResult);
-        return;
-    }
-    
-    // Save to root directory as requested
-    const rootPath = path.join(__dirname, '../../', fileName);
-    fs.writeFileSync(rootPath, docData);
-    console.log(`${docType} RTL document created: ${fileName}`);
+async function saveDocxFile(
+  docResult: Buffer | ArrayBuffer | Blob,
+  fileName: string,
+  docType: string
+) {
+  let docData: Buffer
+  if (docResult instanceof Buffer) {
+    docData = docResult
+  } else if (docResult instanceof ArrayBuffer) {
+    docData = Buffer.from(docResult)
+  } else if (typeof Blob !== 'undefined' && docResult instanceof Blob) {
+    console.log(`Received Blob for ${docType}, converting to ArrayBuffer then Buffer...`)
+    const arrayBuffer = await docResult.arrayBuffer()
+    docData = Buffer.from(arrayBuffer)
+  } else {
+    console.error(`Unexpected result type for ${docType}:`, typeof docResult)
+    return
+  }
+
+  // Save to root directory as requested
+  const rootPath = path.join(__dirname, '../../', fileName)
+  fs.writeFileSync(rootPath, docData)
+  console.log(`${docType} RTL document created: ${fileName}`)
 }
 
 async function generateRTLDocuments() {
-    try {
-        // Arabic RTL document
-        const arabicDoc = await HTMLtoDOCX(
-            arabicHtmlString,
-            null,
-            {
-                direction: "rtl",
-                lang: "ar-SA",
-                font: "Arial",
-                title: "Arabic RTL Example",
-                creator: "TurboDocx RTL Test"
-            }
-        );
-        await saveDocxFile(arabicDoc, "arabic-rtl-test.docx", "Arabic RTL");
+  try {
+    // Arabic RTL document
+    const arabicDoc = await HTMLtoDOCX(arabicHtmlString, null, {
+      direction: 'rtl',
+      lang: 'ar-SA',
+      font: 'Arial',
+      title: 'Arabic RTL Example',
+      creator: 'TurboDocx RTL Test',
+    })
+    await saveDocxFile(arabicDoc, 'arabic-rtl-test.docx', 'Arabic RTL')
 
-        // Hebrew RTL document
-        const hebrewDoc = await HTMLtoDOCX(
-            hebrewHtmlString,
-            null,
-            {
-                direction: "rtl",
-                lang: "he-IL",
-                font: "Arial",
-                title: "Hebrew RTL Example",
-                creator: "TurboDocx RTL Test"
-            }
-        );
-        await saveDocxFile(hebrewDoc, "hebrew-rtl-test.docx", "Hebrew RTL");
+    // Hebrew RTL document
+    const hebrewDoc = await HTMLtoDOCX(hebrewHtmlString, null, {
+      direction: 'rtl',
+      lang: 'he-IL',
+      font: 'Arial',
+      title: 'Hebrew RTL Example',
+      creator: 'TurboDocx RTL Test',
+    })
+    await saveDocxFile(hebrewDoc, 'hebrew-rtl-test.docx', 'Hebrew RTL')
 
-        // Mixed content document (default LTR with RTL sections)
-        const mixedDoc = await HTMLtoDOCX(
-            mixedContentHtml,
-            null,
-            {
-                direction: "ltr", // Default direction
-                lang: "en-US",
-                font: "Arial",
-                title: "Mixed Content Example",
-                creator: "TurboDocx RTL Test"
-            }
-        );
-        await saveDocxFile(mixedDoc, "mixed-content-test.docx", "Mixed Content");
+    // Mixed content document (default LTR with RTL sections)
+    const mixedDoc = await HTMLtoDOCX(mixedContentHtml, null, {
+      direction: 'ltr', // Default direction
+      lang: 'en-US',
+      font: 'Arial',
+      title: 'Mixed Content Example',
+      creator: 'TurboDocx RTL Test',
+    })
+    await saveDocxFile(mixedDoc, 'mixed-content-test.docx', 'Mixed Content')
 
-        // LTR document for comparison
-        const ltrDoc = await HTMLtoDOCX(
-            `<h1>Left-to-Right Document</h1><p>This is a standard LTR document for comparison.</p>`,
-            null,
-            {
-                direction: "ltr",
-                lang: "en-US",
-                font: "Arial",
-                title: "LTR Example",
-                creator: "TurboDocx RTL Test"
-            }
-        );
-        await saveDocxFile(ltrDoc, "ltr-comparison-test.docx", "LTR Comparison");
-
-    } catch (error) {
-        console.error("Error generating RTL documents:", error);
-    }
+    // LTR document for comparison
+    const ltrDoc = await HTMLtoDOCX(
+      `<h1>Left-to-Right Document</h1><p>This is a standard LTR document for comparison.</p>`,
+      null,
+      {
+        direction: 'ltr',
+        lang: 'en-US',
+        font: 'Arial',
+        title: 'LTR Example',
+        creator: 'TurboDocx RTL Test',
+      }
+    )
+    await saveDocxFile(ltrDoc, 'ltr-comparison-test.docx', 'LTR Comparison')
+  } catch (error) {
+    console.error('Error generating RTL documents:', error)
+  }
 }
 
-generateRTLDocuments();
+generateRTLDocuments()

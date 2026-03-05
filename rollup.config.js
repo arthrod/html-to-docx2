@@ -38,9 +38,7 @@ const libraryConfig = {
     }),
     commonjs(),
     builtins(),
-    terser({
-      mangle: false,
-    }),
+    terser({}),
     cleaner({
       targets: ['./dist/'],
     }),

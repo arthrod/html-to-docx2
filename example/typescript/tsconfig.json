@@ -8,15 +8,10 @@
     "declaration": true,
     "outDir": "dist",
     "sourceMap": true,
-    "baseUrl": ".",
     "paths": {
       "@turbodocx/html-to-docx": ["../../"]
     }
   },
-  "include": [
-    "*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
-} 
+  "include": ["*.ts"],
+  "exclude": ["node_modules"]
+}
