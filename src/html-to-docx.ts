@@ -1,5 +1,4 @@
 import { decode } from 'html-entities'
-import { minify } from 'html-minifier-terser'
 /* biome-ignore-all lint: legacy code */
 import JSZip from 'jszip'
 import { create } from 'xmlbuilder2'
@@ -112,11 +111,6 @@ interface NormalizedPageSize {
 }
 
 const convertHTML = createHTMLToVDOM()
-
-const mergeOptions = <T extends object>(options: T, patch: Partial<T>): T => ({
-  ...options,
-  ...patch,
-})
 
 const fixupFontSize = (fontSize: number | string | undefined): number | null => {
   let normalizedFontSize: number | null
@@ -478,12 +472,6 @@ async function addFilesToContainer(
   return zip
 }
 
-type GenerateDocumentOptions = DocumentOptions & {
-  preprocessing?: {
-    skipHTMLMinify?: boolean
-  }
-}
-
 const DOCX_MIME_TYPE =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
@@ -500,52 +488,20 @@ const isNodeRuntime = (runtime: any): boolean =>
     runtime && runtime.process && runtime.process.versions && runtime.process.versions.node
   )
 
-const minifyHTMLString = async (
-  htmlString: string | null | undefined
-): Promise<string | null> => {
-  try {
-    if (typeof htmlString === 'string' || htmlString instanceof String) {
-      return await minify(htmlString as string, {
-        collapseWhitespace: true,
-        removeComments: true,
-      })
-    }
-
-    throw new Error('invalid html string')
-  } catch {
-    return null
-  }
-}
-
 async function generateContainer(
   htmlString: string,
   headerHTMLString?: string | null,
-  documentOptions: GenerateDocumentOptions = {},
+  documentOptions: DocumentOptions = {},
   footerHTMLString?: string | null
 ) {
   const zip = new JSZip()
-  const shouldSkipMinify = Boolean(documentOptions.preprocessing?.skipHTMLMinify)
-
-  let contentHTML = htmlString
-  let headerHTML = headerHTMLString
-  let footerHTML = footerHTMLString
-
-  if (htmlString && !shouldSkipMinify) {
-    contentHTML = await minifyHTMLString(contentHTML)
-  }
-  if (headerHTMLString && !shouldSkipMinify) {
-    headerHTML = await minifyHTMLString(headerHTML)
-  }
-  if (footerHTMLString && !shouldSkipMinify) {
-    footerHTML = await minifyHTMLString(footerHTML)
-  }
 
   await addFilesToContainer(
     zip,
-    contentHTML,
-    documentOptions as DocumentOptions,
-    headerHTML,
-    footerHTML
+    htmlString,
+    documentOptions,
+    headerHTMLString,
+    footerHTMLString
   )
 
   const buffer = await zip.generateAsync({ type: 'arraybuffer' })

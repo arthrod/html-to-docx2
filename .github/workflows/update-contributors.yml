@@ -47,8 +47,8 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: add ${{ github.event.pull_request.user.login }} to contributors"
-          title: "chore: add ${{ github.event.pull_request.user.login }} to contributors"
+          commit-message: 'chore: add ${{ github.event.pull_request.user.login }} to contributors'
+          title: 'chore: add ${{ github.event.pull_request.user.login }} to contributors'
           body: |
             Automatically adding ${{ github.event.pull_request.user.login }} to the contributors list.
 

@@ -195,4 +195,89 @@ describe.skipIf(!canValidate)('OOXML Schema Validation', () => {
     expect(result.passed).toBe(true)
     expect(result.output).toContain('All validations PASSED')
   })
+
+  test('comprehensive regression baseline passes OOXML validation', async () => {
+    const { readFileSync } = await import('node:fs')
+
+    let html = readFileSync(
+      join(process.cwd(), 'tests/regression-baseline/regression-source.html'),
+      'utf-8'
+    )
+
+    // Inject tracked changes + comments (same as generate-baseline.cjs)
+    const insP = encodeURIComponent(
+      JSON.stringify({ id: 'rb-ins', author: 'Alice', date: '2025-06-01T10:00:00Z' })
+    )
+    const delP = encodeURIComponent(
+      JSON.stringify({ id: 'rb-del', author: 'Bob', date: '2025-06-01T11:00:00Z' })
+    )
+    const cmtP = encodeURIComponent(
+      JSON.stringify({
+        id: 'rb-cmt',
+        authorName: 'Charlie',
+        authorInitials: 'C',
+        date: '2025-06-01T12:00:00Z',
+        text: 'Review this',
+      })
+    )
+    const threadP = encodeURIComponent(
+      JSON.stringify({
+        id: 'rb-thread',
+        authorName: 'Diana',
+        authorInitials: 'D',
+        date: '2025-06-01T13:00:00Z',
+        text: 'Keep this?',
+        replies: [
+          {
+            id: 'rb-r1',
+            authorName: 'Eve',
+            authorInitials: 'E',
+            date: '2025-06-01T13:30:00Z',
+            text: 'Yes.',
+          },
+          {
+            id: 'rb-r2',
+            authorName: 'Diana',
+            authorInitials: 'D',
+            date: '2025-06-01T14:00:00Z',
+            text: 'OK.',
+          },
+        ],
+      })
+    )
+
+    const extra = `
+      <h2>Tracked Changes</h2>
+      <p>Has [[DOCX_INS_START:${insP}]]inserted[[DOCX_INS_END:${encodeURIComponent('rb-ins')}]] text.</p>
+      <p>Has [[DOCX_DEL_START:${delP}]]deleted[[DOCX_DEL_END:${encodeURIComponent('rb-del')}]] text.</p>
+      <h2>Comments</h2>
+      <p>Has [[DOCX_CMT_START:${cmtP}]]commented[[DOCX_CMT_END:${encodeURIComponent('rb-cmt')}]] text.</p>
+      <h2>Threaded Comments</h2>
+      <p>Has [[DOCX_CMT_START:${threadP}]]threaded[[DOCX_CMT_END:${encodeURIComponent('rb-thread')}]] text.</p>
+    `
+    html = html.replace('</body>', `${extra}\n</body>`)
+
+    const headerHtml = '<p style="text-align: right;">Regression</p>'
+    const footerHtml =
+      '<p style="text-align: center;">Page <span id="pageNumber"></span></p>'
+
+    const docx = await HTMLtoDOCX(
+      html,
+      headerHtml,
+      {
+        title: 'Regression Baseline',
+        header: true,
+        footer: true,
+        pageNumber: true,
+        table: { row: { cantSplit: true } },
+        imageProcessing: { svgHandling: 'native' },
+      },
+      footerHtml
+    )
+
+    const result = validateDOCX(docx, '_test-regression-baseline.docx')
+
+    expect(result.passed).toBe(true)
+    expect(result.output).toContain('All validations PASSED')
+  })
 })

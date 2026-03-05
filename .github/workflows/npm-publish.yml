@@ -5,7 +5,7 @@ name: TurboDocx NPM Release - Node.js Package
 
 on:
   release:
-    types: [created]  # Trigger when a new release is published on GitHub
+    types: [created] # Trigger when a new release is published on GitHub
 
 jobs:
   # Run all test suites to validate the release before publishing
@@ -26,7 +26,7 @@ jobs:
 
   # Publish the package to npm registry (only runs if build job passes)
   publish-npm:
-    needs: build  # Wait for tests to pass before publishing
+    needs: build # Wait for tests to pass before publishing
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          registry-url: https://registry.npmjs.org/  # Configure npm registry for publishing
+          registry-url: https://registry.npmjs.org/ # Configure npm registry for publishing
 
       # Install dependencies
       - run: npm ci
@@ -45,4 +45,4 @@ jobs:
       # Publish to npm with public access (scoped packages are private by default)
       - run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}  # Use npm token from GitHub secrets
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}} # Use npm token from GitHub secrets

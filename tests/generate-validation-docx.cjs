@@ -6,7 +6,10 @@
 const fs = require('fs')
 const path = require('path')
 
+const OUT_DIR = path.join(__dirname, 'regression-baseline')
+
 async function main() {
+  if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true })
   const { default: HTMLtoDOCX } = require('../dist/index.cjs')
 
   // 1. Tracked changes: insertion + deletion
@@ -25,7 +28,7 @@ async function main() {
       <p>This is a normal paragraph with no changes.</p>
     `
     const docx = await HTMLtoDOCX(html, null, { title: 'Tracked Changes Test' })
-    fs.writeFileSync('test-tracked-changes.docx', Buffer.from(docx))
+    fs.writeFileSync(path.join(OUT_DIR, 'test-tracked-changes.docx'), Buffer.from(docx))
     console.log('Generated: test-tracked-changes.docx')
   }
 
@@ -47,7 +50,7 @@ async function main() {
       <p>This paragraph has no comments.</p>
     `
     const docx = await HTMLtoDOCX(html, null, { title: 'Comments Test' })
-    fs.writeFileSync('test-comments.docx', Buffer.from(docx))
+    fs.writeFileSync(path.join(OUT_DIR, 'test-comments.docx'), Buffer.from(docx))
     console.log('Generated: test-comments.docx')
   }
 
@@ -85,7 +88,7 @@ async function main() {
       <p>Next steps follow below.</p>
     `
     const docx = await HTMLtoDOCX(html, null, { title: 'Threaded Comments Test' })
-    fs.writeFileSync('test-threaded-comments.docx', Buffer.from(docx))
+    fs.writeFileSync(path.join(OUT_DIR, 'test-threaded-comments.docx'), Buffer.from(docx))
     console.log('Generated: test-threaded-comments.docx')
   }
 
@@ -106,7 +109,7 @@ async function main() {
       title: 'SVG Native Test',
       imageProcessing: { svgHandling: 'native' },
     })
-    fs.writeFileSync('test-svg-native.docx', Buffer.from(docx))
+    fs.writeFileSync(path.join(OUT_DIR, 'test-svg-native.docx'), Buffer.from(docx))
     console.log('Generated: test-svg-native.docx')
   }
 
@@ -133,7 +136,7 @@ async function main() {
       <table><tr><th>Col A</th><th>Col B</th></tr><tr><td>1</td><td>2</td></tr></table>
     `
     const docx = await HTMLtoDOCX(html, null, { title: 'Mixed Test' })
-    fs.writeFileSync('test-mixed.docx', Buffer.from(docx))
+    fs.writeFileSync(path.join(OUT_DIR, 'test-mixed.docx'), Buffer.from(docx))
     console.log('Generated: test-mixed.docx')
   }
 
