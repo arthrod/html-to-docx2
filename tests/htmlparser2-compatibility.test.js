@@ -1,6 +1,6 @@
 /**
- * Tests for htmlparser2 v10.0.0 compatibility
- * Validates that our configuration matches v3.9.0 behavior
+ * Tests for justjshtml compatibility
+ * Validates parser behavior and integration contract
  */
 
 import fs from 'node:fs'
@@ -14,11 +14,10 @@ const currentFile = fileURLToPath(import.meta.url)
 const currentDir = path.dirname(currentFile)
 const htmlParserPath = path.resolve(currentDir, '../src/helpers/html-parser.ts')
 
-describe('htmlparser2 v10.0.0 Compatibility', () => {
-  describe('Entity decoding behavior (decodeEntities: false)', () => {
+describe('justjshtml Compatibility', () => {
+  describe('Entity decoding behavior', () => {
     test('should NOT auto-decode &nbsp; during parsing', () => {
-      // With decodeEntities: false, htmlparser2 v10 should behave like v3.9.0
-      // and store &nbsp; as raw string, then we decode it manually
+      // We expect entities to resolve to decoded Unicode characters.
       const result = convertHTML('<p>Hello&nbsp;World</p>')
 
       // After manual decoding, it should be a non-breaking space character
@@ -65,7 +64,7 @@ describe('htmlparser2 v10.0.0 Compatibility', () => {
     })
   })
 
-  describe('Case sensitivity (lowerCaseAttributeNames: false)', () => {
+  describe('Case sensitivity', () => {
     test('should preserve attribute name case', () => {
       const result = convertHTML('<div dataValue="test">Content</div>')
 
@@ -78,7 +77,7 @@ describe('htmlparser2 v10.0.0 Compatibility', () => {
     test('should preserve tag name case', () => {
       const result = convertHTML('<DIV>Content</DIV>')
 
-      // htmlparser2 lowercases tag names by default
+      // HTML element tag names should be normalized to lowercase
       expect(result.tagName).toBe('div')
     })
   })
@@ -186,7 +185,7 @@ describe('Regression tests for CVE-2025-57352 fix', () => {
     const htmlParserSource = fs.readFileSync(htmlParserPath, 'utf8')
 
     expect(htmlParserSource).not.toContain('virtual-dom')
-    expect(htmlParserSource).toContain('htmlparser2')
+    expect(htmlParserSource).toContain("from 'justjshtml")
   })
 
   test('should NOT use html-to-vdom package', () => {

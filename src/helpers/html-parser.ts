@@ -2,7 +2,7 @@
 /**
  * HTML to Virtual DOM Parser
  *
- * Converts HTML strings to virtual DOM trees using htmlparser2 for parsing.
+ * Converts HTML strings to virtual DOM trees using justjshtml for parsing.
  * This implementation replaces the unmaintained html-to-v package while
  * maintaining full API compatibility.
  *
@@ -10,7 +10,7 @@
  */
 
 import { decode } from 'html-entities'
-import * as htmlparser2 from 'htmlparser2'
+import { FragmentContext, JustHTML } from 'justjshtml/src/index.js'
 
 import { VNode, VText } from '../vdom/index'
 
@@ -47,11 +47,10 @@ interface PropertyInfo {
 type NodeAttributes = Record<string, string>
 
 interface ParsedNode {
-  type: string
-  name?: string
+  name: string
   data?: string
+  attrs?: NodeAttributes
   children?: ParsedNode[]
-  attribs?: NodeAttributes
   [key: string]: unknown
 }
 
@@ -111,6 +110,7 @@ const Properties: Record<string, PropertyConfig> = {
   high: null,
   href: null,
   hrefLang: null,
+  htmlFor: null,
   httpEquiv: null,
   icon: null,
   id: MUST_USE_PROPERTY,
@@ -188,6 +188,7 @@ const Properties: Record<string, PropertyConfig> = {
 
 const PropertyToAttributeMapping = {
   className: 'class',
+  htmlFor: 'for',
   httpEquiv: 'http-equiv',
   acceptCharset: 'accept-charset',
 }
@@ -333,7 +334,7 @@ function getPropertySetter(propInfo: PropertyInfo) {
  */
 
 function convertTagAttributes(tag: ParsedNode) {
-  const attributes = tag.attribs || {}
+  const attributes = tag.attrs || {}
   const vNodeProperties = {
     attributes: {},
   }
@@ -356,12 +357,15 @@ type VNodeLike = VNode | VText
 type ConverterGetVNodeKey = (props: NodeAttributes) => unknown
 
 function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
+  const isElementNode = (node: ParsedNode) =>
+    !node.name.startsWith('#') && node.name !== '!doctype'
+
   const converter = {
     convert(node: ParsedNode, getVNodeKey?: ConverterGetVNodeKey): VNodeLike {
-      if (node.type === 'tag' || node.type === 'script' || node.type === 'style') {
+      if (isElementNode(node)) {
         return converter.convertTag(node, getVNodeKey)
       }
-      if (node.type === 'text') {
+      if (node.name === '#text') {
         return new VTextClass(decode(node.data || ''))
       }
       // Converting an unsupported node, return an empty text node instead
@@ -386,21 +390,130 @@ function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
   return converter
 }
 
+const HTML_TAG_PATTERN = /<\s*html\b/i
+const HEAD_TAG_PATTERN = /<\s*head\b/i
+const BODY_TAG_PATTERN = /<\s*body\b/i
+const DOCTYPE_PATTERN = /<\s*!doctype\b/i
+const TBODY_PATTERN = /<\s*tbody\b/i
+const LEADING_TRIVIA_PATTERN = /^\s*(?:<!--[\s\S]*?-->\s*)*/
+
+function getFragmentContextTagName(html: string) {
+  const trimmed = html.replace(LEADING_TRIVIA_PATTERN, '')
+
+  if (/^<(?:td|th)\b/i.test(trimmed)) {
+    return 'tr'
+  }
+  if (/^<tr\b/i.test(trimmed)) {
+    return 'tbody'
+  }
+  if (/^<(?:tbody|thead|tfoot|caption|colgroup)\b/i.test(trimmed)) {
+    return 'table'
+  }
+  if (/^<col\b/i.test(trimmed)) {
+    return 'colgroup'
+  }
+
+  return 'body'
+}
+
+function normalizeDocumentRootNodes(
+  rootChildren: ParsedNode[],
+  hasExplicitHead: boolean,
+  hasExplicitBody: boolean
+) {
+  const normalizedNodes: ParsedNode[] = []
+
+  rootChildren.forEach((rootNode) => {
+    if (rootNode.name !== 'html') {
+      normalizedNodes.push(rootNode)
+      return
+    }
+
+    const htmlChildren = rootNode.children || []
+    const headNode = htmlChildren.find((child) => child.name === 'head')
+    const bodyNode = htmlChildren.find((child) => child.name === 'body')
+
+    if (hasExplicitHead && headNode) {
+      normalizedNodes.push(headNode)
+    }
+    if (hasExplicitBody && bodyNode) {
+      normalizedNodes.push(bodyNode)
+    }
+
+    if (!hasExplicitHead && !hasExplicitBody) {
+      normalizedNodes.push(...(bodyNode?.children || []))
+      return
+    }
+
+    if (hasExplicitHead && !hasExplicitBody) {
+      normalizedNodes.push(...(bodyNode?.children || []))
+    }
+    if (hasExplicitBody && !hasExplicitHead) {
+      normalizedNodes.push(...(headNode?.children || []))
+    }
+  })
+
+  return normalizedNodes
+}
+
+function flattenImplicitTableBodies(nodes: ParsedNode[], shouldFlatten: boolean) {
+  if (!shouldFlatten) {
+    return
+  }
+
+  nodes.forEach((node) => {
+    const children = node.children || []
+    flattenImplicitTableBodies(children, shouldFlatten)
+
+    if (node.name !== 'table' || children.length === 0) {
+      return
+    }
+
+    const elementChildren = children.filter((child) => !child.name.startsWith('#'))
+    if (
+      elementChildren.length > 0 &&
+      elementChildren.every((child) => child.name === 'tbody')
+    ) {
+      node.children = children.flatMap((child) =>
+        child.name === 'tbody' ? child.children || [] : [child]
+      )
+    }
+  })
+}
+
 /**
- * Parse HTML string into DOM nodes
+ * Parse HTML string into DOM nodes.
  *
- * NOTE: htmlparser2 v10.0.0 auto-decodes entities by default.
- * We set decodeEntities: false to match v3.9.0 behavior,
- * then manually decode using html-entities.
+ * justjshtml always parses as a full HTML document, while the previous
+ * htmlparser2 integration behaved like fragment parsing for most inputs.
+ * We normalize root nodes to preserve previous behavior expected by tests:
+ * - fragments resolve to body children
+ * - explicit <html> preserves the html root element
+ * - explicit <head>/<body> keeps those roots
  */
 function parseHTML(html: string): ParsedNode[] {
-  const handler = new htmlparser2.DomHandler()
-  const parser = new htmlparser2.Parser(handler, {
-    lowerCaseAttributeNames: false,
-    decodeEntities: false, // Required for htmlparser2 v10.0.0 compatibility
-  })
-  parser.parseComplete(html)
-  return handler.dom as ParsedNode[]
+  const hasExplicitHtml = HTML_TAG_PATTERN.test(html)
+  const hasExplicitHead = HEAD_TAG_PATTERN.test(html)
+  const hasExplicitBody = BODY_TAG_PATTERN.test(html)
+  const hasDoctype = DOCTYPE_PATTERN.test(html)
+  let parsedNodes: ParsedNode[]
+
+  if (hasExplicitHtml || hasExplicitHead || hasExplicitBody || hasDoctype) {
+    const doc = new JustHTML(html)
+    const rootChildren = (doc.root?.children || []) as ParsedNode[]
+    parsedNodes = hasExplicitHtml
+      ? rootChildren
+      : normalizeDocumentRootNodes(rootChildren, hasExplicitHead, hasExplicitBody)
+  } else {
+    const fragmentContextTagName = getFragmentContextTagName(html)
+    const doc = new JustHTML(html, {
+      fragmentContext: new FragmentContext(fragmentContextTagName),
+    })
+    parsedNodes = (doc.root?.children || []) as ParsedNode[]
+  }
+
+  flattenImplicitTableBodies(parsedNodes, !TBODY_PATTERN.test(html))
+  return parsedNodes
 }
 
 /**
