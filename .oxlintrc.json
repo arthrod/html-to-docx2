@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "rules": {
+    "import/no-named-as-default": "off",
+    "import/no-unassigned-import": "off",
+    "jest/expect-expect": "off",
+    "jest/no-conditional-expect": "off",
+    "jest/require-to-throw-message": "off",
+    "no-shadow": "off",
+    "no-unused-vars": "off",
+    "no-useless-concat": "off",
+    "preserve-caught-error": "off"
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": ["dist/**", "coverage/**", "templates/**", "mockServiceWorker.js"]
+}

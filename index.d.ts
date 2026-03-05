@@ -95,6 +95,20 @@ declare namespace HTMLtoDOCX {
         preprocessing?: {
             skipHTMLMinify?: boolean;
         };
+        imageProcessing?: {
+            maxRetries?: number;
+            verboseLogging?: boolean;
+            downloadTimeout?: number;
+            maxImageSize?: number;
+            retryDelayBase?: number;
+            minTimeout?: number;
+            maxTimeout?: number;
+            minImageSize?: number;
+            maxCacheSize?: number;
+            maxCacheEntries?: number;
+            svgHandling?: "convert" | "native" | "auto";
+            suppressSharpWarning?: boolean;
+        };
     }
 }
 
