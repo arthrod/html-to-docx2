@@ -4,7 +4,7 @@
  * This module provides tools for converting HTML to DOCX format.
  */
 
-// Main converter function (default export)
+// Main converter function
 export { default as HTMLtoDOCX, default } from './html-to-docx'
 
 // Re-export types for backwards compatibility

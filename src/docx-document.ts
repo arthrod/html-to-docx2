@@ -14,14 +14,8 @@ import {
 import {
   applicationName,
   commentsExtendedContentType,
-  commentsExtendedRelationshipType,
-  commentsExtendedType,
   commentsExtensibleContentType,
-  commentsExtensibleRelationshipType,
-  commentsExtensibleType,
   commentsIdsContentType,
-  commentsIdsRelationshipType,
-  commentsIdsType,
   commentsType,
   defaultDirection,
   defaultDocumentOptions,
@@ -38,8 +32,6 @@ import {
   landscapeMargins,
   landscapeWidth,
   peopleContentType,
-  peopleRelationshipType,
-  peopleType,
   portraitMargins,
   themeType as themeFileType,
 } from './constants'
@@ -64,8 +56,6 @@ import { allocatedIds, findDocxTrackingTokens, generateHexId } from './tracking'
 import { fontFamilyToTableObject } from './utils/font-family-conversion'
 import { convertSVGtoPNG, isSVG, parseDataUrl, parseSVGDimensions } from './utils/image'
 import ListStyleBuilder, { type ListStyleDefaults, type ListStyleType } from './utils/list'
-
-let sharpMissingWarningShown = false
 
 /** Virtual DOM tree node */
 export interface VTree {
@@ -927,43 +917,31 @@ class DocxDocument {
     let fileExtension =
       !mimeTypePart || mimeTypePart[1] === 'octet-stream' ? 'png' : mimeTypePart[1]
 
-    const svgHandling =
-      this.imageProcessing?.svgHandling ||
-      defaultDocumentOptions.imageProcessing.svgHandling
+    if (isSVG(mimeType)) {
+      const svgHandling = this.imageProcessing?.svgHandling ?? 'convert'
 
-    if (isSVG(mimeType) && svgHandling === 'convert') {
-      try {
-        const svgString = Buffer.from(base64FileContent, 'base64').toString('utf-8')
-        const { width, height } = parseSVGDimensions(svgString)
-        const pngBuffer = await convertSVGtoPNG(base64FileContent, { width, height })
+      if (svgHandling === 'convert') {
+        try {
+          const svgString =
+            typeof Buffer !== 'undefined'
+              ? Buffer.from(base64FileContent, 'base64').toString('utf-8')
+              : globalThis.atob(base64FileContent)
+          const { width, height } = parseSVGDimensions(svgString)
+          const pngBase64 = await convertSVGtoPNG(base64FileContent, width, height)
 
-        base64FileContent = pngBuffer.toString('base64')
-        fileExtension = 'png'
-        mimeType = 'image/png'
-      } catch (error) {
-        const errorMessage = (error as Error).message || ''
-        if (errorMessage.includes('Sharp is not installed')) {
-          const suppressWarning =
-            this.imageProcessing?.suppressSharpWarning ||
-            defaultDocumentOptions.imageProcessing.suppressSharpWarning
-
-          if (!sharpMissingWarningShown && !suppressWarning) {
-            // eslint-disable-next-line no-console
-            console.warn(
-              '\n[INFO] Sharp not installed - SVG images will be embedded natively (requires Office 2019+ or Microsoft 365).\n' +
-                'For maximum compatibility with all Word versions, install sharp: npm install sharp\n' +
-                'Learn more: https://github.com/TurboDocx/html-to-docx#svg-image-support\n'
-            )
-            sharpMissingWarningShown = true
+          if (pngBase64) {
+            base64FileContent = pngBase64
+            fileExtension = 'png'
+            mimeType = 'image/png'
+          } else {
+            fileExtension = 'svg'
           }
-        } else {
-          // eslint-disable-next-line no-console
-          console.error(`[ERROR] Failed to convert SVG to PNG: ${errorMessage}`)
+        } catch {
+          fileExtension = 'svg'
         }
+      } else {
         fileExtension = 'svg'
       }
-    } else if (isSVG(mimeType)) {
-      fileExtension = 'svg'
     }
 
     const fileNameWithExtension = `image-${nanoid()}.${fileExtension}`
@@ -1009,18 +987,6 @@ class DocxDocument {
       case commentsType:
         relationshipType = namespaces.comments
         break
-      case commentsExtendedType:
-        relationshipType = commentsExtendedRelationshipType
-        break
-      case commentsIdsType:
-        relationshipType = commentsIdsRelationshipType
-        break
-      case commentsExtensibleType:
-        relationshipType = commentsExtensibleRelationshipType
-        break
-      case peopleType:
-        relationshipType = peopleRelationshipType
-        break
       case headerFileType:
         relationshipType = namespaces.headers
         break
@@ -1029,6 +995,10 @@ class DocxDocument {
         break
       case themeFileType:
         relationshipType = namespaces.themes
+        break
+      default:
+        // Allow passing full relationship type URLs directly
+        relationshipType = type
         break
     }
 

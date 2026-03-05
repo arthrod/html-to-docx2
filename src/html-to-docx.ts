@@ -6,11 +6,8 @@ import { create } from 'xmlbuilder2'
 
 import {
   commentsExtendedRelationshipType,
-  commentsExtendedType,
   commentsExtensibleRelationshipType,
-  commentsExtensibleType,
   commentsIdsRelationshipType,
-  commentsIdsType,
   commentsType,
   defaultDocumentOptions,
   defaultHTMLString,
@@ -21,7 +18,6 @@ import {
   headerType,
   internalRelationship,
   peopleRelationshipType,
-  peopleType,
   relsFolderName,
   themeFileName,
   themeFolder,
@@ -438,25 +434,25 @@ async function addFilesToContainer(
     // Add relationships for the 4 new comment-related files
     docxDocument.createDocumentRelationships(
       documentFileName,
-      commentsExtendedType,
+      commentsExtendedRelationshipType,
       'commentsExtended.xml',
       internalRelationship
     )
     docxDocument.createDocumentRelationships(
       documentFileName,
-      commentsIdsType,
+      commentsIdsRelationshipType,
       'commentsIds.xml',
       internalRelationship
     )
     docxDocument.createDocumentRelationships(
       documentFileName,
-      commentsExtensibleType,
+      commentsExtensibleRelationshipType,
       'commentsExtensible.xml',
       internalRelationship
     )
     docxDocument.createDocumentRelationships(
       documentFileName,
-      peopleType,
+      peopleRelationshipType,
       'people.xml',
       internalRelationship
     )

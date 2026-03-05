@@ -1,5 +1,3 @@
-import axios from 'axios'
-
 import { defaultDocumentOptions } from '../constants'
 
 type DownloadOptions = {
@@ -92,15 +90,18 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
+
   try {
-    const response = await axios.get(imageUrl, {
-      maxBodyLength: maxSize,
-      maxContentLength: maxSize,
-      responseType: 'arraybuffer',
-      timeout,
-      validateStatus: (status) => status === 200,
-    })
-    const bytes = new Uint8Array(response.data)
+    const response = await fetch(imageUrl, { signal: controller.signal })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    const bytes = new Uint8Array(arrayBuffer)
 
     if (!bytes.length) {
       throw new Error('Empty image response')
@@ -110,26 +111,20 @@ const downloadImage = async (
       throw new Error(`Image exceeds max size (${bytes.length} > ${maxSize})`)
     }
 
-    const contentTypeHeader = response.headers?.['content-type']?.split(';')[0]?.trim()
+    const contentTypeHeader = response.headers.get('content-type')?.split(';')[0]?.trim()
     const mimeType = contentTypeHeader || guessMimeTypeFromBytes(bytes)
 
     return {
       base64: toBase64(bytes),
       mimeType,
     }
-  } catch (error: any) {
-    if (error?.code === 'ECONNABORTED') {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Request timeout after ${timeout}ms`, { cause: error })
     }
-    if (error?.response) {
-      throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`, {
-        cause: error,
-      })
-    }
-    if (error?.request) {
-      throw new Error(`Network error: ${error.message}`, { cause: error })
-    }
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 

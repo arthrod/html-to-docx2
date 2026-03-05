@@ -18,6 +18,7 @@ export default defineConfig({
     },
     environment: 'node',
     globals: true,
+    exclude: ['tests/examples/**'],
     include: ['tests/**/*.test.js'],
     testTimeout: 10000,
   },

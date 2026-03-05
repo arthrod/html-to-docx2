@@ -59,8 +59,6 @@ interface VNodeProperties {
   [key: string]: unknown
 }
 
-// HTML DOM properties configuration
-/* eslint-disable no-bitwise */
 const Properties: Record<string, PropertyConfig> = {
   accept: null,
   acceptCharset: null,

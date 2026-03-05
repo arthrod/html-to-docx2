@@ -88,6 +88,7 @@ describe('Inline SVG Element Handling', () => {
 
       const parsed = await parseDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
+      // Native mode keeps .svg extension
       expect(parsed.xml).toMatch(/image-.*\.svg/)
     })
 

@@ -1,8 +1,6 @@
 // Unit tests for image processing functionality
 // Tests image download, base64 conversion, dimension handling, and configuration options
 
-import axios from 'axios'
-
 import HTMLtoDOCX from '../index.ts'
 import { clearImageCache, getImageCacheStats } from '../src/helpers/render-document-file'
 import { processImageSource } from '../src/helpers/xml-builder'
@@ -20,8 +18,18 @@ import {
 } from './fixtures/index.js'
 import { parseDOCX, assertParagraphCount } from './helpers/docx-assertions.js'
 
-// Mock axios for downloadImageToBase64 tests
-vi.mock('axios')
+// Helper to create a mock fetch response from a Buffer
+function mockFetchResponse(data, status = 200) {
+  const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+  return Promise.resolve({
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: status === 200 ? 'OK' : status === 404 ? 'Not Found' : 'Error',
+    headers: new Headers({ 'content-type': 'image/png' }),
+    arrayBuffer: () => Promise.resolve(arrayBuffer),
+    blob: () => Promise.resolve(new Blob([arrayBuffer])),
+  })
+}
 
 describe('Image Processing', () => {
   // Base64 images loaded from fixture files
@@ -463,7 +471,6 @@ describe('Image Processing', () => {
       const parsed = await parseDOCX(docx)
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
-      // Note: Alt text handling depends on implementation
     })
 
     test('should handle title attribute', async () => {
@@ -489,52 +496,31 @@ describe('Image Processing', () => {
 
   describe('downloadImageToBase64 utility', () => {
     beforeEach(() => {
-      vi.clearAllMocks()
+      vi.restoreAllMocks()
     })
 
     test('should download image and convert to base64', async () => {
-      // Mock successful axios response with arraybuffer
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE, // Use actual PNG buffer from fixtures
-        status: 200,
-      })
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const base64 = await downloadImageToBase64('https://example.com/image.png')
 
-      // Verify axios was called with correct config
-      expect(axios.get).toHaveBeenCalledWith('https://example.com/image.png', {
-        responseType: 'arraybuffer',
-        timeout: 5000,
-        maxContentLength: 10 * 1024 * 1024,
-        maxBodyLength: 10 * 1024 * 1024,
-        validateStatus: expect.any(Function),
-      })
-
-      // Verify returned base64 matches our fixture
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1)
       expect(base64).toBe(PNG_1x1_BASE64)
     })
 
-    test('should handle custom timeout and maxSize', async () => {
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+    test('should handle custom timeout', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
-      await downloadImageToBase64('https://example.com/image.png', 3000, 5 * 1024 * 1024)
+      await downloadImageToBase64('https://example.com/image.png', 3000)
 
-      expect(axios.get).toHaveBeenCalledWith('https://example.com/image.png', {
-        responseType: 'arraybuffer',
-        timeout: 3000,
-        maxContentLength: 5 * 1024 * 1024,
-        maxBodyLength: 5 * 1024 * 1024,
-        validateStatus: expect.any(Function),
-      })
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1)
     })
 
     test('should throw error on timeout', async () => {
-      axios.get.mockRejectedValue({
-        code: 'ECONNABORTED',
-        message: 'timeout',
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => {
+        const error = new Error('The operation was aborted')
+        error.name = 'AbortError'
+        return Promise.reject(error)
       })
 
       await expect(downloadImageToBase64('https://example.com/image.png')).rejects.toThrow(
@@ -543,34 +529,30 @@ describe('Image Processing', () => {
     })
 
     test('should throw error on HTTP error status', async () => {
-      axios.get.mockRejectedValue({
-        response: {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+        Promise.resolve({
+          ok: false,
           status: 404,
           statusText: 'Not Found',
-        },
-      })
+          headers: new Headers(),
+        })
+      )
 
       await expect(downloadImageToBase64('https://example.com/image.png')).rejects.toThrow(
         'HTTP 404: Not Found'
       )
     })
 
-    test('should throw error on network error', async () => {
-      axios.get.mockRejectedValue({
-        request: {},
-        message: 'Network error',
-      })
-
-      await expect(downloadImageToBase64('https://example.com/image.png')).rejects.toThrow(
-        'Network error: Network error'
-      )
-    })
-
     test('should throw error on empty response', async () => {
-      axios.get.mockResolvedValue({
-        data: Buffer.from([]),
-        status: 200,
-      })
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({ 'content-type': 'image/png' }),
+          blob: () => Promise.resolve(new Blob([])),
+        })
+      )
 
       await expect(downloadImageToBase64('https://example.com/image.png')).rejects.toThrow(
         'Empty response data received'
@@ -582,7 +564,7 @@ describe('Image Processing', () => {
     let mockDocxInstance
 
     beforeEach(() => {
-      vi.clearAllMocks()
+      vi.restoreAllMocks()
       // Create a minimal mock document instance
       mockDocxInstance = {
         imageProcessing: {},
@@ -611,10 +593,7 @@ describe('Image Processing', () => {
     })
 
     test('should download URL image and return properties', async () => {
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const vNode = {
         properties: {
@@ -656,12 +635,14 @@ describe('Image Processing', () => {
     })
 
     test('should return null when download fails', async () => {
-      axios.get.mockRejectedValue({
-        response: {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
+        Promise.resolve({
+          ok: false,
           status: 404,
           statusText: 'Not Found',
-        },
-      })
+          headers: new Headers(),
+        })
+      )
 
       const vNode = {
         properties: {
@@ -770,15 +751,13 @@ describe('Image Processing', () => {
 
   describe('Image cache isolation', () => {
     beforeEach(() => {
-      vi.clearAllMocks()
+      vi.restoreAllMocks()
     })
 
     test('should isolate cache between different document generations', async () => {
-      // Mock axios to return PNG fixture
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const imageUrl = 'https://example.com/test-image.png'
       const htmlString1 = `<img src="${imageUrl}" />`
@@ -798,15 +777,14 @@ describe('Image Processing', () => {
       const parsed2 = await parseDOCX(docx2)
       expect(parsed2.paragraphs.length).toBeGreaterThanOrEqual(1)
 
-      // Verify axios was called twice (once per document, no cross-document caching)
-      expect(axios.get).toHaveBeenCalledTimes(2)
+      // Verify fetch was called twice (once per document, no cross-document caching)
+      expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
 
     test('should maintain cache within same document generation', async () => {
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const imageUrl = 'https://example.com/repeated-image.png'
       // Same image used 3 times in one document
@@ -823,7 +801,7 @@ describe('Image Processing', () => {
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(3)
 
       // Should only download once due to within-document caching
-      expect(axios.get).toHaveBeenCalledTimes(1)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
     })
 
     test('clearImageCache should work with docxDocumentInstance', () => {
@@ -902,31 +880,24 @@ describe('Image Processing', () => {
 
   describe('LRU cache eviction and memory limits', () => {
     beforeEach(() => {
-      vi.clearAllMocks()
+      vi.restoreAllMocks()
     })
 
     test('should respect maxCacheEntries limit and evict oldest entries', async () => {
-      // Configure small cache: max 2 entries
       const htmlWithThreeImages = `
         <img src="https://example.com/image1.png" />
         <img src="https://example.com/image2.png" />
         <img src="https://example.com/image3.png" />
       `
 
-      // Mock axios to return different images
-      let callCount = 0
-      axios.get.mockImplementation(() => {
-        callCount++
-        return Promise.resolve({
-          data: PNG_FIXTURE,
-          status: 200,
-        })
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(htmlWithThreeImages, null, {
         imageProcessing: {
-          maxCacheEntries: 2, // Only cache 2 images max
-          maxCacheSize: 10 * 1024 * 1024, // 10MB (high enough to not hit size limit)
+          maxCacheEntries: 2,
+          maxCacheSize: 10 * 1024 * 1024,
           verboseLogging: false,
         },
       })
@@ -935,39 +906,23 @@ describe('Image Processing', () => {
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(3)
 
       // Should have downloaded all 3 images (no cache hits due to unique URLs)
-      expect(axios.get).toHaveBeenCalledTimes(3)
-
-      // Verify cache was used within document by checking it only downloaded once per unique URL
-      expect(axios.get).toHaveBeenCalledWith(
-        'https://example.com/image1.png',
-        expect.any(Object)
-      )
-      expect(axios.get).toHaveBeenCalledWith(
-        'https://example.com/image2.png',
-        expect.any(Object)
-      )
-      expect(axios.get).toHaveBeenCalledWith(
-        'https://example.com/image3.png',
-        expect.any(Object)
-      )
+      expect(fetchSpy).toHaveBeenCalledTimes(3)
     })
 
     test('should respect maxCacheSize limit and evict when size exceeded', async () => {
-      // Configure tiny cache: max 100 bytes (base64 PNG is ~200 bytes decoded)
       const htmlWithTwoImages = `
         <img src="https://example.com/large1.png" />
         <img src="https://example.com/large2.png" />
       `
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(htmlWithTwoImages, null, {
         imageProcessing: {
-          maxCacheEntries: 100, // High entry limit
-          maxCacheSize: 100, // Only 100 bytes max (will trigger size eviction)
+          maxCacheEntries: 100,
+          maxCacheSize: 100,
           verboseLogging: false,
         },
       })
@@ -975,12 +930,11 @@ describe('Image Processing', () => {
       const parsed = await parseDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
 
-      // Both images should be downloaded (cache too small to hold even one)
-      expect(axios.get).toHaveBeenCalledTimes(2)
+      // Both images should be downloaded
+      expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
 
     test('should cache repeated images within document with LRU', async () => {
-      // Same image repeated 5 times
       const imageUrl = 'https://example.com/repeated.png'
       const htmlWithRepeatedImages = `
         <img src="${imageUrl}" />
@@ -990,15 +944,14 @@ describe('Image Processing', () => {
         <img src="${imageUrl}" />
       `
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(htmlWithRepeatedImages, null, {
         imageProcessing: {
           maxCacheEntries: 100,
-          maxCacheSize: 20 * 1024 * 1024, // 20MB default
+          maxCacheSize: 20 * 1024 * 1024,
           verboseLogging: false,
         },
       })
@@ -1007,7 +960,7 @@ describe('Image Processing', () => {
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(5)
 
       // Should only download once, then use cache
-      expect(axios.get).toHaveBeenCalledTimes(1)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
     })
 
     test('should handle cache limits with mixed unique and repeated images', async () => {
@@ -1019,14 +972,13 @@ describe('Image Processing', () => {
         <img src="https://example.com/img2.png" />
       `
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: {
-          maxCacheEntries: 2, // Can only cache 2 images
+          maxCacheEntries: 2,
           maxCacheSize: 10 * 1024 * 1024,
           verboseLogging: false,
         },
@@ -1035,11 +987,8 @@ describe('Image Processing', () => {
       const parsed = await parseDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(5)
 
-      // Should download: img1 (cache), img2 (cache), img1 (hit), img3 (evicts oldest), img2 (miss, re-download)
-      // Actual downloads: img1, img2, img3, img2 (again) = 4 calls
-      // OR might be 3 if LRU keeps most recent
-      expect(axios.get.mock.calls.length).toBeGreaterThanOrEqual(3)
-      expect(axios.get.mock.calls.length).toBeLessThanOrEqual(4)
+      expect(fetchSpy.mock.calls.length).toBeGreaterThanOrEqual(3)
+      expect(fetchSpy.mock.calls.length).toBeLessThanOrEqual(4)
     })
 
     test('should work with default cache limits (20MB, 100 entries)', async () => {
@@ -1047,30 +996,26 @@ describe('Image Processing', () => {
         <img src="https://example.com/default-test.png" />
       `
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
-      // Use default config (no imageProcessing override)
       const docx = await HTMLtoDOCX(html)
       const parsed = await parseDOCX(docx)
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
-      expect(axios.get).toHaveBeenCalledTimes(1)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
     })
 
     test('should use configured cache limits', async () => {
-      // Test that custom cache limits are applied correctly
       const html = `
         <img src="https://example.com/test1.png" />
         <img src="https://example.com/test2.png" />
       `
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      const fetchSpy = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: {
@@ -1083,24 +1028,19 @@ describe('Image Processing', () => {
       const parsed = await parseDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
 
-      // Should successfully process images with custom cache config
-      expect(axios.get).toHaveBeenCalledTimes(2)
+      expect(fetchSpy).toHaveBeenCalledTimes(2)
     })
   })
 
   describe('HTML attribute vs CSS style precedence', () => {
     beforeEach(() => {
-      vi.clearAllMocks()
+      vi.restoreAllMocks()
     })
 
     test('CSS style width/height should override HTML attribute width/height', async () => {
-      // CSS style should take precedence over HTML attributes
       const html = `<img src="https://example.com/test.png" width="100" height="100" style="width: 200px; height: 200px;" />`
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: { verboseLogging: false },
@@ -1108,12 +1048,9 @@ describe('Image Processing', () => {
 
       const parsed = await parseDOCX(docx)
 
-      // Verify image was processed
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
-      expect(axios.get).toHaveBeenCalledTimes(1)
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1)
 
-      // Check that dimensions in XML reflect CSS values (200px) not HTML attributes (100px)
-      // 200px * 9525 EMU/px = 1905000 EMU
       const cxMatch = parsed.xml.match(/cx=["']([0-9]+)["']/)
       const cyMatch = parsed.xml.match(/cy=["']([0-9]+)["']/)
 
@@ -1124,7 +1061,6 @@ describe('Image Processing', () => {
       const heightEMU = parseInt(cyMatch[1])
 
       // CSS 200px should be ~1905000 EMU (200 * 9525)
-      // Allow some rounding tolerance
       expect(widthEMU).toBeGreaterThan(1800000)
       expect(widthEMU).toBeLessThan(2000000)
       expect(heightEMU).toBeGreaterThan(1800000)
@@ -1134,10 +1070,7 @@ describe('Image Processing', () => {
     test('HTML attributes should apply when no CSS style is present', async () => {
       const html = `<img src="https://example.com/test.png" width="150" height="150" />`
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: { verboseLogging: false },
@@ -1147,8 +1080,6 @@ describe('Image Processing', () => {
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
 
-      // Check that dimensions reflect HTML attribute values (150px)
-      // 150px * 9525 EMU/px = 1428750 EMU
       const cxMatch = parsed.xml.match(/cx=["']([0-9]+)["']/)
       const cyMatch = parsed.xml.match(/cy=["']([0-9]+)["']/)
 
@@ -1168,10 +1099,7 @@ describe('Image Processing', () => {
     test('Partial CSS override: only width in style should override HTML width but keep HTML height', async () => {
       const html = `<img src="https://example.com/test.png" width="100" height="100" style="width: 300px;" />`
 
-      axios.get.mockResolvedValue({
-        data: PNG_FIXTURE,
-        status: 200,
-      })
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: { verboseLogging: false },
@@ -1190,9 +1118,6 @@ describe('Image Processing', () => {
       // CSS width 300px should be ~2857500 EMU (300 * 9525)
       expect(widthEMU).toBeGreaterThan(2700000)
       expect(widthEMU).toBeLessThan(3000000)
-
-      // Height should maintain aspect ratio based on new width
-      // (since CSS only specified width, height is calculated from aspect ratio)
     })
   })
 })

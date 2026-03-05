@@ -1,5 +1,3 @@
-import axios from 'axios'
-
 import { SVG_UNIT_TO_PIXEL_CONVERSIONS } from '../constants'
 import {
   downloadAndCacheImage,
@@ -7,20 +5,6 @@ import {
   imageToBase64,
   parseDataUrl,
 } from './image-to-base64'
-
-type SVGConvertOptions = {
-  density?: number
-  height?: number
-  width?: number
-}
-
-type RuntimeBuffer = {
-  from: (
-    input: string | ArrayBuffer | ArrayLike<number> | ArrayBufferView,
-    encoding?: BufferEncoding
-  ) => Buffer
-  isBuffer: (input: unknown) => boolean
-}
 
 const MIME_BY_EXTENSION: Record<string, string> = {
   bmp: 'image/bmp',
@@ -34,23 +18,9 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   webp: 'image/webp',
 }
 
-const getRuntimeBuffer = (): RuntimeBuffer | null => {
-  const runtime = globalThis as typeof globalThis & { Buffer?: RuntimeBuffer }
-  const runtimeBuffer = runtime.Buffer
-  if (
-    runtimeBuffer &&
-    typeof runtimeBuffer.from === 'function' &&
-    typeof runtimeBuffer.isBuffer === 'function'
-  ) {
-    return runtimeBuffer
-  }
-  return null
-}
-
 const toBase64ByteArray = (base64String: string): Uint8Array => {
-  const runtimeBuffer = getRuntimeBuffer()
-  if (runtimeBuffer) {
-    return Uint8Array.from(runtimeBuffer.from(base64String.substring(0, 50), 'base64'))
+  if (typeof Buffer !== 'undefined') {
+    return Uint8Array.from(Buffer.from(base64String.substring(0, 50), 'base64'))
   }
 
   const binaryString = globalThis.atob(base64String.substring(0, 50))
@@ -155,9 +125,7 @@ export const isSVG = (mimeTypeOrExtension?: string | null): boolean => {
 }
 
 const convertSVGUnitToPixels = (value: number, unit: string): number => {
-  const factor =
-    SVG_UNIT_TO_PIXEL_CONVERSIONS[unit as keyof typeof SVG_UNIT_TO_PIXEL_CONVERSIONS] || 1
-
+  const factor = SVG_UNIT_TO_PIXEL_CONVERSIONS[unit] || 1
   return Math.round(value * factor)
 }
 
@@ -174,15 +142,16 @@ export const parseSVGDimensions = (
   let height: number | undefined
 
   if (widthMatch) {
-    const value = Number.parseFloat(widthMatch[1])
-    const unit = widthMatch[2]?.toLowerCase() || 'px'
-    width = convertSVGUnitToPixels(value, unit)
+    width = convertSVGUnitToPixels(
+      Number.parseFloat(widthMatch[1]),
+      widthMatch[2]?.toLowerCase() || 'px'
+    )
   }
-
   if (heightMatch) {
-    const value = Number.parseFloat(heightMatch[1])
-    const unit = heightMatch[2]?.toLowerCase() || 'px'
-    height = convertSVGUnitToPixels(value, unit)
+    height = convertSVGUnitToPixels(
+      Number.parseFloat(heightMatch[1]),
+      heightMatch[2]?.toLowerCase() || 'px'
+    )
   }
 
   if (!width || !height) {
@@ -190,142 +159,157 @@ export const parseSVGDimensions = (
     if (viewBoxMatch) {
       const parts = viewBoxMatch[1].trim().split(/\s+/)
       if (parts.length === 4) {
-        const viewBoxWidth = Number.parseFloat(parts[2])
-        const viewBoxHeight = Number.parseFloat(parts[3])
-
-        if (!width && height && viewBoxWidth && viewBoxHeight) {
-          width = Math.round((height * viewBoxWidth) / viewBoxHeight)
-        } else if (width && !height && viewBoxWidth && viewBoxHeight) {
-          height = Math.round((width * viewBoxHeight) / viewBoxWidth)
-        } else if (!width && !height) {
-          width = Math.round(viewBoxWidth)
-          height = Math.round(viewBoxHeight)
+        const vbW = Number.parseFloat(parts[2])
+        const vbH = Number.parseFloat(parts[3])
+        if (!width && height && vbW && vbH) width = Math.round((height * vbW) / vbH)
+        else if (width && !height && vbW && vbH) height = Math.round((width * vbH) / vbW)
+        else if (!width && !height) {
+          width = Math.round(vbW)
+          height = Math.round(vbH)
         }
       }
     }
   }
 
-  return {
-    width: width || 300,
-    height: height || 150,
-  }
+  return { width: width || 300, height: height || 150 }
 }
 
-const bytesToBase64 = (bytes: Uint8Array): string => {
-  const runtimeBuffer = getRuntimeBuffer()
-  if (runtimeBuffer) {
-    return runtimeBuffer.from(bytes).toString('base64')
+/**
+ * Converts SVG base64 content to PNG base64 using the browser Canvas API.
+ * Returns null if Canvas is not available (e.g. pure Node without OffscreenCanvas).
+ */
+const convertSVGtoPNGCanvas = (
+  svgBase64: string,
+  width: number,
+  height: number
+): Promise<string | null> => {
+  const CanvasClass = typeof OffscreenCanvas !== 'undefined' ? OffscreenCanvas : null
+
+  if (!CanvasClass) {
+    return Promise.resolve(null)
   }
 
-  let binary = ''
-  for (let i = 0; i < bytes.length; i += 1) {
-    binary += String.fromCharCode(bytes[i])
-  }
+  return new Promise((resolve) => {
+    const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`
+    const canvas = new CanvasClass(width, height)
+    const ctx = canvas.getContext('2d')
 
-  if (typeof globalThis.btoa === 'function') {
-    return globalThis.btoa(binary)
-  }
+    if (!ctx) {
+      resolve(null)
+      return
+    }
 
-  throw new Error('No base64 encoder is available in this runtime')
+    fetch(svgDataUrl)
+      .then((res) => res.blob())
+      .then((blob) => createImageBitmap(blob, { resizeWidth: width, resizeHeight: height }))
+      .then((bitmap) => {
+        ctx.drawImage(bitmap, 0, 0, width, height)
+        return canvas.convertToBlob({ type: 'image/png' })
+      })
+      .then((blob) => blob.arrayBuffer())
+      .then((arrayBuffer) => {
+        if (typeof Buffer !== 'undefined') {
+          resolve(Buffer.from(arrayBuffer).toString('base64'))
+        } else {
+          const bytes = new Uint8Array(arrayBuffer)
+          let binary = ''
+          for (let i = 0; i < bytes.length; i += 1) {
+            binary += String.fromCharCode(bytes[i])
+          }
+          resolve(globalThis.btoa(binary))
+        }
+      })
+      .catch(() => {
+        resolve(null)
+      })
+  })
 }
 
-const loadSharp = async (): Promise<any> => {
+/**
+ * Converts SVG base64 to PNG base64 using sharp (Node.js fallback).
+ * Returns null if sharp is not installed.
+ */
+const convertSVGtoPNGSharp = async (
+  svgBase64: string,
+  width: number,
+  height: number
+): Promise<string | null> => {
   try {
     const sharpModule = await import('sharp')
-    return sharpModule.default || sharpModule
+    const sharp = sharpModule.default || sharpModule
+    const svgBuffer = Buffer.from(svgBase64, 'base64')
+
+    const pngBuffer = await sharp(svgBuffer, { density: 72 })
+      .resize(width, height, {
+        fit: 'contain',
+        background: { r: 255, g: 255, b: 255, alpha: 0 },
+      })
+      .png()
+      .toBuffer()
+
+    return pngBuffer.toString('base64')
   } catch {
-    throw new Error('Sharp is not installed. Install it with: npm install sharp')
+    return null
   }
 }
 
 /**
- * Converts SVG input to PNG using sharp.
+ * Converts SVG base64 to PNG base64.
+ * Tries Canvas first (browser), falls back to sharp (Node.js).
+ * Returns null if neither is available — SVG will be embedded natively.
  */
 export const convertSVGtoPNG = async (
-  svgInput: Buffer | Uint8Array | string,
-  options: SVGConvertOptions = {}
-): Promise<Buffer> => {
-  try {
-    const runtimeBuffer = getRuntimeBuffer()
-    if (!runtimeBuffer) {
-      throw new Error('Buffer API is unavailable in this runtime')
-    }
+  svgBase64: string,
+  width: number,
+  height: number
+): Promise<string | null> => {
+  const canvasResult = await convertSVGtoPNGCanvas(svgBase64, width, height)
+  if (canvasResult) return canvasResult
 
-    let svgBuffer: Buffer
-    if (typeof svgInput === 'string') {
-      if (/^[A-Za-z0-9+/=]+$/.test(svgInput)) {
-        svgBuffer = runtimeBuffer.from(svgInput, 'base64')
-      } else {
-        svgBuffer = runtimeBuffer.from(svgInput, 'utf-8')
-      }
-    } else if (runtimeBuffer.isBuffer(svgInput)) {
-      svgBuffer = svgInput as Buffer
-    } else if (svgInput instanceof Uint8Array) {
-      svgBuffer = runtimeBuffer.from(svgInput)
-    } else {
-      throw new Error('Invalid SVG input type')
-    }
-
-    const sharp = await loadSharp()
-    const { density = 72, width, height } = options
-
-    let sharpInstance = sharp(svgBuffer, { density })
-
-    if (width || height) {
-      sharpInstance = sharpInstance.resize(width, height, {
-        fit: 'contain',
-        background: { alpha: 0, b: 255, g: 255, r: 255 },
-      })
-    }
-
-    return await sharpInstance.png().toBuffer()
-  } catch (error) {
-    throw new Error(`Failed to convert SVG to PNG: ${(error as Error).message}`, {
-      cause: error,
-    })
-  }
+  return convertSVGtoPNGSharp(svgBase64, width, height)
 }
 
 /**
- * Downloads an image URL and returns base64 content.
+ * Downloads an image URL and returns base64 content using fetch.
  */
 export const downloadImageToBase64 = async (
   url: string,
-  timeout = 5000,
-  maxSize = 10 * 1024 * 1024
+  timeout = 5000
 ): Promise<string> => {
-  try {
-    const response = await axios.get(url, {
-      responseType: 'arraybuffer',
-      timeout,
-      maxContentLength: maxSize,
-      maxBodyLength: maxSize,
-      validateStatus: (status) => status === 200,
-    })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-    if (!response.data || response.data.length === 0) {
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const blob = await response.blob()
+    if (blob.size === 0) {
       throw new Error('Empty response data received')
     }
 
-    const base64 = bytesToBase64(new Uint8Array(response.data))
-    if (!base64 || base64.length === 0) {
-      throw new Error('Failed to convert response to base64')
+    const arrayBuffer = await blob.arrayBuffer()
+
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(arrayBuffer).toString('base64')
     }
 
-    return base64
-  } catch (error: any) {
-    if (error.code === 'ECONNABORTED') {
+    const bytes = new Uint8Array(arrayBuffer)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i += 1) {
+      binary += String.fromCharCode(bytes[i])
+    }
+    return globalThis.btoa(binary)
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Request timeout after ${timeout}ms`, { cause: error })
     }
-    if (error.response) {
-      throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`, {
-        cause: error,
-      })
-    }
-    if (error.request) {
-      throw new Error(`Network error: ${error.message}`, { cause: error })
-    }
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 

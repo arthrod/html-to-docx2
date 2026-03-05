@@ -2370,9 +2370,10 @@ const buildTableRowProperties = (
     Object.keys(attributes).forEach((key) => {
       switch (key) {
         case 'tableRowHeight': {
-          const tableRowHeightFragment = buildTableRowHeight(attributes[key]!)
-          tableRowPropertiesFragment.import(tableRowHeightFragment)
-
+          if (attributes[key] != null) {
+            const tableRowHeightFragment = buildTableRowHeight(attributes[key])
+            tableRowPropertiesFragment.import(tableRowHeightFragment)
+          }
           attributes.tableRowHeight = undefined
           break
         }

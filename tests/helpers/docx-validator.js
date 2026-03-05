@@ -3,8 +3,8 @@
  * Utilities for extracting and parsing DOCX file contents for testing
  */
 
-import JSZip from 'jszip';
-import { create } from 'xmlbuilder2';
+import JSZip from 'jszip'
+import { create } from 'xmlbuilder2'
 import {
   PARAGRAPH_REGEX,
   TEXT_REGEX,
@@ -15,7 +15,7 @@ import {
   FONT_REGEX,
   COLOR_REGEX,
   FONT_SIZE_REGEX,
-} from './constants.js';
+} from './constants.js'
 
 /**
  * Unzip a DOCX file buffer and return the JSZip instance
@@ -23,9 +23,9 @@ import {
  * @returns {Promise<JSZip>} JSZip instance with DOCX contents
  */
 export async function unzipDocx(docxBuffer) {
-  const zip = new JSZip();
-  await zip.loadAsync(docxBuffer);
-  return zip;
+  const zip = new JSZip()
+  await zip.loadAsync(docxBuffer)
+  return zip
 }
 
 /**
@@ -34,11 +34,11 @@ export async function unzipDocx(docxBuffer) {
  * @returns {Promise<string>} The word/document.xml file as a string
  */
 export async function extractDocumentXML(zip) {
-  const documentFile = zip.file('word/document.xml');
+  const documentFile = zip.file('word/document.xml')
   if (!documentFile) {
-    throw new Error('word/document.xml not found in DOCX file');
+    throw new Error('word/document.xml not found in DOCX file')
   }
-  return await documentFile.async('string');
+  return await documentFile.async('string')
 }
 
 /**
@@ -47,7 +47,7 @@ export async function extractDocumentXML(zip) {
  * @returns {Object} Parsed XML document
  */
 export function parseXML(xmlString) {
-  return create(xmlString);
+  return create(xmlString)
 }
 
 /**
@@ -58,8 +58,8 @@ export function parseXML(xmlString) {
 export function findParagraphs(xmlString) {
   // Use pre-compiled regex constant from constants.js
   // Avoids recompiling regex on every function call
-  const matches = xmlString.match(PARAGRAPH_REGEX);
-  return matches || [];
+  const matches = xmlString.match(PARAGRAPH_REGEX)
+  return matches || []
 }
 
 /**
@@ -68,17 +68,17 @@ export function findParagraphs(xmlString) {
  * @returns {string} Concatenated text content from all text runs
  */
 export function extractText(paragraphXml) {
-  const texts = [];
-  let match;
+  const texts = []
+  let match
 
   // Use pre-compiled regex constant from constants.js
   // IMPORTANT: Reset lastIndex for global regexes when reusing
-  TEXT_REGEX.lastIndex = 0;
+  TEXT_REGEX.lastIndex = 0
   while ((match = TEXT_REGEX.exec(paragraphXml)) !== null) {
-    texts.push(match[1]);
+    texts.push(match[1])
   }
 
-  return texts.join('');
+  return texts.join('')
 }
 
 /**
@@ -87,30 +87,30 @@ export function extractText(paragraphXml) {
  * @returns {Object} Object containing paragraph properties
  */
 export function extractParagraphProperties(paragraphXml) {
-  const properties = {};
+  const properties = {}
 
   // Use pre-compiled regex constants from constants.js for all property extractions
   // Each regex is compiled once at module load instead of on every function call
 
   // Extract alignment (justification)
-  const alignmentMatch = paragraphXml.match(ALIGNMENT_REGEX);
+  const alignmentMatch = paragraphXml.match(ALIGNMENT_REGEX)
   if (alignmentMatch) {
-    properties.alignment = alignmentMatch[1];
+    properties.alignment = alignmentMatch[1]
   }
 
   // Extract spacing before
-  const spacingBeforeMatch = paragraphXml.match(SPACING_BEFORE_REGEX);
+  const spacingBeforeMatch = paragraphXml.match(SPACING_BEFORE_REGEX)
   if (spacingBeforeMatch) {
-    properties.spacingBefore = parseInt(spacingBeforeMatch[1], 10);
+    properties.spacingBefore = parseInt(spacingBeforeMatch[1], 10)
   }
 
   // Extract spacing after
-  const spacingAfterMatch = paragraphXml.match(SPACING_AFTER_REGEX);
+  const spacingAfterMatch = paragraphXml.match(SPACING_AFTER_REGEX)
   if (spacingAfterMatch) {
-    properties.spacingAfter = parseInt(spacingAfterMatch[1], 10);
+    properties.spacingAfter = parseInt(spacingAfterMatch[1], 10)
   }
 
-  return properties;
+  return properties
 }
 
 /**
@@ -119,57 +119,57 @@ export function extractParagraphProperties(paragraphXml) {
  * @returns {Array} Array of run property objects
  */
 export function extractRunProperties(paragraphXml) {
-  const runs = [];
-  let match;
+  const runs = []
+  let match
 
   // Use pre-compiled regex constant from constants.js
   // IMPORTANT: Reset lastIndex for global regexes when reusing
-  RUN_REGEX.lastIndex = 0;
+  RUN_REGEX.lastIndex = 0
   while ((match = RUN_REGEX.exec(paragraphXml)) !== null) {
-    const runXml = match[1];
-    const runProps = {};
+    const runXml = match[1]
+    const runProps = {}
 
     // Use pre-compiled regex constants for all run property extractions
 
     // Extract font family
-    const fontMatch = runXml.match(FONT_REGEX);
+    const fontMatch = runXml.match(FONT_REGEX)
     if (fontMatch) {
-      runProps.font = fontMatch[1];
+      runProps.font = fontMatch[1]
     }
 
     // Extract color
-    const colorMatch = runXml.match(COLOR_REGEX);
+    const colorMatch = runXml.match(COLOR_REGEX)
     if (colorMatch) {
-      runProps.color = colorMatch[1];
+      runProps.color = colorMatch[1]
     }
 
     // Extract bold
     // Note: Using string includes for simple existence checks (faster than regex)
     if (runXml.includes('<w:b />') || runXml.includes('<w:b/>')) {
-      runProps.bold = true;
+      runProps.bold = true
     }
 
     // Extract italic
     if (runXml.includes('<w:i />') || runXml.includes('<w:i/>')) {
-      runProps.italic = true;
+      runProps.italic = true
     }
 
     // Extract font size
-    const sizeMatch = runXml.match(FONT_SIZE_REGEX);
+    const sizeMatch = runXml.match(FONT_SIZE_REGEX)
     if (sizeMatch) {
-      runProps.fontSize = parseInt(sizeMatch[1], 10);
+      runProps.fontSize = parseInt(sizeMatch[1], 10)
     }
 
     // Extract text content
-    const textMatch = runXml.match(TEXT_REGEX);
+    const textMatch = runXml.match(TEXT_REGEX)
     if (textMatch) {
-      runProps.text = textMatch[1];
+      runProps.text = textMatch[1]
     }
 
-    runs.push(runProps);
+    runs.push(runProps)
   }
 
-  return runs;
+  return runs
 }
 
 /**
@@ -195,35 +195,35 @@ export function extractRunProperties(paragraphXml) {
  */
 class LazyParagraph {
   constructor(xml) {
-    this.xml = xml;
-    this._text = null;
-    this._properties = null;
-    this._runs = null;
+    this.xml = xml
+    this._text = null
+    this._properties = null
+    this._runs = null
   }
 
   get text() {
     // Lazy parse: Only extract text if accessed
     if (this._text === null) {
-      this._text = extractText(this.xml);
+      this._text = extractText(this.xml)
     }
-    return this._text;
+    return this._text
   }
 
   get properties() {
     // Lazy parse: Only extract properties if accessed
     if (this._properties === null) {
-      this._properties = extractParagraphProperties(this.xml);
+      this._properties = extractParagraphProperties(this.xml)
     }
-    return this._properties;
+    return this._properties
   }
 
   get runs() {
     // Lazy parse: Only extract runs if accessed
     // Note: extractRunProperties is most expensive operation
     if (this._runs === null) {
-      this._runs = extractRunProperties(this.xml);
+      this._runs = extractRunProperties(this.xml)
     }
-    return this._runs;
+    return this._runs
   }
 }
 
@@ -233,22 +233,27 @@ class LazyParagraph {
  * @returns {Promise<Object>} Object with parsed content: { paragraphs, xml, zip, contentTypes }
  */
 export async function parseDOCX(docxBuffer) {
-  const zip = await unzipDocx(docxBuffer);
-  const documentXml = await extractDocumentXML(zip);
-  const paragraphs = findParagraphs(documentXml);
+  const zip = await unzipDocx(docxBuffer)
+  const documentXml = await extractDocumentXML(zip)
+  const paragraphs = findParagraphs(documentXml)
 
   // Extract [Content_Types].xml for content type validation
-  const contentTypesFile = zip.file('[Content_Types].xml');
-  const contentTypes = contentTypesFile ? await contentTypesFile.async('string') : null;
+  const contentTypesFile = zip.file('[Content_Types].xml')
+  const contentTypes = contentTypesFile ? await contentTypesFile.async('string') : null
+
+  // Extract numbering.xml for list/numbering validation
+  const numberingFile = zip.file('word/numbering.xml')
+  const numberingXml = numberingFile ? await numberingFile.async('string') : null
 
   // Wrap each paragraph in LazyParagraph for on-demand parsing
   // Properties are only parsed when accessed, not upfront
-  const parsedParagraphs = paragraphs.map((paraXml) => new LazyParagraph(paraXml));
+  const parsedParagraphs = paragraphs.map((paraXml) => new LazyParagraph(paraXml))
 
   return {
     paragraphs: parsedParagraphs,
     xml: documentXml,
+    numberingXml,
     zip,
     contentTypes,
-  };
+  }
 }
