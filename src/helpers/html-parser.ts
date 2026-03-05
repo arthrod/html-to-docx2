@@ -30,9 +30,39 @@ const HAS_POSITIVE_NUMERIC_VALUE = 0x10 | 0x8
 const HAS_OVERLOADED_BOOLEAN_VALUE = 0x20
 /* eslint-enable no-bitwise */
 
+type PropertyConfig = number | null
+
+interface PropertyInfo {
+  attributeName: string
+  propertyName?: string
+  mustUseAttribute: boolean
+  mustUseProperty: boolean
+  hasBooleanValue: boolean
+  hasNumericValue: boolean
+  hasPositiveNumericValue: boolean
+  hasOverloadedBooleanValue: boolean
+  isCustomAttribute?: boolean
+}
+
+type NodeAttributes = Record<string, string>
+
+interface ParsedNode {
+  type: string
+  name?: string
+  data?: string
+  children?: ParsedNode[]
+  attribs?: NodeAttributes
+  [key: string]: unknown
+}
+
+interface VNodeProperties {
+  attributes: NodeAttributes
+  [key: string]: unknown
+}
+
 // HTML DOM properties configuration
 /* eslint-disable no-bitwise */
-const Properties = {
+const Properties: Record<string, PropertyConfig> = {
   accept: null,
   acceptCharset: null,
   accessKey: null,
@@ -81,7 +111,6 @@ const Properties = {
   high: null,
   href: null,
   hrefLang: null,
-  htmlFor: null,
   httpEquiv: null,
   icon: null,
   id: MUST_USE_PROPERTY,
@@ -159,23 +188,22 @@ const Properties = {
 
 const PropertyToAttributeMapping = {
   className: 'class',
-  htmlFor: 'for',
   httpEquiv: 'http-equiv',
   acceptCharset: 'accept-charset',
 }
 
-function checkMask(value, bitmask) {
+function checkMask(value: number, bitmask: number) {
   // eslint-disable-next-line no-bitwise
   return (value & bitmask) === bitmask
 }
 
 // Build property info lookup table
-const propInfoByAttributeName = {}
+const propInfoByAttributeName: Record<string, PropertyInfo> = {}
 Object.keys(Properties).forEach((propName) => {
-  const propConfig = Properties[propName]
+  const propConfig = Properties[propName] || 0
   const attributeName = PropertyToAttributeMapping[propName] || propName.toLowerCase()
 
-  const propertyInfo = {
+  const propertyInfo: PropertyInfo = {
     attributeName,
     propertyName: propName,
     mustUseAttribute: checkMask(propConfig, MUST_USE_ATTRIBUTE),
@@ -189,7 +217,7 @@ Object.keys(Properties).forEach((propName) => {
   propInfoByAttributeName[attributeName] = propertyInfo
 })
 
-function getPropertyInfo(attributeName) {
+function getPropertyInfo(attributeName: string): PropertyInfo {
   const lowerCased = attributeName.toLowerCase()
 
   if (Object.hasOwn(propInfoByAttributeName, lowerCased)) {
@@ -204,16 +232,12 @@ function getPropertyInfo(attributeName) {
   }
 }
 
-// ============================================================================
-// Property Setters
-// ============================================================================
-
 /**
  * Parse CSS style string into object
  */
-function parseStyles(input) {
+function parseStyles(input: string): Record<string, string> {
   const attributes = input.split(';')
-  const styles = attributes.reduce((object, attribute) => {
+  const styles = attributes.reduce<Record<string, string>>((object, attribute) => {
     const entry = attribute.split(/:(.*)/)
     if (entry[0] && entry[1]) {
       object[entry[0].trim()] = entry[1].trim()
@@ -223,24 +247,32 @@ function parseStyles(input) {
   return styles
 }
 
-const propertyValueConversions = {
+const propertyValueConversions: Record<string, (value: string) => unknown> = {
   style: parseStyles,
   placeholder: decode,
   title: decode,
   alt: decode,
 }
 
-function propertyIsTrue(propInfo, value) {
+function propertyIsTrue(
+  propInfo: Pick<
+    PropertyInfo,
+    'hasBooleanValue' | 'hasOverloadedBooleanValue' | 'attributeName'
+  >,
+  value: unknown
+) {
+  const propertyValue = typeof value === 'string' ? value : String(value)
+
   if (propInfo.hasBooleanValue) {
-    return value === '' || value.toLowerCase() === propInfo.attributeName
+    return propertyValue === '' || propertyValue.toLowerCase() === propInfo.attributeName
   }
   if (propInfo.hasOverloadedBooleanValue) {
-    return value === ''
+    return propertyValue === ''
   }
   return false
 }
 
-function getPropertyValue(propInfo, value) {
+function getPropertyValue(propInfo: PropertyInfo, value: unknown) {
   const isTrue = propertyIsTrue(propInfo, value)
   if (propInfo.hasBooleanValue) {
     return !!isTrue
@@ -254,30 +286,42 @@ function getPropertyValue(propInfo, value) {
   return value
 }
 
-function setVNodeProperty(properties, propInfo, value) {
+function setVNodeProperty(
+  properties: VNodeProperties,
+  propInfo: PropertyInfo,
+  value: unknown
+) {
   const propName = propInfo.propertyName
-  let valueConverter
+  let valueConverter: ((input: string) => unknown) | undefined
 
-  if (propName && Object.hasOwn(propertyValueConversions, propName)) {
-    valueConverter = propertyValueConversions[propInfo.propertyName]
-    value = valueConverter(value)
+  if (!propName) {
+    return
+  }
+
+  if (Object.hasOwn(propertyValueConversions, propName)) {
+    valueConverter = propertyValueConversions[propName]
+    value = valueConverter(typeof value === 'string' ? value : String(value))
   }
 
   properties[propInfo.propertyName] = getPropertyValue(propInfo, value)
 }
 
-function getAttributeValue(propInfo, value) {
+function getAttributeValue(propInfo: PropertyInfo, value: string) {
   if (propInfo.hasBooleanValue) {
     return ''
   }
   return value
 }
 
-function setVNodeAttribute(properties, propInfo, value) {
+function setVNodeAttribute(
+  properties: VNodeProperties,
+  propInfo: PropertyInfo,
+  value: string
+) {
   properties.attributes[propInfo.attributeName] = getAttributeValue(propInfo, value)
 }
 
-function getPropertySetter(propInfo: { mustUseAttribute: any }) {
+function getPropertySetter(propInfo: PropertyInfo) {
   if (propInfo.mustUseAttribute) {
     return { set: setVNodeAttribute }
   }
@@ -287,8 +331,9 @@ function getPropertySetter(propInfo: { mustUseAttribute: any }) {
 /**
  * Convert tag attributes to VNode properties
  */
-function convertTagAttributes(tag) {
-  const attributes = tag.attribs
+
+function convertTagAttributes(tag: ParsedNode) {
+  const attributes = tag.attribs || {}
   const vNodeProperties = {
     attributes: {},
   }
@@ -307,28 +352,31 @@ function convertTagAttributes(tag) {
 // HTML Parser to VDOM Converter
 // ============================================================================
 
-function createConverter(VNodeClass, VTextClass) {
+type VNodeLike = VNode | VText
+type ConverterGetVNodeKey = (props: NodeAttributes) => unknown
+
+function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
   const converter = {
-    convert(node, getVNodeKey) {
+    convert(node: ParsedNode, getVNodeKey?: ConverterGetVNodeKey): VNodeLike {
       if (node.type === 'tag' || node.type === 'script' || node.type === 'style') {
         return converter.convertTag(node, getVNodeKey)
       }
       if (node.type === 'text') {
-        return new VTextClass(decode(node.data))
+        return new VTextClass(decode(node.data || ''))
       }
       // Converting an unsupported node, return an empty text node instead
       return new VTextClass('')
     },
 
-    convertTag(tag, getVNodeKey) {
+    convertTag(tag: ParsedNode, getVNodeKey?: ConverterGetVNodeKey): VNodeLike {
       const attributes = convertTagAttributes(tag)
-      let key
+      let key: unknown
 
       if (getVNodeKey) {
         key = getVNodeKey(attributes)
       }
 
-      const children = Array.prototype.map.call(tag.children || [], (node) =>
+      const children = (tag.children || []).map((node) =>
         converter.convert(node, getVNodeKey)
       )
 
@@ -345,14 +393,14 @@ function createConverter(VNodeClass, VTextClass) {
  * We set decodeEntities: false to match v3.9.0 behavior,
  * then manually decode using html-entities.
  */
-function parseHTML(html) {
+function parseHTML(html: string): ParsedNode[] {
   const handler = new htmlparser2.DomHandler()
   const parser = new htmlparser2.Parser(handler, {
     lowerCaseAttributeNames: false,
     decodeEntities: false, // Required for htmlparser2 v10.0.0 compatibility
   })
   parser.parseComplete(html)
-  return handler.dom
+  return handler.dom as ParsedNode[]
 }
 
 /**

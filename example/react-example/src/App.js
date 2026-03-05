@@ -1,7 +1,7 @@
-import HTMLtoDOCX from 'html-to-docx';
-import { saveAs } from 'file-saver';
+import { saveAs } from 'file-saver'
+import { HTMLtoDOCX as htmlToDOCX } from 'html-to-docx'
 
-import './App.css';
+import './App.css' // eslint-disable-line import/no-unassigned-import
 
 const htmlString = `<!DOCTYPE html>
 <html lang="en">
@@ -1888,33 +1888,32 @@ const htmlString = `<!DOCTYPE html>
             />
         </div>
     </body>
-</html>`;
+</html>`
 
 function App() {
   async function downloadDocx() {
-    const fileBuffer = await HTMLtoDOCX(htmlString, null, {
-      table: { 
+    const fileBuffer = await htmlToDOCX(htmlString, null, {
+      table: {
         row: { cantSplit: true },
-        addSpacingAfter: true
+        addSpacingAfter: true,
       },
       footer: true,
       pageNumber: true,
-      preprocessing: { skipHTMLMinify: false }
-    });
+      preprocessing: { skipHTMLMinify: false },
+    })
 
-    saveAs(fileBuffer, 'html-to-docx.docx');
+    saveAs(fileBuffer, 'html-to-docx.docx')
   }
 
   return (
     <div className="App">
       <header className="App-header">
-        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-        <a className="App-link" href="#" onClick={downloadDocx}>
+        <button type="button" className="App-link" onClick={downloadDocx}>
           Learn React
-        </a>
+        </button>
       </header>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

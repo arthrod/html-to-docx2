@@ -6,7 +6,7 @@
     "suspicious": "error"
   },
   "rules": {
-    "import/no-named-as-default": "warn",
+    "import/no-named-as-default": "error",
     "no-explicit-any": "warn",
     "import/no-unassigned-import": "warn",
     "jest/expect-expect": "error",
