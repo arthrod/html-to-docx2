@@ -119,13 +119,15 @@ const downloadImage = async (
     }
   } catch (error: any) {
     if (error?.code === 'ECONNABORTED') {
-      throw new Error(`Request timeout after ${timeout}ms`)
+      throw new Error(`Request timeout after ${timeout}ms`, { cause: error })
     }
     if (error?.response) {
-      throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`)
+      throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`, {
+        cause: error,
+      })
     }
     if (error?.request) {
-      throw new Error(`Network error: ${error.message}`)
+      throw new Error(`Network error: ${error.message}`, { cause: error })
     }
     throw error
   }

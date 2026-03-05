@@ -192,7 +192,7 @@ Object.keys(Properties).forEach((propName) => {
 function getPropertyInfo(attributeName) {
   const lowerCased = attributeName.toLowerCase()
 
-  if (Object.prototype.hasOwnProperty.call(propInfoByAttributeName, lowerCased)) {
+  if (Object.hasOwn(propInfoByAttributeName, lowerCased)) {
     return propInfoByAttributeName[lowerCased]
   }
 
@@ -258,10 +258,7 @@ function setVNodeProperty(properties, propInfo, value) {
   const propName = propInfo.propertyName
   let valueConverter
 
-  if (
-    propName &&
-    Object.prototype.hasOwnProperty.call(propertyValueConversions, propName)
-  ) {
+  if (propName && Object.hasOwn(propertyValueConversions, propName)) {
     valueConverter = propertyValueConversions[propInfo.propertyName]
     value = valueConverter(value)
   }
@@ -280,7 +277,7 @@ function setVNodeAttribute(properties, propInfo, value) {
   properties.attributes[propInfo.attributeName] = getAttributeValue(propInfo, value)
 }
 
-function getPropertySetter(propInfo) {
+function getPropertySetter(propInfo: { mustUseAttribute: any }) {
   if (propInfo.mustUseAttribute) {
     return { set: setVNodeAttribute }
   }
@@ -361,15 +358,18 @@ function parseHTML(html) {
 /**
  * Main converter function
  */
-function convertHTML(options, html) {
-  // Support both (options, html) and (html) signatures
-  let opts = options
-  let htmlString = html
-
-  if (typeof options === 'string') {
-    htmlString = options
-    opts = {}
-  }
+function convertHTML(html: string): VNode[] | VNode | VText
+function convertHTML(
+  options: { getVNodeKey?: (props: Record<string, string>) => unknown },
+  html: string
+): VNode[] | VNode | VText
+function convertHTML(
+  optionsOrHTML: string | { getVNodeKey?: (props: Record<string, string>) => unknown },
+  html?: string
+) {
+  const shouldUseOptions = typeof optionsOrHTML === 'object'
+  const opts = shouldUseOptions ? optionsOrHTML : undefined
+  const htmlString = (typeof optionsOrHTML === 'string' ? optionsOrHTML : html) || ''
 
   const converter = createConverter(VNode, VText)
   const tags = parseHTML(htmlString)
@@ -379,9 +379,9 @@ function convertHTML(options, html) {
     // Empty HTML
     convertedHTML = new VText('')
   } else if (tags.length > 1) {
-    convertedHTML = tags.map((tag) => converter.convert(tag, opts.getVNodeKey))
+    convertedHTML = tags.map((tag) => converter.convert(tag, opts && opts.getVNodeKey))
   } else {
-    convertedHTML = converter.convert(tags[0], opts.getVNodeKey)
+    convertedHTML = converter.convert(tags[0], opts && opts.getVNodeKey)
   }
 
   return convertedHTML

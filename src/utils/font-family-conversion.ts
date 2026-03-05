@@ -22,6 +22,7 @@ export const fontFamilyToTableObject = (
 
   return {
     fontName: fontFamilyElements[0],
-    genericFontName: fontFamilyElements.at(-1) ?? fontFamilyElements[0],
+    genericFontName:
+      fontFamilyElements[fontFamilyElements.length - 1] || fontFamilyElements[0],
   }
 }

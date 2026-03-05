@@ -16,7 +16,6 @@ const noChildren = []
 /**
  * Helper to check if something is a VNode (internal)
  */
-// eslint-disable-next-line no-underscore-dangle
 function _isVNode(x) {
   return x && x.type === 'VirtualNode'
 }
@@ -41,9 +40,8 @@ function isThunk(x) {
 function isVHook(x) {
   return (
     x &&
-    ((typeof x.hook === 'function' && !Object.prototype.hasOwnProperty.call(x, 'hook')) ||
-      (typeof x.unhook === 'function' &&
-        !Object.prototype.hasOwnProperty.call(x, 'unhook')))
+    ((typeof x.hook === 'function' && !Object.hasOwn(x, 'hook')) ||
+      (typeof x.unhook === 'function' && !Object.hasOwn(x, 'unhook')))
   )
 }
 
@@ -52,14 +50,35 @@ function isVHook(x) {
  * EXACT copy of virtual-dom/vnode/vnode.js
  */
 export class VNode {
-  constructor(tagName, properties, children, key, namespace) {
+  [key: string]: unknown
+  tagName: string
+  properties: Record<string, unknown>
+  children: (VNode | VText)[]
+  key?: string
+  namespace: string | null
+  count: number
+  hasWidgets: boolean
+  hasThunks: boolean
+  hooks?: Record<string, unknown>
+  descendantHooks: boolean
+
+  constructor(
+    tagName: string,
+    properties?: Record<string, unknown> | null,
+    children?: (VNode | VText)[],
+    key?: unknown,
+    namespace?: string | null
+  ) {
+    const vnodeProperties = properties || noProperties
+    const vnodeChildren = children || noChildren
+
     this.tagName = tagName
-    this.properties = properties || noProperties
-    this.children = children || noChildren
+    this.properties = vnodeProperties
+    this.children = vnodeChildren
     this.key = key != null ? String(key) : undefined
     this.namespace = typeof namespace === 'string' ? namespace : null
 
-    const count = (children && children.length) || 0
+    const count = (vnodeChildren && vnodeChildren.length) || 0
     let descendants = 0
     let hasWidgets = false
     let hasThunks = false
@@ -68,9 +87,9 @@ export class VNode {
 
     // Check properties for hooks
     // eslint-disable-next-line no-restricted-syntax
-    for (const propName in properties) {
-      if (Object.prototype.hasOwnProperty.call(properties, propName)) {
-        const property = properties[propName]
+    for (const propName in vnodeProperties) {
+      if (Object.hasOwn(vnodeProperties, propName)) {
+        const property = vnodeProperties[propName]
         if (isVHook(property) && property.unhook) {
           if (!hooks) {
             hooks = {}
@@ -82,7 +101,7 @@ export class VNode {
 
     // Calculate descendants and check for widgets/thunks
     for (let i = 0; i < count; i += 1) {
-      const child = children[i]
+      const child = vnodeChildren[i]
       if (_isVNode(child)) {
         descendants += child.count || 0
 
@@ -122,9 +141,11 @@ VNode.prototype.type = 'VirtualNode'
  * EXACT copy of virtual-dom/vnode/vtext.js
  */
 export class VText {
+  [key: string]: unknown
   constructor(text) {
     this.text = String(text)
   }
+  text: string
 }
 
 VText.prototype.version = version

@@ -18,12 +18,14 @@ const banner = `// ${meta.homepage} v${meta.version} Copyright ${new Date().getF
 const libraryConfig = {
   input: 'index.ts',
   external: [
+    'axios',
     'color-name',
     'jszip',
     'xmlbuilder2',
     'html-entities',
     'lru-cache',
     'htmlparser2',
+    'nanoid',
     'sharp',
   ],
   plugins: [
@@ -56,8 +58,10 @@ const libraryConfig = {
       name: 'HTMLToDOCX',
       sourcemap: !isProduction,
       globals: {
+        axios: 'axios',
         htmlparser2: 'htmlparser2',
         jszip: 'JSZip',
+        nanoid: 'nanoid',
         xmlbuilder2: 'xmlbuilder2',
         'html-entities': 'htmlEntities',
       },

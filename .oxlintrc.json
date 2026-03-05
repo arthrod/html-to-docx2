@@ -1,20 +1,22 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["import", "vitest"],
+  "plugins": ["import", "vitest", "jsx-a11y", "jsdoc", "typescript"],
   "categories": {
     "correctness": "error",
     "suspicious": "error"
   },
   "rules": {
-    "import/no-named-as-default": "off",
-    "import/no-unassigned-import": "off",
-    "jest/expect-expect": "off",
-    "jest/no-conditional-expect": "off",
-    "jest/require-to-throw-message": "off",
-    "no-shadow": "off",
-    "no-unused-vars": "off",
-    "no-useless-concat": "off",
-    "preserve-caught-error": "off"
+    "import/no-named-as-default": "warn",
+    "no-explicit-any": "warn",
+    "import/no-unassigned-import": "warn",
+    "jest/expect-expect": "error",
+    "no-implicit-any-catch": "warn",
+    "jest/no-conditional-expect": "error",
+    "jest/require-to-throw-message": "error",
+    "no-shadow": "warn",
+    "no-unused-vars": "warn",
+    "no-useless-concat": "warn",
+    "preserve-caught-error": "warn"
   },
   "env": {
     "builtin": true

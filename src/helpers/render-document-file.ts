@@ -4,9 +4,8 @@
 import { fragment } from 'xmlbuilder2'
 import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces'
 
+import { isVNode, isVText, VNode } from '../vdom/index'
 import createHTMLToVDOM from './html-parser'
-// @ts-expect-error - JS module without declarations
-import { VNode, isVNode, isVText } from '../vdom/index'
 
 type XMLBuilderType = XMLBuilder
 
@@ -353,6 +352,8 @@ type VNodeObject = {
   type: string
 }
 
+const getLastAccumulatorItem = <T>(items: T[]): T | undefined => items[items.length - 1]
+
 export const buildList = async (
   vNode: VNodeType,
   docxDocumentInstance: DocxDocumentInstance,
@@ -418,12 +419,14 @@ export const buildList = async (
             })
           } else if (
             accumulator.length > 0 &&
-            isVNode(accumulator.at(-1)!.node) &&
-            ((accumulator.at(-1)!.node as VNodeType).tagName || '').toLowerCase() === 'p' &&
+            isVNode(accumulator[accumulator.length - 1].node) &&
+            (
+              (accumulator[accumulator.length - 1].node as VNodeType).tagName || ''
+            ).toLowerCase() === 'p' &&
             // Don't append <li> elements to paragraphs - they need separate processing
             (childNode.tagName || '').toLowerCase() !== 'li'
           ) {
-            const lastNode = accumulator.at(-1)!.node as VNodeType
+            const lastNode = accumulator[accumulator.length - 1].node as VNodeType
             if (lastNode.children) {
               lastNode.children.push(childVNode)
             }

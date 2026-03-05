@@ -3,8 +3,7 @@
 /* biome-ignore-all lint/performance/useTopLevelRegex: legacy code */
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
-import { cloneDeep } from 'lodash-es'
-// @ts-expect-error - JS module without declarations
+import { cloneDeep } from 'es-toolkit'
 import { fragment } from 'xmlbuilder2'
 import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces'
 
@@ -41,6 +40,7 @@ import {
 } from '../constants'
 import namespaces from '../namespaces'
 import {
+  type ActiveSuggestion,
   buildCommentRangeEnd,
   buildCommentRangeStart,
   buildCommentReferenceRun,
@@ -48,9 +48,8 @@ import {
   ensureTrackingState,
   hasTrackingTokens,
   splitDocxTrackingTokens,
-  wrapRunWithSuggestion,
-  type ActiveSuggestion,
   type TrackingDocumentInstance,
+  wrapRunWithSuggestion,
 } from '../tracking'
 import {
   hex3Regex,
@@ -807,8 +806,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.color = fixupColorCode(style.color)
     }
 
-    const backgroundColor =
-      style['background-color'] ?? (style as Record<string, string>).backgroundColor
+    const backgroundColor = style['background-color'] ?? style.backgroundColor
     if (backgroundColor && !colorlessColors.includes(backgroundColor)) {
       modifiedAttributes.backgroundColor = fixupColorCode(backgroundColor)
     }
@@ -1110,8 +1108,8 @@ const buildRun = async (
 
           // if spanFragment is an array, we need to add each fragment to the runFragmentsArray. If the fragment is an array, perform a depth first search on the array to add each fragment to the runFragmentsArray
           if (Array.isArray(spanFragment)) {
-            ;(spanFragment as XMLBuilderType[]).flat(Number.POSITIVE_INFINITY)
-            runFragmentsArray.push(...(spanFragment as XMLBuilderType[]))
+            spanFragment.flat(Number.POSITIVE_INFINITY)
+            runFragmentsArray.push(...spanFragment)
           } else {
             runFragmentsArray.push(spanFragment)
           }
@@ -2634,7 +2632,7 @@ const buildTableProperties = (attributes: TableAttributes | undefined): XMLBuild
         }
         case 'width':
           if (attributes[key]) {
-            const tableWidthFragment = buildTableWidth(attributes[key]!)
+            const tableWidthFragment = buildTableWidth(attributes[key])
             tablePropertiesFragment.import(tableWidthFragment)
           }
 
@@ -3337,19 +3335,19 @@ const buildDrawing = (
 }
 
 export {
-  buildParagraph,
-  buildTable,
-  processImageSource,
-  buildNumberingInstances,
-  buildLineBreak,
-  buildIndentation,
-  buildTextElement,
   buildBold,
-  buildItalics,
-  buildUnderline,
   buildDrawing,
-  fixupLineHeight,
+  buildIndentation,
+  buildItalics,
+  buildLineBreak,
+  buildNumberingInstances,
+  buildParagraph,
   // Tracking support exports
   buildRunsFromTextWithTokens,
+  buildTable,
+  buildTextElement,
   buildTextRunFragment,
+  buildUnderline,
+  fixupLineHeight,
+  processImageSource,
 }
