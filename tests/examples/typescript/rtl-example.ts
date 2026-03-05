@@ -1,5 +1,11 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+import { HTMLtoDOCX } from '../../../dist/index.cjs'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 /**
  * RTL (Right-to-Left) Language Support Example
@@ -139,7 +145,7 @@ async function generateRTLDocuments() {
     // Arabic RTL document
     const arabicDoc = await HTMLtoDOCX(arabicHtmlString, null, {
       direction: 'rtl',
-      lang: 'ar-SA',
+      defaultLang: 'ar-SA',
       font: 'Arial',
       title: 'Arabic RTL Example',
       creator: 'TurboDocx RTL Test',
@@ -149,7 +155,7 @@ async function generateRTLDocuments() {
     // Hebrew RTL document
     const hebrewDoc = await HTMLtoDOCX(hebrewHtmlString, null, {
       direction: 'rtl',
-      lang: 'he-IL',
+      defaultLang: 'he-IL',
       font: 'Arial',
       title: 'Hebrew RTL Example',
       creator: 'TurboDocx RTL Test',
@@ -159,7 +165,7 @@ async function generateRTLDocuments() {
     // Mixed content document (default LTR with RTL sections)
     const mixedDoc = await HTMLtoDOCX(mixedContentHtml, null, {
       direction: 'ltr', // Default direction
-      lang: 'en-US',
+      defaultLang: 'en-US',
       font: 'Arial',
       title: 'Mixed Content Example',
       creator: 'TurboDocx RTL Test',
@@ -172,7 +178,7 @@ async function generateRTLDocuments() {
       null,
       {
         direction: 'ltr',
-        lang: 'en-US',
+        defaultLang: 'en-US',
         font: 'Arial',
         title: 'LTR Example',
         creator: 'TurboDocx RTL Test',
@@ -184,4 +190,4 @@ async function generateRTLDocuments() {
   }
 }
 
-generateRTLDocuments()
+void generateRTLDocuments()

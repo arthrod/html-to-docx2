@@ -1441,83 +1441,81 @@ const buildParagraphProperties = (
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'pPr')
   if (attributes && attributes.constructor === Object) {
-    Object.keys(attributes).forEach((key) => {
-      switch (key) {
-        case 'numbering': {
-          const { levelId, numberingId } = attributes[key]!
-          const numberingPropertiesFragment = buildNumberingProperties(levelId, numberingId)
-          paragraphPropertiesFragment.import(numberingPropertiesFragment)
+    // OOXML XSD requires pPr children in this order:
+    // pStyle, keepNext, keepLines, pageBreakBefore, framePr, widowControl,
+    // numPr, suppressLineNumbers, pBdr, shd, tabs, suppressAutoHyphens,
+    // kinsoku, wordWrap, overflowPunct, topLinePunct, autoSpaceDE, autoSpaceDN,
+    // bidi, adjustRightInd, snapToGrid, spacing, ind, contextualSpacing,
+    // mirrorIndents, suppressOverlap, jc, textDirection, textAlignment,
+    // textboxTightWrap, outlineLvl, divId, cnfStyle, rPr, sectPr, pPrChange
 
-          attributes.numbering = undefined
-          break
-        }
-        case 'textAlign': {
-          const horizontalAlignmentFragment = buildHorizontalAlignment(attributes[key]!)
-          paragraphPropertiesFragment.import(horizontalAlignmentFragment)
+    // 1. pStyle
+    if (attributes.paragraphStyle !== undefined) {
+      const pStyleFragment = buildPStyle(attributes.paragraphStyle)
+      paragraphPropertiesFragment.import(pStyleFragment)
+      attributes.paragraphStyle = undefined
+    }
 
-          attributes.textAlign = undefined
-          break
-        }
-        case 'backgroundColor':
-          // Add shading to Paragraph Properties only if display is block
-          // Essentially if background color needs to be across the row
-          if (attributes.display === 'block') {
-            const shadingFragment = buildShading(attributes[key]!)
-            paragraphPropertiesFragment.import(shadingFragment)
-            // FIXME: Inner padding in case of shaded paragraphs.
-            const paragraphBorderFragment = buildParagraphBorder()
-            paragraphPropertiesFragment.import(paragraphBorderFragment)
+    // 2. numPr
+    if (attributes.numbering !== undefined) {
+      const { levelId, numberingId } = attributes.numbering
+      const numberingPropertiesFragment = buildNumberingProperties(levelId, numberingId)
+      paragraphPropertiesFragment.import(numberingPropertiesFragment)
+      attributes.numbering = undefined
+    }
 
-            attributes.backgroundColor = undefined
-          }
-          break
-        case 'paragraphStyle': {
-          const pStyleFragment = buildPStyle(attributes.paragraphStyle)
-          paragraphPropertiesFragment.import(pStyleFragment)
-          attributes.paragraphStyle = undefined
-          break
-        }
-        case 'indentation': {
-          const indentationFragment = buildIndentation(attributes[key]!)
-          paragraphPropertiesFragment.import(indentationFragment)
+    // 3. pBdr
+    if (attributes.blockquoteBorder !== undefined) {
+      const borderFragment = fragment({
+        namespaceAlias: { w: namespaces.w },
+      })
+        .ele('@w', 'pBdr')
+        .ele('@w', 'left')
+        .att('@w', 'val', 'single')
+        .att('@w', 'sz', '18')
+        .att('@w', 'space', '4')
+        .att('@w', 'color', 'CCCCCC')
+        .up()
+        .up()
+      paragraphPropertiesFragment.import(borderFragment)
+      attributes.blockquoteBorder = undefined
+    } else if (attributes.backgroundColor !== undefined && attributes.display === 'block') {
+      // FIXME: Inner padding in case of shaded paragraphs.
+      const paragraphBorderFragment = buildParagraphBorder()
+      paragraphPropertiesFragment.import(paragraphBorderFragment)
+    }
 
-          attributes.indentation = undefined
-          break
-        }
-        case 'blockquoteBorder': {
-          // Add left border for blockquote styling
-          const borderFragment = fragment({
-            namespaceAlias: { w: namespaces.w },
-          })
-            .ele('@w', 'pBdr')
-            .ele('@w', 'left')
-            .att('@w', 'val', 'single')
-            .att('@w', 'sz', '18') // 2.25pt border width
-            .att('@w', 'space', '4')
-            .att('@w', 'color', 'CCCCCC')
-            .up()
-            .up()
-          paragraphPropertiesFragment.import(borderFragment)
+    // 4. shd
+    if (attributes.backgroundColor !== undefined && attributes.display === 'block') {
+      const shadingFragment = buildShading(attributes.backgroundColor)
+      paragraphPropertiesFragment.import(shadingFragment)
+      attributes.backgroundColor = undefined
+    }
 
-          attributes.blockquoteBorder = undefined
-          break
-        }
-      }
-    })
-
+    // 5. spacing
     const spacingFragment = buildSpacing(
       attributes.lineHeight,
       attributes.beforeSpacing,
       attributes.afterSpacing
     )
-
     attributes.lineHeight = undefined
-
     attributes.beforeSpacing = undefined
-
     attributes.afterSpacing = undefined
-
     paragraphPropertiesFragment.import(spacingFragment)
+
+    // 6. ind
+    if (attributes.indentation !== undefined) {
+      const indentationFragment = buildIndentation(attributes.indentation)
+      paragraphPropertiesFragment.import(indentationFragment)
+      attributes.indentation = undefined
+    }
+
+    // 7. jc
+    if (attributes.textAlign !== undefined) {
+      const horizontalAlignmentFragment = buildHorizontalAlignment(attributes.textAlign)
+      paragraphPropertiesFragment.import(horizontalAlignmentFragment)
+      attributes.textAlign = undefined
+    }
   }
   paragraphPropertiesFragment.up()
 
@@ -2607,47 +2605,53 @@ const buildTableProperties = (attributes: TableAttributes | undefined): XMLBuild
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'tblPr')
 
+  // OOXML XSD requires tblPr children in this order:
+  // tblStyle, tblpPr, tblOverlap, bidiVisual, tblStyleRowBandSize,
+  // tblStyleColBandSize, tblW, jc, tblCellSpacing, tblInd, tblBorders,
+  // shd, tblLayout, tblCellMar, tblLook, tblCaption, tblDescription, tblPrChange
+
   if (attributes && attributes.constructor === Object) {
-    Object.keys(attributes).forEach((key) => {
-      switch (key) {
-        case 'tableBorder': {
-          const border = attributes[key]!
-          // Only add table borders if at least one border has a non-zero size
-          const hasVisibleBorder = Object.entries(border).some(
-            ([k, v]) => k !== 'color' && k !== 'stroke' && v && v > 0
-          )
-          if (hasVisibleBorder) {
-            const tableBordersFragment = buildTableBorders(border)
-            tablePropertiesFragment.import(tableBordersFragment)
-          }
+    // 1. tblW
+    if (attributes.width) {
+      const tableWidthFragment = buildTableWidth(attributes.width)
+      tablePropertiesFragment.import(tableWidthFragment)
+      attributes.width = undefined
+    }
 
-          attributes.tableBorder = undefined
-          break
-        }
-        case 'tableCellSpacing': {
-          const tableCellSpacingFragment = buildTableCellSpacing(attributes[key])
-          tablePropertiesFragment.import(tableCellSpacingFragment)
+    // 2. jc (center alignment by default)
+    const alignmentFragment = buildHorizontalAlignment('center')
+    tablePropertiesFragment.import(alignmentFragment)
 
-          attributes.tableCellSpacing = undefined
-          break
-        }
-        case 'width':
-          if (attributes[key]) {
-            const tableWidthFragment = buildTableWidth(attributes[key])
-            tablePropertiesFragment.import(tableWidthFragment)
-          }
+    // 3. tblCellSpacing
+    if (attributes.tableCellSpacing !== undefined) {
+      const tableCellSpacingFragment = buildTableCellSpacing(attributes.tableCellSpacing)
+      tablePropertiesFragment.import(tableCellSpacingFragment)
+      attributes.tableCellSpacing = undefined
+    }
 
-          attributes.width = undefined
-          break
+    // 4. tblBorders
+    if (attributes.tableBorder) {
+      const border = attributes.tableBorder
+      const hasVisibleBorder = Object.entries(border).some(
+        ([k, v]) => k !== 'color' && k !== 'stroke' && v && v > 0
+      )
+      if (hasVisibleBorder) {
+        const tableBordersFragment = buildTableBorders(border)
+        tablePropertiesFragment.import(tableBordersFragment)
       }
-    })
-  }
-  const tableCellMarginFragment = buildTableCellMargins(160)
-  tablePropertiesFragment.import(tableCellMarginFragment)
+      attributes.tableBorder = undefined
+    }
 
-  // by default, all tables are center aligned.
-  const alignmentFragment = buildHorizontalAlignment('center')
-  tablePropertiesFragment.import(alignmentFragment)
+    // 5. tblCellMar
+    const tableCellMarginFragment = buildTableCellMargins(160)
+    tablePropertiesFragment.import(tableCellMarginFragment)
+  } else {
+    // No attributes - still add default alignment and margins
+    const alignmentFragment = buildHorizontalAlignment('center')
+    tablePropertiesFragment.import(alignmentFragment)
+    const tableCellMarginFragment = buildTableCellMargins(160)
+    tablePropertiesFragment.import(tableCellMarginFragment)
+  }
 
   tablePropertiesFragment.up()
 

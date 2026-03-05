@@ -1,5 +1,11 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+import { HTMLtoDOCX } from '../../../dist/index.cjs'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 /**
  * This file demonstrates how to use html-to-docx with TypeScript

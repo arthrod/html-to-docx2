@@ -523,6 +523,18 @@ class DocxDocument {
     generateContentTypesFragments(contentTypesXML, 'header', this.headerObjects)
     generateContentTypesFragments(contentTypesXML, 'footer', this.footerObjects)
 
+    // Add SVG content type if there are native SVG files in the archive
+    if (this.mediaFiles.some((m) => m.isSVG)) {
+      const svgFrag = fragment({
+        defaultNamespace: { ele: namespaces.contentTypes },
+      })
+        .ele('Default')
+        .att('Extension', 'svg')
+        .att('ContentType', 'image/svg+xml')
+        .up()
+      contentTypesXML.root().import(svgFrag)
+    }
+
     // Add comment-related content types if there are comments
     if (this.comments.length > 0) {
       const overrides: Array<{ contentType: string; partName: string }> = [
@@ -651,6 +663,15 @@ class DocxDocument {
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
       .replace(/<\/w:svgBlip>/g, '</asvg:svgBlip>')
+
+    // OOXML spec requires w:sectPr to be the LAST child of w:body.
+    // The template places it first so header/footer refs can target it positionally,
+    // but after content import the paragraphs end up after sectPr, violating the schema.
+    // Move sectPr to the end of body as a post-processing step.
+    xmlString = xmlString.replace(
+      /(<w:body>)\s*(<w:sectPr[\s\S]*?<\/w:sectPr>)([\s\S]*?)(<\/w:body>)/,
+      '$1$3$2$4'
+    )
 
     const deadTokens = findDocxTrackingTokens(xmlString)
     if (deadTokens.length > 0) {
@@ -948,12 +969,16 @@ class DocxDocument {
 
     this.lastMediaId += 1
 
-    return {
+    const mediaFile: MediaFileInfo = {
       id: this.lastMediaId,
       fileContent: base64FileContent,
       fileNameWithExtension,
       isSVG: fileExtension === 'svg',
     }
+
+    this.mediaFiles.push(mediaFile)
+
+    return mediaFile
   }
 
   createDocumentRelationships(
