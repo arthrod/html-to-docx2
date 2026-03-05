@@ -673,6 +673,24 @@ class DocxDocument {
       '$1$3$2$4'
     )
 
+    // OOXML requires sectPr children in order: headerReference*, footerReference*,
+    // endnotePr, type, pgSz, pgMar, ...
+    // Move headerReference/footerReference elements before pgSz.
+    xmlString = xmlString.replace(
+      /(<w:sectPr[^>]*>)([\s\S]*?)(<\/w:sectPr>)/g,
+      (_match, open: string, inner: string, close: string) => {
+        const refs: string[] = []
+        const rest = inner.replace(
+          /<w:(header|footer)Reference[^/]*\/>/g,
+          (refMatch: string) => {
+            refs.push(refMatch)
+            return ''
+          }
+        )
+        return `${open}${refs.join('')}${rest}${close}`
+      }
+    )
+
     const deadTokens = findDocxTrackingTokens(xmlString)
     if (deadTokens.length > 0) {
       const uniqueTokens = Array.from(new Set(deadTokens))

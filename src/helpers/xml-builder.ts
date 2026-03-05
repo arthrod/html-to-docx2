@@ -1964,20 +1964,31 @@ const buildTableCellSpacing = (cellSpacing = 0): XMLBuilderType =>
     .att('@w', 'type', 'dxa')
     .up()
 
+// OOXML XSD order for tcBorders: top, start, bottom, end, insideH, insideV, tl2br, tr2bl
+const tcBorderOrder = ['top', 'left', 'bottom', 'right'] as const
+
 const buildTableCellBorders = (tableCellBorder: TableCellBorder): XMLBuilderType => {
   const tableCellBordersFragment = fragment({
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'tcBorders')
 
-  const { color, stroke, ...borders } = tableCellBorder
-  Object.keys(borders).forEach((border) => {
-    const borderValue = (borders as Record<string, number | undefined>)[border]
+  const { color, stroke } = tableCellBorder
+  const borderValues: Record<string, number | undefined> = {
+    top: tableCellBorder.top,
+    left: tableCellBorder.left,
+    bottom: tableCellBorder.bottom,
+    right: tableCellBorder.right,
+  }
+
+  for (const border of tcBorderOrder) {
+    const borderValue = borderValues[border]
     // Skip borders with value 0 or undefined - they should not be rendered
     if (borderValue !== undefined && borderValue > 0) {
-      const borderFragment = buildBorder(border, borderValue, 0, color, stroke)
+      const xmlName = borderNameMap[border] || border
+      const borderFragment = buildBorder(xmlName, borderValue, 0, color, stroke)
       tableCellBordersFragment.import(borderFragment)
     }
-  })
+  }
 
   tableCellBordersFragment.up()
 
@@ -2010,60 +2021,60 @@ const buildTableCellProperties = (
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'tcPr')
   if (attributes && attributes.constructor === Object) {
-    Object.keys(attributes).forEach((key) => {
-      switch (key) {
-        case 'backgroundColor': {
-          const shadingFragment = buildShading(attributes[key]!)
-          tableCellPropertiesFragment.import(shadingFragment)
+    // OOXML XSD requires tcPr children in this order:
+    // cnfStyle, tcW, gridSpan, hMerge, vMerge, tcBorders, shd, noWrap,
+    // tcMar, textDirection, tcFitText, vAlign, hideMark, headers, tcPrChange
 
-          attributes.backgroundColor = undefined
-          break
-        }
-        case 'verticalAlign': {
-          const verticalAlignmentFragment = buildVerticalAlignment(attributes[key]!)
-          tableCellPropertiesFragment.import(verticalAlignmentFragment)
-
-          attributes.verticalAlign = undefined
-          break
-        }
-        case 'colSpan': {
-          const gridSpanFragment = buildGridSpanFragment(attributes[key]!)
-          tableCellPropertiesFragment.import(gridSpanFragment)
-
-          attributes.colSpan = undefined
-          break
-        }
-        case 'tableCellBorder': {
-          const border = attributes[key]!
-          // Only add cell borders if at least one border has a non-zero size
-          const hasVisibleBorder = Object.entries(border).some(
-            ([k, v]) => k !== 'color' && k !== 'stroke' && typeof v === 'number' && v > 0
-          )
-          if (hasVisibleBorder) {
-            const tableCellBorderFragment = buildTableCellBorders(border)
-            tableCellPropertiesFragment.import(tableCellBorderFragment)
-          }
-
-          attributes.tableCellBorder = undefined
-          break
-        }
-        case 'rowSpan': {
-          const verticalMergeFragment = buildVerticalMerge(attributes[key])
-          tableCellPropertiesFragment.import(verticalMergeFragment)
-
-          attributes.rowSpan = undefined
-          break
-        }
-        case 'width': {
-          const widthFragment = buildTableCellWidth(attributes[key] as string | undefined)
-          if (widthFragment) {
-            tableCellPropertiesFragment.import(widthFragment)
-          }
-          attributes.width = undefined
-          break
-        }
+    // 1. tcW
+    if (attributes.width !== undefined) {
+      const widthValue = attributes.width != null ? String(attributes.width) : undefined
+      const widthFragment = buildTableCellWidth(widthValue)
+      if (widthFragment) {
+        tableCellPropertiesFragment.import(widthFragment)
       }
-    })
+      attributes.width = undefined
+    }
+
+    // 2. gridSpan
+    if (attributes.colSpan !== undefined) {
+      const gridSpanFragment = buildGridSpanFragment(attributes.colSpan)
+      tableCellPropertiesFragment.import(gridSpanFragment)
+      attributes.colSpan = undefined
+    }
+
+    // 3. vMerge
+    if (attributes.rowSpan !== undefined) {
+      const verticalMergeFragment = buildVerticalMerge(attributes.rowSpan)
+      tableCellPropertiesFragment.import(verticalMergeFragment)
+      attributes.rowSpan = undefined
+    }
+
+    // 4. tcBorders
+    if (attributes.tableCellBorder !== undefined) {
+      const border = attributes.tableCellBorder
+      const hasVisibleBorder = Object.entries(border).some(
+        ([k, v]) => k !== 'color' && k !== 'stroke' && typeof v === 'number' && v > 0
+      )
+      if (hasVisibleBorder) {
+        const tableCellBorderFragment = buildTableCellBorders(border)
+        tableCellPropertiesFragment.import(tableCellBorderFragment)
+      }
+      attributes.tableCellBorder = undefined
+    }
+
+    // 5. shd
+    if (attributes.backgroundColor !== undefined) {
+      const shadingFragment = buildShading(attributes.backgroundColor)
+      tableCellPropertiesFragment.import(shadingFragment)
+      attributes.backgroundColor = undefined
+    }
+
+    // 6. vAlign
+    if (attributes.verticalAlign !== undefined) {
+      const verticalAlignmentFragment = buildVerticalAlignment(attributes.verticalAlign)
+      tableCellPropertiesFragment.import(verticalAlignmentFragment)
+      attributes.verticalAlign = undefined
+    }
   }
   tableCellPropertiesFragment.up()
 
@@ -2548,21 +2559,38 @@ const buildTableGridFromTableRow = (
   return tableGridFragment
 }
 
+// OOXML border name mapping: left→start, right→end (ISO 29500:2016)
+const borderNameMap: Record<string, string> = {
+  left: 'start',
+  right: 'end',
+}
+
+// OOXML XSD order for tblBorders: top, start, bottom, end, insideH, insideV
+const tblBorderOrder = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'] as const
+
 const buildTableBorders = (tableBorder: TableBorder): XMLBuilderType => {
   const tableBordersFragment = fragment({
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'tblBorders')
 
   const { color, stroke, ...borders } = tableBorder
+  const borderValues: Record<string, number | undefined> = {
+    top: borders.top,
+    left: borders.left,
+    bottom: borders.bottom,
+    right: borders.right,
+    insideH: borders.insideH,
+    insideV: borders.insideV,
+  }
 
-  Object.keys(borders).forEach((border) => {
-    const borderValue = (borders as Record<string, number | undefined>)[border]
-    // Skip borders with value 0 or undefined - they should not be rendered
+  for (const border of tblBorderOrder) {
+    const borderValue = borderValues[border]
     if (borderValue !== undefined && borderValue > 0) {
-      const borderFragment = buildBorder(border, borderValue, 0, color, stroke)
+      const xmlName = borderNameMap[border] || border
+      const borderFragment = buildBorder(xmlName, borderValue, 0, color, stroke)
       tableBordersFragment.import(borderFragment)
     }
-  })
+  }
 
   tableBordersFragment.up()
 
@@ -2588,14 +2616,18 @@ const buildTableCellMargins = (margin: number): XMLBuilderType => {
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'tblCellMar')
 
-  ;['top', 'bottom'].forEach((side) => {
-    const marginFragment = buildCellMargin(side, margin / 2)
+  // OOXML XSD order for tblCellMar: top, start, bottom, end
+  // ISO 29500:2016 uses start/end instead of left/right
+  const sides: [string, number][] = [
+    ['top', margin / 2],
+    ['start', margin],
+    ['bottom', margin / 2],
+    ['end', margin],
+  ]
+  for (const [side, value] of sides) {
+    const marginFragment = buildCellMargin(side, value)
     tableCellMarFragment.import(marginFragment)
-  })
-  ;['left', 'right'].forEach((side) => {
-    const marginFragment = buildCellMargin(side, margin)
-    tableCellMarFragment.import(marginFragment)
-  })
+  }
 
   return tableCellMarFragment
 }
@@ -2823,53 +2855,56 @@ const buildTable = async (
   const tablePropertiesFragment = buildTableProperties(modifiedAttributes)
   tableFragment.import(tablePropertiesFragment)
 
+  // OOXML requires: tblPr, tblGrid, tr* — tblGrid must come once, right after tblPr
+  // Find the tblGrid source: colgroup first, then first tr found in thead/tbody/direct
+  let tblGridEmitted = false
+
   const rowSpanMap = new Map<number, RowSpanInfo>()
 
   if (vNodeHasChildren(vNode)) {
-    for (let index = 0; index < (vNode.children || []).length; index++) {
-      const childVNode = (vNode.children || [])[index] as VNodeType
-      if (childVNode.tagName === 'colgroup') {
+    // First pass: emit tblGrid from colgroup if present
+    for (const childVNode of (vNode.children || []) as VNodeType[]) {
+      if (childVNode.tagName === 'colgroup' && !tblGridEmitted) {
         const tableGridFragment = buildTableGrid(childVNode, modifiedAttributes)
         tableFragment.import(tableGridFragment)
-      } else if (childVNode.tagName === 'thead') {
-        for (
-          let iteratorIndex = 0;
-          iteratorIndex < (childVNode.children || []).length;
-          iteratorIndex++
-        ) {
-          const grandChildVNode = (childVNode.children || [])[iteratorIndex] as VNodeType
-          if (grandChildVNode.tagName === 'tr') {
-            if (iteratorIndex === 0) {
+        tblGridEmitted = true
+      }
+    }
+
+    // If no colgroup, find first tr to build tblGrid from
+    if (!tblGridEmitted) {
+      for (const childVNode of (vNode.children || []) as VNodeType[]) {
+        if (tblGridEmitted) break
+        if (childVNode.tagName === 'tr') {
+          const tableGridFragment = buildTableGridFromTableRow(
+            childVNode,
+            modifiedAttributes
+          )
+          tableFragment.import(tableGridFragment)
+          tblGridEmitted = true
+        } else if (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
+          for (const grandChildVNode of (childVNode.children || []) as VNodeType[]) {
+            if (grandChildVNode.tagName === 'tr') {
               const tableGridFragment = buildTableGridFromTableRow(
                 grandChildVNode,
                 modifiedAttributes
               )
               tableFragment.import(tableGridFragment)
+              tblGridEmitted = true
+              break
             }
-            const tableRowFragment = await buildTableRow(
-              grandChildVNode,
-              modifiedAttributes,
-              rowSpanMap,
-              docxDocumentInstance
-            )
-            tableFragment.import(tableRowFragment)
           }
         }
-      } else if (childVNode.tagName === 'tbody') {
-        for (
-          let iteratorIndex = 0;
-          iteratorIndex < (childVNode.children || []).length;
-          iteratorIndex++
-        ) {
-          const grandChildVNode = (childVNode.children || [])[iteratorIndex] as VNodeType
+      }
+    }
+
+    // Second pass: emit all tr elements
+    for (const childVNode of (vNode.children || []) as VNodeType[]) {
+      if (childVNode.tagName === 'colgroup') {
+        // Already handled above
+      } else if (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
+        for (const grandChildVNode of (childVNode.children || []) as VNodeType[]) {
           if (grandChildVNode.tagName === 'tr') {
-            if (iteratorIndex === 0) {
-              const tableGridFragment = buildTableGridFromTableRow(
-                grandChildVNode,
-                modifiedAttributes
-              )
-              tableFragment.import(tableGridFragment)
-            }
             const tableRowFragment = await buildTableRow(
               grandChildVNode,
               modifiedAttributes,
@@ -2880,13 +2915,6 @@ const buildTable = async (
           }
         }
       } else if (childVNode.tagName === 'tr') {
-        if (index === 0) {
-          const tableGridFragment = buildTableGridFromTableRow(
-            childVNode,
-            modifiedAttributes
-          )
-          tableFragment.import(tableGridFragment)
-        }
         const tableRowFragment = await buildTableRow(
           childVNode,
           modifiedAttributes,
