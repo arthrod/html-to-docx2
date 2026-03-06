@@ -19,6 +19,12 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - tests/examples/typescript/type-test.ts
 - src/comment-templates.ts
 - src/utils/image-to-base64.ts
+- src/utils/image.ts
+- src/utils/image-browser.ts
+- src/utils/image-dimensions.ts
+- src/utils/list.ts
+- src/utils/url.ts
+- src/utils/font-family-conversion.ts
 - src/utils/svg-sanitizer.ts
 - src/utils/xml-escape.ts
 - src/utils/xmlbuilder2.ts

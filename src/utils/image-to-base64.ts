@@ -122,7 +122,9 @@ const downloadImage = async (
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Request timeout after ${timeout}ms`, { cause: error })
+      const timeoutError = new Error(`Request timeout after ${timeout}ms`)
+      ;(timeoutError as Error & { cause?: Error }).cause = error
+      throw timeoutError
     }
     throw error
   } finally {

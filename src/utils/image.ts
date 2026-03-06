@@ -6,7 +6,16 @@ import {
   parseDataUrl,
 } from './image-to-base64'
 
-const MIME_BY_EXTENSION: Record<string, string> = {
+type ImageMimeType =
+  | 'image/bmp'
+  | 'image/gif'
+  | 'image/jpeg'
+  | 'image/png'
+  | 'image/svg+xml'
+  | 'image/tiff'
+  | 'image/webp'
+
+const MIME_BY_EXTENSION = {
   bmp: 'image/bmp',
   gif: 'image/gif',
   jpeg: 'image/jpeg',
@@ -16,7 +25,7 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   tif: 'image/tiff',
   tiff: 'image/tiff',
   webp: 'image/webp',
-}
+} as const satisfies Record<string, ImageMimeType>
 
 const toBase64ByteArray = (base64String: string): Uint8Array => {
   if (typeof Buffer !== 'undefined') {
@@ -34,7 +43,7 @@ const toBase64ByteArray = (base64String: string): Uint8Array => {
 /**
  * Tries to infer MIME type by checking magic bytes in a base64 image string.
  */
-export const guessMimeTypeFromBase64 = (base64String: string): string | false => {
+export const guessMimeTypeFromBase64 = (base64String: string): ImageMimeType | false => {
   const byteArray = toBase64ByteArray(base64String)
 
   if (byteArray[0] === 0xff && byteArray[1] === 0xd8 && byteArray[2] === 0xff) {
@@ -95,7 +104,7 @@ const extractExtension = (source: string): string | null => {
 /**
  * Determines MIME type from file extension or base64 magic bytes.
  */
-export const getMimeType = (source: string, base64?: string): string | false => {
+export const getMimeType = (source: string, base64?: string): ImageMimeType | false => {
   const extension = extractExtension(source)
   if (extension && MIME_BY_EXTENSION[extension]) {
     return MIME_BY_EXTENSION[extension]
@@ -235,8 +244,7 @@ const convertSVGtoPNGSharp = async (
   height: number
 ): Promise<string | null> => {
   try {
-    const sharpModule = await import('sharp')
-    const sharp = sharpModule.default || sharpModule
+    const { default: sharp } = await import('sharp')
     const svgBuffer = Buffer.from(svgBase64, 'base64')
 
     const pngBuffer = await sharp(svgBuffer, { density: 72 })
@@ -305,7 +313,9 @@ export const downloadImageToBase64 = async (
     return globalThis.btoa(binary)
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Request timeout after ${timeout}ms`, { cause: error })
+      const timeoutError = new Error(`Request timeout after ${timeout}ms`)
+      ;(timeoutError as Error & { cause?: Error }).cause = error
+      throw timeoutError
     }
     throw error
   } finally {

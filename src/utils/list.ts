@@ -29,6 +29,16 @@ export type ListStyle = {
 
 class ListStyleBuilder {
   private readonly defaults: ListStyleDefaults
+  private static readonly defaultListStyleByDocxType: Record<
+    DocxListStyleType,
+    ListStyleType
+  > = {
+    decimal: 'decimal',
+    lowerLetter: 'lower-alpha',
+    lowerRoman: 'lower-roman',
+    upperLetter: 'upper-alpha',
+    upperRoman: 'upper-roman',
+  }
 
   constructor(defaults?: ListStyleDefaults) {
     this.defaults = defaults || { defaultOrderedListStyleType: 'decimal' }
@@ -55,7 +65,8 @@ class ListStyleBuilder {
   }
 
   getListPrefixSuffix(style: ListStyle | null | undefined, lvl: number): string {
-    let listType: ListStyleType = this.defaults.defaultOrderedListStyleType as ListStyleType
+    let listType =
+      ListStyleBuilder.defaultListStyleByDocxType[this.defaults.defaultOrderedListStyleType]
 
     if (style?.['list-style-type']) {
       listType = style['list-style-type']

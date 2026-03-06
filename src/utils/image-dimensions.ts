@@ -5,7 +5,7 @@
 
 export type ImageDimensions = {
   height: number
-  type: string
+  type: 'bmp' | 'gif' | 'jpg' | 'png' | 'unknown' | 'webp'
   width: number
 }
 

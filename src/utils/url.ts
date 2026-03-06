@@ -1,12 +1,13 @@
+const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:'])
+
 const isValidUrl = (urlString: string | null | undefined): boolean => {
   if (!urlString || typeof urlString !== 'string') {
     return false
   }
 
-  // Check for http/https URLs
   try {
     const url = new URL(urlString)
-    return url.protocol === 'http:' || url.protocol === 'https:'
+    return SUPPORTED_PROTOCOLS.has(url.protocol)
   } catch {
     return false
   }

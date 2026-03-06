@@ -1,4 +1,4 @@
-export const removeSimpleOrDoubleQuotes = /(["'])(.*?)\1/
+export const removeSimpleOrDoubleQuotes = /^["'](.*)["']$/
 
 export type FontTableObject = {
   fontName: string
@@ -9,14 +9,15 @@ export const fontFamilyToTableObject = (
   fontFamilyString: string | null | undefined,
   fallbackFont: string
 ): FontTableObject => {
+  const removeWrappingQuotes = (fontName: string): string => {
+    const match = fontName.match(removeSimpleOrDoubleQuotes)
+    return match ? match[1] : fontName
+  }
+
   const fontFamilyElements = fontFamilyString
     ? fontFamilyString.split(',').map((fontName) => {
         const trimmedFontName = fontName.trim()
-        if (removeSimpleOrDoubleQuotes.test(trimmedFontName)) {
-          const match = trimmedFontName.match(removeSimpleOrDoubleQuotes)
-          return match ? match[2] : trimmedFontName
-        }
-        return trimmedFontName
+        return removeWrappingQuotes(trimmedFontName)
       })
     : [fallbackFont]
 
