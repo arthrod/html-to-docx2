@@ -1,6 +1,6 @@
 export type VNode = {
   children?: VNode[]
-  [key: string]: unknown
+  [key: string]: VNode[] | string | number | boolean | null | undefined
 }
 
 export const vNodeHasChildren = (vNode: VNode | null | undefined): boolean =>

@@ -57,9 +57,17 @@ import { convertSVGtoPNG, isSVG, parseDataUrl, parseSVGDimensions } from './util
 import ListStyleBuilder, { type ListStyleDefaults, type ListStyleType } from './utils/list'
 
 /** Virtual DOM tree node */
+type VTreePropertyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Record<string, string>
+
 export interface VTree {
   children?: VTree[]
-  properties?: Record<string, unknown>
+  properties?: Record<string, VTreePropertyValue>
   tagName?: string
   text?: string
 }
@@ -169,7 +177,7 @@ export interface MediaFileInfo {
 
 /** Style object */
 export interface StyleObject {
-  [key: string]: unknown
+  [key: string]: string | number | boolean | null | undefined | Record<string, string>
 }
 
 /** Section header result */

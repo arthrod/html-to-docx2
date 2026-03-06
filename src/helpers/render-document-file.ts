@@ -33,12 +33,19 @@ type VNodeType = {
   children?: (VNodeType | VTextType)[]
   properties?: VNodeProperties
   tagName?: string
-  [key: string]: unknown
+  [key: string]:
+    | (VNodeType | VTextType)[]
+    | VNodeProperties
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
 }
 
 type VTextType = {
   text: string
-  [key: string]: unknown
+  [key: string]: string
 }
 
 type VTree = VNodeType | VTextType | (VNodeType | VTextType)[]

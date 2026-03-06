@@ -51,12 +51,14 @@ interface ParsedNode {
   data?: string
   attrs?: NodeAttributes
   children?: ParsedNode[]
-  [key: string]: unknown
+  [key: string]: string | NodeAttributes | ParsedNode[] | undefined
 }
+
+type VNodePropertyValue = string | number | boolean | Record<string, string>
 
 interface VNodeProperties {
   attributes: NodeAttributes
-  [key: string]: unknown
+  [key: string]: NodeAttributes | VNodePropertyValue
 }
 
 const Properties: Record<string, PropertyConfig> = {
@@ -191,7 +193,7 @@ const PropertyToAttributeMapping = {
   acceptCharset: 'accept-charset',
 }
 
-function checkMask(value: number, bitmask: number) {
+function checkMask(value: number, bitmask: number): boolean {
   // eslint-disable-next-line no-bitwise
   return (value & bitmask) === bitmask
 }
@@ -246,7 +248,7 @@ function parseStyles(input: string): Record<string, string> {
   return styles
 }
 
-const propertyValueConversions: Record<string, (value: string) => unknown> = {
+const propertyValueConversions: Record<string, (value: string) => VNodePropertyValue> = {
   style: parseStyles,
   placeholder: decode,
   title: decode,
@@ -258,8 +260,8 @@ function propertyIsTrue(
     PropertyInfo,
     'hasBooleanValue' | 'hasOverloadedBooleanValue' | 'attributeName'
   >,
-  value: unknown
-) {
+  value: VNodePropertyValue
+): boolean {
   const propertyValue = typeof value === 'string' ? value : String(value)
 
   if (propInfo.hasBooleanValue) {
@@ -271,7 +273,10 @@ function propertyIsTrue(
   return false
 }
 
-function getPropertyValue(propInfo: PropertyInfo, value: unknown) {
+function getPropertyValue(
+  propInfo: PropertyInfo,
+  value: VNodePropertyValue
+): VNodePropertyValue {
   const isTrue = propertyIsTrue(propInfo, value)
   if (propInfo.hasBooleanValue) {
     return !!isTrue
@@ -288,10 +293,10 @@ function getPropertyValue(propInfo: PropertyInfo, value: unknown) {
 function setVNodeProperty(
   properties: VNodeProperties,
   propInfo: PropertyInfo,
-  value: unknown
-) {
+  value: VNodePropertyValue
+): void {
   const propName = propInfo.propertyName
-  let valueConverter: ((input: string) => unknown) | undefined
+  let valueConverter: ((input: string) => VNodePropertyValue) | undefined
 
   if (!propName) {
     return
@@ -305,7 +310,7 @@ function setVNodeProperty(
   properties[propInfo.propertyName] = getPropertyValue(propInfo, value)
 }
 
-function getAttributeValue(propInfo: PropertyInfo, value: string) {
+function getAttributeValue(propInfo: PropertyInfo, value: string): string {
   if (propInfo.hasBooleanValue) {
     return ''
   }
@@ -316,11 +321,13 @@ function setVNodeAttribute(
   properties: VNodeProperties,
   propInfo: PropertyInfo,
   value: string
-) {
+): void {
   properties.attributes[propInfo.attributeName] = getAttributeValue(propInfo, value)
 }
 
-function getPropertySetter(propInfo: PropertyInfo) {
+function getPropertySetter(propInfo: PropertyInfo): {
+  set: typeof setVNodeAttribute | typeof setVNodeProperty
+} {
   if (propInfo.mustUseAttribute) {
     return { set: setVNodeAttribute }
   }
@@ -331,7 +338,7 @@ function getPropertySetter(propInfo: PropertyInfo) {
  * Convert tag attributes to VNode properties
  */
 
-function convertTagAttributes(tag: ParsedNode) {
+function convertTagAttributes(tag: ParsedNode): VNodeProperties {
   const attributes = tag.attrs || {}
   const vNodeProperties = {
     attributes: {},
@@ -352,7 +359,7 @@ function convertTagAttributes(tag: ParsedNode) {
 // ============================================================================
 
 type VNodeLike = VNode | VText
-type ConverterGetVNodeKey = (props: NodeAttributes) => unknown
+type ConverterGetVNodeKey = (props: NodeAttributes) => string | number | null | undefined
 
 function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
   const isElementNode = (node: ParsedNode) =>
@@ -372,7 +379,7 @@ function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
 
     convertTag(tag: ParsedNode, getVNodeKey?: ConverterGetVNodeKey): VNodeLike {
       const attributes = convertTagAttributes(tag)
-      let key: unknown
+      let key: string | number | null | undefined
 
       if (getVNodeKey) {
         key = getVNodeKey(attributes)
@@ -395,7 +402,7 @@ const DOCTYPE_PATTERN = /<\s*!doctype\b/i
 const TBODY_PATTERN = /<\s*tbody\b/i
 const LEADING_TRIVIA_PATTERN = /^\s*(?:<!--[\s\S]*?-->\s*)*/
 
-function getFragmentContextTagName(html: string) {
+function getFragmentContextTagName(html: string): string {
   const trimmed = html.replace(LEADING_TRIVIA_PATTERN, '')
 
   if (/^<(?:td|th)\b/i.test(trimmed)) {
@@ -418,7 +425,7 @@ function normalizeDocumentRootNodes(
   rootChildren: ParsedNode[],
   hasExplicitHead: boolean,
   hasExplicitBody: boolean
-) {
+): ParsedNode[] {
   const normalizedNodes: ParsedNode[] = []
 
   rootChildren.forEach((rootNode) => {
@@ -454,7 +461,7 @@ function normalizeDocumentRootNodes(
   return normalizedNodes
 }
 
-function flattenImplicitTableBodies(nodes: ParsedNode[], shouldFlatten: boolean) {
+function flattenImplicitTableBodies(nodes: ParsedNode[], shouldFlatten: boolean): void {
   if (!shouldFlatten) {
     return
   }
@@ -519,11 +526,17 @@ function parseHTML(html: string): ParsedNode[] {
  */
 function convertHTML(html: string): VNode[] | VNode | VText
 function convertHTML(
-  options: { getVNodeKey?: (props: Record<string, string>) => unknown },
+  options: {
+    getVNodeKey?: (props: Record<string, string>) => string | number | null | undefined
+  },
   html: string
 ): VNode[] | VNode | VText
 function convertHTML(
-  optionsOrHTML: string | { getVNodeKey?: (props: Record<string, string>) => unknown },
+  optionsOrHTML:
+    | string
+    | {
+        getVNodeKey?: (props: Record<string, string>) => string | number | null | undefined
+      },
   html?: string
 ) {
   const shouldUseOptions = typeof optionsOrHTML === 'object'

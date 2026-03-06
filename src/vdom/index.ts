@@ -10,34 +10,62 @@
  */
 
 const version = '2'
-const noProperties = {}
-const noChildren = []
+const noProperties: VNodeProperties = {}
+const noChildren: VNodeChild[] = []
+
+type VNodePropertyValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Record<string, string>
+
+type VNodeProperties = Record<string, VNodePropertyValue>
+
+type VNodeKey = string | number | null | undefined
+
+type VHook = {
+  hook?: () => void
+  unhook?: () => void
+}
+
+type WidgetNode = {
+  destroy?: () => void
+  type: 'Widget'
+}
+
+type ThunkNode = {
+  type: 'Thunk'
+}
+
+type VNodeChild = VNode | VText | WidgetNode | ThunkNode
 
 /**
  * Helper to check if something is a VNode (internal)
  */
-function _isVNode(x) {
+function _isVNode(x: VNodeChild | null | undefined): x is VNode {
   return x && x.type === 'VirtualNode'
 }
 
 /**
  * Helper to check if something is a Widget
  */
-function isWidget(x) {
+function isWidget(x: VNodeChild | null | undefined): x is WidgetNode {
   return x && x.type === 'Widget'
 }
 
 /**
  * Helper to check if something is a Thunk
  */
-function isThunk(x) {
+function isThunk(x: VNodeChild | null | undefined): x is ThunkNode {
   return x && x.type === 'Thunk'
 }
 
 /**
  * Helper to check if something is a VHook
  */
-function isVHook(x) {
+function isVHook(x: VNodePropertyValue): x is VHook {
   return (
     x &&
     ((typeof x.hook === 'function' && !Object.hasOwn(x, 'hook')) ||
@@ -50,23 +78,31 @@ function isVHook(x) {
  * EXACT copy of virtual-dom/vnode/vnode.js
  */
 export class VNode {
-  [key: string]: unknown
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | null
+    | undefined
+    | VNodeProperties
+    | VNodeChild[]
+    | Record<string, VHook>
   tagName: string
-  properties: Record<string, unknown>
-  children: (VNode | VText)[]
+  properties: VNodeProperties
+  children: VNodeChild[]
   key?: string
   namespace: string | null
   count: number
   hasWidgets: boolean
   hasThunks: boolean
-  hooks?: Record<string, unknown>
+  hooks?: Record<string, VHook>
   descendantHooks: boolean
 
   constructor(
     tagName: string,
-    properties?: Record<string, unknown> | null,
-    children?: (VNode | VText)[],
-    key?: unknown,
+    properties?: VNodeProperties | null,
+    children?: VNodeChild[],
+    key?: VNodeKey,
     namespace?: string | null
   ) {
     const vnodeProperties = properties || noProperties
@@ -141,8 +177,8 @@ VNode.prototype.type = 'VirtualNode'
  * EXACT copy of virtual-dom/vnode/vtext.js
  */
 export class VText {
-  [key: string]: unknown
-  constructor(text) {
+  [key: string]: string
+  constructor(text: string | number | boolean | null | undefined) {
     this.text = String(text)
   }
   text: string
@@ -154,13 +190,13 @@ VText.prototype.type = 'VirtualText'
 /**
  * Check if a value is a VNode (exported for compatibility)
  */
-export function isVNode(vnode) {
+export function isVNode(vnode: VNodeChild | null | undefined): vnode is VNode {
   return vnode && vnode.type === 'VirtualNode'
 }
 
 /**
  * Check if a value is a VText (exported for compatibility)
  */
-export function isVText(vtext) {
+export function isVText(vtext: VNodeChild | null | undefined): vtext is VText {
   return vtext && vtext.type === 'VirtualText'
 }

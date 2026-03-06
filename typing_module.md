@@ -12,3 +12,7 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/helpers/render-document-file.ts
 - tests/helpers/docx-assertions.js
 - tests/helpers/docx-validator.js
+- src/vdom/index.ts
+- src/helpers/html-parser.ts
+- src/utils/vnode.ts
+- src/docx-document.ts
