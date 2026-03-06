@@ -9,6 +9,10 @@ const outputDirectory = path.resolve(__dirname, '../tmp')
 if (!fs.existsSync(outputDirectory)) {
   fs.mkdirSync(outputDirectory, { recursive: true })
 }
+const legacyBrowserOutput = path.join(outputDirectory, 'example-node-browser.docx')
+if (fs.existsSync(legacyBrowserOutput)) {
+  fs.rmSync(legacyBrowserOutput, { force: true })
+}
 
 const toBuffer = async (docResult) => {
   if (Buffer.isBuffer(docResult)) return docResult
@@ -2055,38 +2059,30 @@ const htmlString = `<!DOCTYPE html>
 </html>`
 
 void (async () => {
-  const { default: HTMLtoDOCXBrowser } = await import('../dist/browser.js')
-  const runtimes = [
-    { convert: HTMLtoDOCXNode, runtime: 'node' },
-    { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
-  ]
+  const docResult = await HTMLtoDOCXNode(htmlString, null, {
+    table: {
+      row: { cantSplit: true },
+      addSpacingAfter: true,
+    },
+    footer: true,
+    pageNumber: true,
+    preprocessing: { skipHTMLMinify: false },
+    imageProcessing: {
+      // By default, shows a warning when sharp is not installed
+      // Uncomment to suppress the warning (useful for intentional native SVG mode):
+      // suppressSharpWarning: true,
+    },
+    // ===================================================================
+    // WARNING: deterministicIds is ONLY for CI/CD testing purposes.
+    // DO NOT use this option in production.
+    // DO NOT change this line.
+    // This option makes image filenames sequential (image-0.png, image-1.png)
+    // instead of random UUIDs, allowing automated regression testing.
+    // ===================================================================
+    deterministicIds: process.env.DETERMINISTIC_IDS === 'true',
+  })
 
-  for (const { convert, runtime } of runtimes) {
-    const docResult = await convert(htmlString, null, {
-      table: {
-        row: { cantSplit: true },
-        addSpacingAfter: true,
-      },
-      footer: true,
-      pageNumber: true,
-      preprocessing: { skipHTMLMinify: false },
-      imageProcessing: {
-        // By default, shows a warning when sharp is not installed
-        // Uncomment to suppress the warning (useful for intentional native SVG mode):
-        // suppressSharpWarning: true,
-      },
-      // ===================================================================
-      // WARNING: deterministicIds is ONLY for CI/CD testing purposes.
-      // DO NOT use this option in production.
-      // DO NOT change this line.
-      // This option makes image filenames sequential (image-0.png, image-1.png)
-      // instead of random UUIDs, allowing automated regression testing.
-      // ===================================================================
-      deterministicIds: process.env.DETERMINISTIC_IDS === 'true',
-    })
-
-    const outputPath = path.join(outputDirectory, `example-node-${runtime}.docx`)
-    fs.writeFileSync(outputPath, await toBuffer(docResult))
-    console.log(`Docx file created successfully: ${outputPath}`)
-  }
+  const outputPath = path.join(outputDirectory, 'example-node-node.docx')
+  fs.writeFileSync(outputPath, await toBuffer(docResult))
+  console.log(`Docx file created successfully: ${outputPath}`)
 })()
