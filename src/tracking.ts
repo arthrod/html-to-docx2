@@ -51,6 +51,93 @@ export interface CommentPayload {
   replies?: CommentReply[]
 }
 
+type JsonPrimitive = boolean | number | string | null
+type JsonValue = JsonObject | JsonPrimitive | JsonValue[]
+type JsonObject = { [key: string]: JsonValue | undefined }
+
+function isJsonObject(value: JsonValue): value is JsonObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function readOptionalString(value: JsonValue | undefined): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
+function parseSuggestionPayload(value: JsonValue): SuggestionPayload | null {
+  if (!isJsonObject(value)) {
+    return null
+  }
+
+  const id = readOptionalString(value.id)
+  if (!id) {
+    return null
+  }
+
+  return {
+    id,
+    author: readOptionalString(value.author),
+    date: readOptionalString(value.date),
+  }
+}
+
+function parseCommentReply(value: JsonValue): CommentReply | null {
+  if (!isJsonObject(value)) {
+    return null
+  }
+
+  const id = readOptionalString(value.id)
+  if (!id) {
+    return null
+  }
+
+  return {
+    id,
+    authorName: readOptionalString(value.authorName),
+    authorInitials: readOptionalString(value.authorInitials),
+    date: readOptionalString(value.date),
+    paraId: readOptionalString(value.paraId),
+    text: readOptionalString(value.text),
+  }
+}
+
+function parseCommentReplies(value: JsonValue | undefined): CommentReply[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined
+  }
+
+  const replies: CommentReply[] = []
+  for (const item of value) {
+    const reply = parseCommentReply(item)
+    if (!reply) {
+      return undefined
+    }
+    replies.push(reply)
+  }
+  return replies
+}
+
+function parseCommentPayload(value: JsonValue): CommentPayload | null {
+  if (!isJsonObject(value)) {
+    return null
+  }
+
+  const id = readOptionalString(value.id)
+  if (!id) {
+    return null
+  }
+
+  return {
+    id,
+    authorName: readOptionalString(value.authorName),
+    authorInitials: readOptionalString(value.authorInitials),
+    date: readOptionalString(value.date),
+    paraId: readOptionalString(value.paraId),
+    parentParaId: readOptionalString(value.parentParaId),
+    text: readOptionalString(value.text),
+    replies: parseCommentReplies(value.replies),
+  }
+}
+
 /** Parsed token from text */
 export type ParsedToken =
   | { type: 'text'; value: string }
@@ -176,15 +263,18 @@ function parseDocxToken(
       return { type: 'insEnd', id: decoded }
     }
 
-    const data = JSON.parse(decoded)
+    const data = JSON.parse(decoded) as JsonValue
 
     if (kind === 'CMT') {
-      return { type: 'commentStart', data: data as CommentPayload }
+      const payload = parseCommentPayload(data)
+      return payload ? { type: 'commentStart', data: payload } : null
     }
     if (kind === 'DEL') {
-      return { type: 'delStart', data: data as SuggestionPayload }
+      const payload = parseSuggestionPayload(data)
+      return payload ? { type: 'delStart', data: payload } : null
     }
-    return { type: 'insStart', data: data as SuggestionPayload }
+    const payload = parseSuggestionPayload(data)
+    return payload ? { type: 'insStart', data: payload } : null
   } catch {
     return null
   }

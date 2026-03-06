@@ -24,6 +24,29 @@ type CacheAwareDocument = {
 }
 
 type LogArgument = boolean | number | string | null | undefined | { toString(): string }
+type CaughtError =
+  | Error
+  | LogArgument
+  | { message?: string; name?: string; toString(): string }
+type ErrorWithCause = Error & { cause?: Error }
+
+const toError = (error: CaughtError): Error => {
+  if (error instanceof Error) {
+    return error
+  }
+  if (typeof error === 'string') {
+    return new Error(error)
+  }
+  if (error && typeof error === 'object' && typeof error.message === 'string') {
+    const normalizedError = new Error(error.message)
+    if (typeof error.name === 'string' && error.name.length > 0) {
+      normalizedError.name = error.name
+    }
+    return normalizedError
+  }
+
+  return new Error(String(error ?? 'Unknown error'))
+}
 
 const toBase64 = (bytes: Uint8Array): string => {
   if (typeof Buffer !== 'undefined') {
@@ -121,12 +144,13 @@ const downloadImage = async (
       mimeType,
     }
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      const timeoutError = new Error(`Request timeout after ${timeout}ms`)
-      ;(timeoutError as Error & { cause?: Error }).cause = error
+    const normalizedError = toError(error)
+    if (normalizedError.name === 'AbortError') {
+      const timeoutError: ErrorWithCause = new Error(`Request timeout after ${timeout}ms`)
+      timeoutError.cause = normalizedError
       throw timeoutError
     }
-    throw error
+    throw normalizedError
   } finally {
     clearTimeout(timeoutId)
   }
@@ -241,7 +265,7 @@ export const downloadAndCacheImage = async (
       docxDocumentInstance._imageCache.set(imageSource, dataUri)
       return dataUri
     } catch (error) {
-      lastError = error as Error
+      lastError = toError(error)
       if (attempt < maxRetries) {
         const delayMs =
           (options.retryDelayBase ??

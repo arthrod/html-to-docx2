@@ -60,3 +60,11 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - tests/examples/typescript/type-test.ts
 - src/index.ts
 - src/html-to-docx.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/tracking.ts
+- src/helpers/html-parser.ts
+- src/utils/image-to-base64.ts
+- src/utils/image.ts
+- src/utils/image-browser.ts

@@ -54,6 +54,14 @@ interface ParsedNode {
   [key: string]: string | NodeAttributes | ParsedNode[] | undefined
 }
 
+interface ParsedDocumentRoot {
+  children?: ParsedNode[]
+}
+
+interface ParsedDocument {
+  root?: ParsedDocumentRoot
+}
+
 type VNodePropertyValue = string | number | boolean | Record<string, string>
 
 interface VNodeProperties {
@@ -486,6 +494,11 @@ function flattenImplicitTableBodies(nodes: ParsedNode[], shouldFlatten: boolean)
   })
 }
 
+function getRootChildren(document: JustHTML): ParsedNode[] {
+  const parsedDocument = document as ParsedDocument
+  return parsedDocument.root?.children || []
+}
+
 /**
  * Parse HTML string into DOM nodes.
  *
@@ -505,7 +518,7 @@ function parseHTML(html: string): ParsedNode[] {
 
   if (hasExplicitHtml || hasExplicitHead || hasExplicitBody || hasDoctype) {
     const doc = new JustHTML(html)
-    const rootChildren = (doc.root?.children || []) as ParsedNode[]
+    const rootChildren = getRootChildren(doc)
     parsedNodes = hasExplicitHtml
       ? rootChildren
       : normalizeDocumentRootNodes(rootChildren, hasExplicitHead, hasExplicitBody)
@@ -514,7 +527,7 @@ function parseHTML(html: string): ParsedNode[] {
     const doc = new JustHTML(html, {
       fragmentContext: new FragmentContext(fragmentContextTagName),
     })
-    parsedNodes = (doc.root?.children || []) as ParsedNode[]
+    parsedNodes = getRootChildren(doc)
   }
 
   flattenImplicitTableBodies(parsedNodes, !TBODY_PATTERN.test(html))
