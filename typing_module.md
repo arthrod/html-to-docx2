@@ -9,3 +9,6 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/tracking.spec.ts
 - src/browser.ts
 - src/node.ts
+- src/helpers/render-document-file.ts
+- tests/helpers/docx-assertions.js
+- tests/helpers/docx-validator.js

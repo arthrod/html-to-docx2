@@ -13,6 +13,32 @@ import { parseDOCX } from './docx-validator.js'
 // Re-export parseDOCX for convenience
 export { parseDOCX }
 
+/**
+ * @typedef {string | number | boolean | null | undefined} DocxScalar
+ */
+
+/**
+ * @typedef {Object} DocxRun
+ * @property {boolean} [bold] Whether the run is bold.
+ * @property {string} [color] Run color in uppercase hex format.
+ * @property {string} [font] Run font family name.
+ * @property {number} [fontSize] Run font size in half-points.
+ * @property {boolean} [italic] Whether the run is italic.
+ * @property {string} [text] Run text content.
+ */
+
+/**
+ * @typedef {Object} DocxParagraph
+ * @property {Object.<string, DocxScalar>} properties Paragraph-level OOXML properties.
+ * @property {DocxRun[]} runs Text runs contained in the paragraph.
+ * @property {string} text Plain text extracted from all runs.
+ */
+
+/**
+ * @typedef {Object} ParsedDocx
+ * @property {DocxParagraph[]} paragraphs Parsed paragraphs in document order.
+ */
+
 // =============================================================================
 // INTERNAL HELPERS
 // =============================================================================
@@ -20,10 +46,10 @@ export { parseDOCX }
 /**
  * Validate paragraph index and return the paragraph.
  *
- * @param {Object} parsed - Parsed DOCX object
+ * @param {ParsedDocx} parsed - Parsed DOCX object
  * @param {number} paragraphIndex - Zero-based paragraph index
  * @param {string} functionName - Name of calling function (for error messages)
- * @returns {Object} The validated paragraph object
+ * @returns {DocxParagraph} The validated paragraph object
  * @throws {Error} If index is out of range
  */
 function validateParagraphIndex(parsed, paragraphIndex, functionName) {
@@ -41,7 +67,7 @@ function validateParagraphIndex(parsed, paragraphIndex, functionName) {
 
 /**
  * Assert that a parsed DOCX has the expected number of paragraphs
- * @param {Object} parsed - Parsed DOCX object from parseDOCX()
+ * @param {ParsedDocx} parsed - Parsed DOCX object from parseDOCX()
  * @param {number} expectedCount - Expected number of paragraphs
  */
 export function assertParagraphCount(parsed, expectedCount) {
@@ -50,7 +76,7 @@ export function assertParagraphCount(parsed, expectedCount) {
 
 /**
  * Assert that a specific paragraph contains expected text
- * @param {Object} parsed - Parsed DOCX object from parseDOCX()
+ * @param {ParsedDocx} parsed - Parsed DOCX object from parseDOCX()
  * @param {number} paragraphIndex - Zero-based paragraph index
  * @param {string} expectedText - Expected text content
  */
@@ -62,7 +88,7 @@ export function assertParagraphText(parsed, paragraphIndex, expectedText) {
 
 /**
  * Assert that a specific paragraph has expected alignment
- * @param {Object} parsed - Parsed DOCX object from parseDOCX()
+ * @param {ParsedDocx} parsed - Parsed DOCX object from parseDOCX()
  * @param {number} paragraphIndex - Zero-based paragraph index
  * @param {string} expectedAlignment - Expected alignment (left, center, right, both)
  */
@@ -73,12 +99,12 @@ export function assertParagraphAlignment(parsed, paragraphIndex, expectedAlignme
 
 /**
  * Assert that all paragraphs have a specific property
- * @param {Object} parsed - Parsed DOCX object from parseDOCX()
+ * @param {ParsedDocx} parsed - Parsed DOCX object from parseDOCX()
  * @param {string} propertyName - Property name to check (alignment, spacingBefore, etc.)
- * @param {any} expectedValue - Expected property value
+ * @param {DocxScalar} expectedValue - Expected property value
  */
 export function assertAllParagraphsHaveProperty(parsed, propertyName, expectedValue) {
-  parsed.paragraphs.forEach((para, index) => {
+  parsed.paragraphs.forEach((para) => {
     const actualValue = para.properties[propertyName]
     expect(actualValue).toBe(expectedValue)
   })
@@ -86,7 +112,7 @@ export function assertAllParagraphsHaveProperty(parsed, propertyName, expectedVa
 
 /**
  * Assert that a paragraph's first run has expected text color
- * @param {Object} parsed - Parsed DOCX object from parseDOCX()
+ * @param {ParsedDocx} parsed - Parsed DOCX object from parseDOCX()
  * @param {number} paragraphIndex - Zero-based paragraph index
  * @param {string} expectedColor - Expected color in hex (e.g., 'FF0000' for red)
  */
@@ -102,7 +128,7 @@ export function assertRunColor(parsed, paragraphIndex, expectedColor) {
 
 /**
  * Assert that a paragraph's first run has expected font family
- * @param {Object} parsed - Parsed DOCX object from parseDOCX()
+ * @param {ParsedDocx} parsed - Parsed DOCX object from parseDOCX()
  * @param {number} paragraphIndex - Zero-based paragraph index
  * @param {string} expectedFont - Expected font name
  */
@@ -118,10 +144,10 @@ export function assertRunFont(parsed, paragraphIndex, expectedFont) {
 
 /**
  * Assert that a paragraph has a specific property value
- * @param {Object} parsed - Parsed DOCX object from parseDOCX()
+ * @param {ParsedDocx} parsed - Parsed DOCX object from parseDOCX()
  * @param {number} paragraphIndex - Zero-based paragraph index
  * @param {string} propertyName - Property name
- * @param {any} expectedValue - Expected value
+ * @param {DocxScalar} expectedValue - Expected value
  */
 export function assertParagraphProperty(
   parsed,
