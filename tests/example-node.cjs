@@ -1,10 +1,30 @@
 /* eslint-disable no-console */
 const fs = require('fs')
+const path = require('path')
 // FIXME: Incase you have the npm package
 // const HTMLtoDOCX = require('html-to-docx');
-const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
 
-const filePath = './example-node.docx'
+const outputDirectory = path.resolve(__dirname, '../tmp')
+if (!fs.existsSync(outputDirectory)) {
+  fs.mkdirSync(outputDirectory, { recursive: true })
+}
+
+const toBuffer = async (docResult) => {
+  if (Buffer.isBuffer(docResult)) return docResult
+  if (docResult instanceof ArrayBuffer) return Buffer.from(docResult)
+  if (typeof Blob !== 'undefined' && docResult instanceof Blob) {
+    const arrayBuffer = await docResult.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  }
+  if (docResult && docResult.buffer && typeof docResult.length === 'number') {
+    return Buffer.from(docResult)
+  }
+
+  throw new TypeError(
+    `Unsupported doc result type: ${Object.prototype.toString.call(docResult)}`
+  )
+}
 
 const htmlString = `<!DOCTYPE html>
 <html lang="en">
@@ -2035,34 +2055,38 @@ const htmlString = `<!DOCTYPE html>
 </html>`
 
 void (async () => {
-  const fileBuffer = await HTMLtoDOCX(htmlString, null, {
-    table: {
-      row: { cantSplit: true },
-      addSpacingAfter: true,
-    },
-    footer: true,
-    pageNumber: true,
-    preprocessing: { skipHTMLMinify: false },
-    imageProcessing: {
-      // By default, shows a warning when sharp is not installed
-      // Uncomment to suppress the warning (useful for intentional native SVG mode):
-      // suppressSharpWarning: true,
-    },
-    // ===================================================================
-    // WARNING: deterministicIds is ONLY for CI/CD testing purposes.
-    // DO NOT use this option in production.
-    // DO NOT change this line.
-    // This option makes image filenames sequential (image-0.png, image-1.png)
-    // instead of random UUIDs, allowing automated regression testing.
-    // ===================================================================
-    deterministicIds: process.env.DETERMINISTIC_IDS === 'true',
-  })
+  const { default: HTMLtoDOCXBrowser } = await import('../dist/browser.js')
+  const runtimes = [
+    { convert: HTMLtoDOCXNode, runtime: 'node' },
+    { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
+  ]
 
-  fs.writeFile(filePath, fileBuffer, (error) => {
-    if (error) {
-      console.log('Docx file creation failed')
-      return
-    }
-    console.log('Docx file created successfully')
-  })
+  for (const { convert, runtime } of runtimes) {
+    const docResult = await convert(htmlString, null, {
+      table: {
+        row: { cantSplit: true },
+        addSpacingAfter: true,
+      },
+      footer: true,
+      pageNumber: true,
+      preprocessing: { skipHTMLMinify: false },
+      imageProcessing: {
+        // By default, shows a warning when sharp is not installed
+        // Uncomment to suppress the warning (useful for intentional native SVG mode):
+        // suppressSharpWarning: true,
+      },
+      // ===================================================================
+      // WARNING: deterministicIds is ONLY for CI/CD testing purposes.
+      // DO NOT use this option in production.
+      // DO NOT change this line.
+      // This option makes image filenames sequential (image-0.png, image-1.png)
+      // instead of random UUIDs, allowing automated regression testing.
+      // ===================================================================
+      deterministicIds: process.env.DETERMINISTIC_IDS === 'true',
+    })
+
+    const outputPath = path.join(outputDirectory, `example-node-${runtime}.docx`)
+    fs.writeFileSync(outputPath, await toBuffer(docResult))
+    console.log(`Docx file created successfully: ${outputPath}`)
+  }
 })()

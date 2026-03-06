@@ -1,13 +1,33 @@
 /* eslint-disable no-console */
 const fs = require('fs')
-const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+const path = require('path')
+const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
 
 /**
  * This example demonstrates the customizable heading styles feature
  * introduced in PR #129: https://github.com/TurboDocx/html-to-docx/pull/129
  */
 
-const filePath = './example-heading-styles.docx'
+const outputDirectory = path.resolve(__dirname, '../tmp')
+if (!fs.existsSync(outputDirectory)) {
+  fs.mkdirSync(outputDirectory, { recursive: true })
+}
+
+const toBuffer = async (docResult) => {
+  if (Buffer.isBuffer(docResult)) return docResult
+  if (docResult instanceof ArrayBuffer) return Buffer.from(docResult)
+  if (typeof Blob !== 'undefined' && docResult instanceof Blob) {
+    const arrayBuffer = await docResult.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  }
+  if (docResult && docResult.buffer && typeof docResult.length === 'number') {
+    return Buffer.from(docResult)
+  }
+
+  throw new TypeError(
+    `Unsupported doc result type: ${Object.prototype.toString.call(docResult)}`
+  )
+}
 
 const htmlString = `<!DOCTYPE html>
 <html lang="en">
@@ -110,28 +130,35 @@ void (async () => {
   console.log('  H6: (using defaults)\n')
 
   try {
-    const fileBuffer = await HTMLtoDOCX(htmlString, null, {
-      heading: customHeadingOptions,
-      title: 'Customizable Heading Styles Demo',
-      subject: 'Demonstrating PR #129 - Customizable Heading Styles',
-      creator: 'TurboDocx Example',
-      description: 'This document showcases the customizable heading styles feature',
-    })
+    const { default: HTMLtoDOCXBrowser } = await import('../dist/browser.js')
+    const runtimes = [
+      { convert: HTMLtoDOCXNode, runtime: 'node' },
+      { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
+    ]
 
-    fs.writeFile(filePath, fileBuffer, (error) => {
-      if (error) {
-        console.log('❌ Docx file creation failed')
-        console.error(error)
-        return
-      }
-      console.log('✅ Docx file created successfully: ' + filePath)
-      console.log('\n📖 Open the file to see:')
-      console.log('   • Custom fonts for different heading levels')
-      console.log('   • Custom font sizes')
-      console.log('   • Custom spacing before/after headings')
-      console.log('   • H3 without bold (customized)')
-      console.log('   • H4 and H6 with default styles (for comparison)')
-    })
+    for (const { convert, runtime } of runtimes) {
+      const docResult = await convert(htmlString, null, {
+        heading: customHeadingOptions,
+        title: 'Customizable Heading Styles Demo',
+        subject: 'Demonstrating PR #129 - Customizable Heading Styles',
+        creator: 'TurboDocx Example',
+        description: 'This document showcases the customizable heading styles feature',
+      })
+
+      const outputPath = path.join(
+        outputDirectory,
+        `example-heading-styles-${runtime}.docx`
+      )
+      fs.writeFileSync(outputPath, await toBuffer(docResult))
+      console.log(`✅ Docx file created successfully: ${outputPath}`)
+    }
+
+    console.log('\n📖 Open the files to see:')
+    console.log('   • Custom fonts for different heading levels')
+    console.log('   • Custom font sizes')
+    console.log('   • Custom spacing before/after headings')
+    console.log('   • H3 without bold (customized)')
+    console.log('   • H4 and H6 with default styles (for comparison)')
   } catch (error) {
     console.log('❌ Error generating document')
     console.error(error)

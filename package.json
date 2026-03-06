@@ -53,7 +53,7 @@
         "import": "./dist/browser.js"
       },
       "node": {
-        "types": "./dist/node.d.ts",
+        "types": "./dist/index.d.ts",
         "import": "./dist/node.js",
         "require": "./dist/node.cjs"
       },
@@ -68,7 +68,7 @@
       "default": "./dist/browser.js"
     },
     "./node": {
-      "types": "./dist/node.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/node.js",
       "require": "./dist/node.cjs"
     }
@@ -85,9 +85,15 @@
     "test:example-inline-svg": "bun run build && node tests/example-inline-svg.js",
     "test:rtl": "bun run build && node tests/example-rtl.js",
     "test:headings": "bun run build && node tests/example-heading-styles.cjs",
+    "test:baseline:node": "bun run build && node tests/regression-baseline/generate-baseline.cjs",
+    "test:baseline:browser": "bun run build && node tests/regression-baseline/generate-baseline-browser.cjs",
     "test:ts": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/typescript-example.ts",
     "test:ts-rtl": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/rtl-example.ts",
-    "test:all": "bun run test:unit && bun run test && bun run test:headings && bun run test:ts && bun run test:ts-rtl",
+    "test:prepare-artifacts": "node -e \"require('fs').mkdirSync('tmp', { recursive: true })\"",
+    "test:all": "bun run test:prepare-artifacts && bun run test:unit:coverage && bun run test && bun run test:headings && bun run test:ts && bun run test:ts-rtl && bun run test:baseline:node && bun run test:baseline:browser && bun run api:check",
+    "api:extract:browser": "api-extractor run --local --config config/api-extractor.browser.json",
+    "api:extract:node": "api-extractor run --local --config config/api-extractor.node.json",
+    "api:check": "bun run build && bun run api:extract:browser && bun run api:extract:node && node scripts/check-api-parity.cjs",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:unit:coverage": "vitest run --coverage",
@@ -145,6 +151,8 @@
   },
   "homepage": "https://github.com/TurboDocx/html-to-docx#readme",
   "devDependencies": {
+    "@microsoft/api-extractor": "^7.57.6",
+    "@playwright/test": "^1.58.2",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.3.3",
     "@vitest/coverage-v8": "4.0.18",

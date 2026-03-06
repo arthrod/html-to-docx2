@@ -2,10 +2,19 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
-import { HTMLtoDOCX } from '../../../dist/index.cjs'
+import { HTMLtoDOCX as HTMLtoDOCXNode } from '../../../dist/node.cjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const repoRoot = path.resolve(__dirname, '../../../')
+const outputDirectory = path.join(repoRoot, 'tmp')
+
+if (!fs.existsSync(outputDirectory)) {
+  fs.mkdirSync(outputDirectory, { recursive: true })
+}
+
+type RuntimeName = 'browser' | 'node'
+type HTMLtoDOCXFn = typeof HTMLtoDOCXNode
 
 /**
  * This file demonstrates how to use html-to-docx with TypeScript
@@ -56,7 +65,8 @@ const footerHtml = `<p style="text-align: center;">Page <span id="pageNumber">X<
 async function saveDocxFile(
   docResult: Buffer | ArrayBuffer | Blob,
   fileName: string,
-  docType: string
+  docType: string,
+  runtime: RuntimeName
 ) {
   let docData: Buffer
   if (docResult instanceof Buffer) {
@@ -73,135 +83,145 @@ async function saveDocxFile(
     console.log(`${docType} constructor name:`, docResult?.constructor?.name)
     return
   }
-  // Save to root directory as requested
-  const rootPath = path.join(__dirname, '../../', fileName)
-  fs.writeFileSync(rootPath, docData)
-  console.log(`${docType} document created: ${fileName}`)
+
+  const runtimeFileName = fileName.replace(/\.docx$/i, `-${runtime}.docx`)
+  const outputPath = path.join(outputDirectory, runtimeFileName)
+  fs.writeFileSync(outputPath, docData)
+  console.log(`${docType} document created (${runtime}): ${outputPath}`)
 }
 
 async function generateDocuments() {
   try {
-    // Basic example
-    const basicDocResult = await HTMLtoDOCX(htmlString)
-    await saveDocxFile(basicDocResult, 'basic-example.docx', 'Basic')
+    const { default: HTMLtoDOCXBrowser } = await import('../../../dist/browser.js')
+    const runtimes: { convert: HTMLtoDOCXFn; runtime: RuntimeName }[] = [
+      { convert: HTMLtoDOCXNode as HTMLtoDOCXFn, runtime: 'node' },
+      { convert: HTMLtoDOCXBrowser as HTMLtoDOCXFn, runtime: 'browser' },
+    ]
 
-    // Advanced example with all options
-    const advancedDocResult = await HTMLtoDOCX(
-      htmlString,
-      headerHtml,
-      {
-        orientation: 'portrait',
-        pageSize: {
-          width: 12240, // Letter width in TWIP
-          height: 15840, // Letter height in TWIP
-        },
-        margins: {
-          top: 1440,
-          right: 1800,
-          bottom: 1440,
-          left: 1800,
-          header: 720,
-          footer: 720,
-        },
-        title: 'TypeScript Example',
-        subject: 'HTML to DOCX Conversion',
-        creator: 'TurboDocx',
-        keywords: ['html', 'docx', 'typescript', 'conversion'],
-        description: 'An example document created with html-to-docx and TypeScript',
-        lastModifiedBy: 'TypeScript Example',
-        revision: 1,
-        header: true,
-        headerType: 'default',
-        footer: true,
-        footerType: 'default',
-        pageNumber: true,
-        table: {
-          row: {
-            cantSplit: true,
+    for (const { convert, runtime } of runtimes) {
+      // Basic example
+      const basicDocResult = await convert(htmlString)
+      await saveDocxFile(basicDocResult, 'basic-example.docx', 'Basic', runtime)
+
+      // Advanced example with all options
+      const advancedDocResult = await convert(
+        htmlString,
+        headerHtml,
+        {
+          orientation: 'portrait',
+          pageSize: {
+            width: 12240, // Letter width in TWIP
+            height: 15840, // Letter height in TWIP
           },
-          borderOptions: {
-            size: 2,
-            color: '000000',
+          margins: {
+            top: 1440,
+            right: 1800,
+            bottom: 1440,
+            left: 1800,
+            header: 720,
+            footer: 720,
+          },
+          title: 'TypeScript Example',
+          subject: 'HTML to DOCX Conversion',
+          creator: 'TurboDocx',
+          keywords: ['html', 'docx', 'typescript', 'conversion'],
+          description: 'An example document created with html-to-docx and TypeScript',
+          lastModifiedBy: 'TypeScript Example',
+          revision: 1,
+          header: true,
+          headerType: 'default',
+          footer: true,
+          footerType: 'default',
+          pageNumber: true,
+          table: {
+            row: {
+              cantSplit: true,
+            },
+            borderOptions: {
+              size: 2,
+              color: '000000',
+            },
           },
         },
-      },
-      footerHtml
-    )
+        footerHtml
+      )
 
-    await saveDocxFile(advancedDocResult, 'advanced-example.docx', 'Advanced')
+      await saveDocxFile(advancedDocResult, 'advanced-example.docx', 'Advanced', runtime)
 
-    // RTL Direction test
-    const rtlTestResult = await HTMLtoDOCX(
-      `<h1>Direction Test</h1><p>This tests the direction property in TypeScript.</p>`,
-      null,
-      {
-        direction: 'rtl',
-        lang: 'ar-SA',
-        title: 'RTL Direction Test',
-        creator: 'TypeScript RTL Test',
-      }
-    )
+      // RTL Direction test
+      const rtlTestResult = await convert(
+        `<h1>Direction Test</h1><p>This tests the direction property in TypeScript.</p>`,
+        null,
+        {
+          direction: 'rtl',
+          lang: 'ar-SA',
+          title: 'RTL Direction Test',
+          creator: 'TypeScript RTL Test',
+        }
+      )
 
-    await saveDocxFile(rtlTestResult, 'typescript-rtl-test.docx', 'RTL Test')
+      await saveDocxFile(rtlTestResult, 'typescript-rtl-test.docx', 'RTL Test', runtime)
 
-    // Customizable Heading Styles test (PR #129)
-    const headingStylesHtml = `
-            <h1>Custom Heading Styles Demo</h1>
-            <p>This demonstrates the customizable heading styles feature from PR #129.</p>
-            <h2>Custom Styled Section</h2>
-            <p>All headings in this document use custom fonts, sizes, and spacing.</p>
-            <h3>Subsection Header</h3>
-            <p>Notice the different styling for each heading level.</p>
-        `
+      // Customizable Heading Styles test (PR #129)
+      const headingStylesHtml = `
+              <h1>Custom Heading Styles Demo</h1>
+              <p>This demonstrates the customizable heading styles feature from PR #129.</p>
+              <h2>Custom Styled Section</h2>
+              <p>All headings in this document use custom fonts, sizes, and spacing.</p>
+              <h3>Subsection Header</h3>
+              <p>Notice the different styling for each heading level.</p>
+          `
 
-    const headingStylesResult = await HTMLtoDOCX(headingStylesHtml, null, {
-      title: 'Custom Heading Styles Test',
-      creator: 'TypeScript Heading Styles Test',
-      heading: {
-        heading1: {
-          font: 'Arial',
-          fontSize: 72, // 36pt in Word (OOXML uses half-points: 72 / 2 = 36pt)
-          bold: true,
-          spacing: {
-            before: 600,
-            after: 200,
+      const headingStylesResult = await convert(headingStylesHtml, null, {
+        title: 'Custom Heading Styles Test',
+        creator: 'TypeScript Heading Styles Test',
+        heading: {
+          heading1: {
+            font: 'Arial',
+            fontSize: 72, // 36pt in Word (OOXML uses half-points: 72 / 2 = 36pt)
+            bold: true,
+            spacing: {
+              before: 600,
+              after: 200,
+            },
+            keepLines: true,
+            keepNext: true,
+            outlineLevel: 0,
           },
-          keepLines: true,
-          keepNext: true,
-          outlineLevel: 0,
-        },
-        heading2: {
-          font: 'Georgia',
-          fontSize: 40, // 20pt in Word (40 / 2 = 20pt)
-          bold: true,
-          spacing: {
-            before: 400,
-            after: 150,
+          heading2: {
+            font: 'Georgia',
+            fontSize: 40, // 20pt in Word (40 / 2 = 20pt)
+            bold: true,
+            spacing: {
+              before: 400,
+              after: 150,
+            },
+            keepLines: true,
+            keepNext: true,
+            outlineLevel: 1,
           },
-          keepLines: true,
-          keepNext: true,
-          outlineLevel: 1,
-        },
-        heading3: {
-          font: 'Calibri',
-          fontSize: 26, // 13pt in Word (26 / 2 = 13pt)
-          bold: false, // Not bold
-          spacing: {
-            before: 240,
-            after: 100,
+          heading3: {
+            font: 'Calibri',
+            fontSize: 26, // 13pt in Word (26 / 2 = 13pt)
+            bold: false, // Not bold
+            spacing: {
+              before: 240,
+              after: 100,
+            },
+            keepLines: true,
+            keepNext: true,
+            outlineLevel: 2,
           },
-          keepLines: true,
-          keepNext: true,
-          outlineLevel: 2,
         },
-      },
-    })
+      })
 
-    await saveDocxFile(
-      headingStylesResult,
-      'typescript-heading-styles-test.docx',
-      'Heading Styles Test'
-    )
+      await saveDocxFile(
+        headingStylesResult,
+        'typescript-heading-styles-test.docx',
+        'Heading Styles Test',
+        runtime
+      )
+    }
   } catch (error) {
     console.error('Error generating documents:', error)
   }

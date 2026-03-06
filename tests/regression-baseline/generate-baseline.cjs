@@ -3,7 +3,7 @@
  *
  * Run:  node tests/regression-baseline/generate-baseline.cjs
  *
- * Produces:  tests/regression-baseline/regression-baseline.docx
+ * Produces:  tmp/regression-baseline-node.docx
  *
  * This file is also invoked by the OOXML validation test to ensure the
  * baseline always passes schema validation.
@@ -11,10 +11,14 @@
 const fs = require('fs')
 const path = require('path')
 
-const OUT_DIR = path.join(__dirname)
+const OUT_DIR = path.resolve(__dirname, '../../tmp')
 
 async function main() {
-  const { default: HTMLtoDOCX } = require('../../dist/index.cjs')
+  if (!fs.existsSync(OUT_DIR)) {
+    fs.mkdirSync(OUT_DIR, { recursive: true })
+  }
+
+  const { default: HTMLtoDOCX } = require('../../dist/node.cjs')
 
   // Read the static HTML source
   let html = fs.readFileSync(path.join(__dirname, 'regression-source.html'), 'utf-8')
@@ -162,7 +166,7 @@ async function main() {
     footerHtml
   )
 
-  const outPath = path.join(OUT_DIR, 'regression-baseline.docx')
+  const outPath = path.join(OUT_DIR, 'regression-baseline-node.docx')
   fs.writeFileSync(outPath, Buffer.from(docx))
   console.log(`Generated: ${outPath}`)
   console.log(`File size: ${(fs.statSync(outPath).size / 1024).toFixed(1)} KB`)
