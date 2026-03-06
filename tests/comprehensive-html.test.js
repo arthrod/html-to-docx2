@@ -233,7 +233,6 @@ describe('Comprehensive HTML to DOCX', () => {
     test('should handle header and footer', async () => {
       const html = '<p>Document body</p>'
       const header = '<p>Header content</p>'
-      const footer = '<p>Footer content</p>'
 
       const docx = await HTMLtoDOCX(html, header, {
         footer: true,

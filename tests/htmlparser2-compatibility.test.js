@@ -144,9 +144,9 @@ describe('justjshtml Compatibility', () => {
     })
 
     test('should handle special punctuation', () => {
-      const result = convertHTML('<p>—–""' + "'" + "'</p>")
+      const result = convertHTML(`<p>—–""''</p>`)
 
-      expect(result.children[0].text).toBe('—–""' + "'" + "'")
+      expect(result.children[0].text).toBe(`—–""''`)
     })
 
     test('should handle currency symbols', () => {

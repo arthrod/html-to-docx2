@@ -16,3 +16,4 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/helpers/html-parser.ts
 - src/utils/vnode.ts
 - src/docx-document.ts
+- tests/examples/typescript/type-test.ts

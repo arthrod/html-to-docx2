@@ -309,7 +309,7 @@ function generateReport(report) {
             })
         } else {
           // Unchanged content - add context lines
-          const lines = part.value.split('\n').filter((l) => l.trim())
+          const partLines = part.value.split('\n').filter((l) => l.trim())
 
           // Check if previous or next part is a change
           const prevIsChange = i > 0 && (diffToUse[i - 1].added || diffToUse[i - 1].removed)
@@ -318,15 +318,17 @@ function generateReport(report) {
 
           if (prevIsChange || nextIsChange) {
             // Show context lines
-            const start = prevIsChange ? Math.max(0, lines.length - contextLines) : 0
-            const end = nextIsChange ? Math.min(lines.length, contextLines) : lines.length
+            const start = prevIsChange ? Math.max(0, partLines.length - contextLines) : 0
+            const end = nextIsChange
+              ? Math.min(partLines.length, contextLines)
+              : partLines.length
 
             for (let j = start; j < end; j++) {
-              diffOutput.push(`  ${lines[j]}`)
+              diffOutput.push(`  ${partLines[j]}`)
             }
 
             // Add separator if there's more content
-            if (nextIsChange && end < lines.length) {
+            if (nextIsChange && end < partLines.length) {
               diffOutput.push('  ...')
             }
           }

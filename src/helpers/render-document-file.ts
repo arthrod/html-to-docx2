@@ -310,7 +310,7 @@ export const buildImage = async (
     if (base64Uri) {
       response = await docxDocumentInstance.createMediaFile(base64Uri)
     }
-  } catch (_error) {
+  } catch {
     // NOOP
   }
   if (response) {
@@ -357,8 +357,6 @@ type VNodeObject = {
   numberingId: number
   type: string
 }
-
-const getLastAccumulatorItem = <T>(items: T[]): T | undefined => items[items.length - 1]
 
 export const buildList = async (
   vNode: VNodeType,

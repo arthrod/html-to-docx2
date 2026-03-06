@@ -17,13 +17,13 @@ const htmlString = `<!DOCTYPE html>
     </html>`
 
 // $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const doc1 = HTMLtoDOCX(htmlString)
+const _doc1 = HTMLtoDOCX(htmlString)
 
 // $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const doc2 = HTMLtoDOCX(htmlString, '<p>Header</p>')
+const _doc2 = HTMLtoDOCX(htmlString, '<p>Header</p>')
 
 // $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const doc3 = HTMLtoDOCX(htmlString, null, {
+const _doc3 = HTMLtoDOCX(htmlString, null, {
   orientation: 'landscape',
   table: {
     row: {
@@ -33,7 +33,7 @@ const doc3 = HTMLtoDOCX(htmlString, null, {
 })
 
 // $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const doc4 = HTMLtoDOCX(
+const _doc4 = HTMLtoDOCX(
   htmlString,
   null,
   {
@@ -48,7 +48,7 @@ const doc4 = HTMLtoDOCX(
 )
 
 // @ts-expect-error - This should show a TypeScript error because parameters are in wrong order
-const doc5 = HTMLtoDOCX(htmlString, {
+const _doc5 = HTMLtoDOCX(htmlString, {
   orientation: 'landscape',
   table: {
     row: {
@@ -57,12 +57,12 @@ const doc5 = HTMLtoDOCX(htmlString, {
   },
 })
 
-const doc6 = HTMLtoDOCX(htmlString, null, {
+const _doc6 = HTMLtoDOCX(htmlString, null, {
   // @ts-expect-error - This should show a TypeScript error because orientation has invalid value
   orientation: 'invalid',
 })
 
-const doc7 = HTMLtoDOCX(htmlString, null, {
+const _doc7 = HTMLtoDOCX(htmlString, null, {
   // @ts-expect-error - This should show a TypeScript error because headerType has invalid value
   headerType: 'invalid',
 })

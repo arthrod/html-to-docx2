@@ -16,7 +16,7 @@ import {
   GIF_1x1_BASE64,
   PNG_FIXTURE,
 } from './fixtures/index.js'
-import { parseDOCX, assertParagraphCount } from './helpers/docx-assertions.js'
+import { parseDOCX } from './helpers/docx-assertions.js'
 
 // Helper to create a mock fetch response from a Buffer
 function mockFetchResponse(data, status = 200) {
