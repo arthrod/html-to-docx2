@@ -1,5 +1,13 @@
 import { defaultFont } from '../constants'
 
+const escapeXml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+
 const generateThemeXML = (font: string = defaultFont): string => `
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
@@ -45,13 +53,13 @@ const generateThemeXML = (font: string = defaultFont): string => `
       </a:clrScheme>
       <a:fontScheme name="Office">
         <a:majorFont>
-          <a:latin typeface="${font}"/>
-          <a:ea typeface="${font}"/>
+          <a:latin typeface="${escapeXml(font)}"/>
+          <a:ea typeface="${escapeXml(font)}"/>
           <a:cs typeface=""/>
         </a:majorFont>
         <a:minorFont>
-          <a:latin typeface="${font}"/>
-          <a:ea typeface="${font}"/>
+          <a:latin typeface="${escapeXml(font)}"/>
+          <a:ea typeface="${escapeXml(font)}"/>
           <a:cs typeface=""/>
         </a:minorFont>
       </a:fontScheme>

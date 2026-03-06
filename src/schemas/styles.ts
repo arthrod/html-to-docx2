@@ -16,6 +16,29 @@ const escapeXml = (value: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;')
 
+const headingKeys: Array<keyof HeadingOptions> = [
+  'heading1',
+  'heading2',
+  'heading3',
+  'heading4',
+  'heading5',
+  'heading6',
+]
+
+const mergeHeadingConfig = (
+  overrides: HeadingOptions = defaultHeadingOptions
+): HeadingOptions =>
+  headingKeys.reduce<HeadingOptions>(
+    (acc, key) => {
+      acc[key] = {
+        ...defaultHeadingOptions[key],
+        ...overrides[key],
+      }
+      return acc
+    },
+    { ...defaultHeadingOptions }
+  )
+
 const generateHeadingStyleXML = (
   headingId: string,
   heading: HeadingStyleOptions
@@ -91,17 +114,7 @@ const generateStylesXML = (
   lang: string = defaultLang,
   headingConfig: HeadingOptions = defaultHeadingOptions
 ): string => {
-  const config: HeadingOptions = Object.fromEntries(
-    Object.entries(defaultHeadingOptions).map(([key, defaultValue]) => [
-      key,
-      headingConfig?.[key as keyof HeadingOptions]
-        ? {
-            ...defaultValue,
-            ...headingConfig[key as keyof HeadingOptions],
-          }
-        : defaultValue,
-    ])
-  ) as HeadingOptions
+  const config = mergeHeadingConfig(headingConfig)
 
   return `
   <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -132,14 +145,10 @@ const generateStylesXML = (
 			<w:u w:val="single" />
 		  </w:rPr>
 		</w:style>
-		${Object.entries(config)
-      .filter(([key]) => key.startsWith('heading'))
-      .sort(([a], [b]) => a.localeCompare(b))
+		${headingKeys
+      .map((key) => [key, config[key]] as const)
       .map(([key, value]) =>
-        generateHeadingStyleXML(
-          key.charAt(0).toUpperCase() + key.slice(1),
-          value as HeadingStyleOptions
-        )
+        generateHeadingStyleXML(key.charAt(0).toUpperCase() + key.slice(1), value)
       )
       .join('')}
   </w:styles>

@@ -34,3 +34,11 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/utils/unit-conversion.ts
 - src/helpers/index.ts
 - src/schemas/index.ts
+- src/schemas/core.ts
+- src/schemas/document-rels.ts
+- src/schemas/document.template.ts
+- src/schemas/styles.ts
+- src/schemas/theme.ts
+- src/schemas/numbering.ts
+- src/schemas/web-settings.ts
+- src/schemas/font-table.ts

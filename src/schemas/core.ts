@@ -2,6 +2,14 @@
 import { applicationName } from '../constants'
 import namespaces from '../namespaces'
 
+const escapeXml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+
 /**
  * Format a Date as local time with Z suffix.
  * Word uses local time with a trailing 'Z' in dcterms:created/modified
@@ -16,6 +24,9 @@ function toLocalWithZ(d: Date): string {
   const s = String(d.getSeconds()).padStart(2, '0')
   return `${Y}-${M}-${D}T${h}:${m}:${s}Z`
 }
+
+const formatMetadataDate = (value: Date): string =>
+  value instanceof Date ? toLocalWithZ(value) : toLocalWithZ(new Date())
 
 const generateCoreXML = (
   title: string = '',
@@ -37,25 +48,19 @@ const generateCoreXML = (
           xmlns:dcmitype="${namespaces.dcmitype}"
           xmlns:xsi="${namespaces.xsi}"
           >
-            <dc:title>${title}</dc:title>
-            <dc:subject>${subject}</dc:subject>
-            <dc:creator>${creator}</dc:creator>
-            ${
-              keywords && Array.isArray(keywords)
-                ? `<cp:keywords>${keywords.join(', ')}</cp:keywords>`
-                : ''
-            }
-            <dc:description>${description}</dc:description>
-            <cp:lastModifiedBy>${lastModifiedBy}</cp:lastModifiedBy>
+            <dc:title>${escapeXml(title)}</dc:title>
+            <dc:subject>${escapeXml(subject)}</dc:subject>
+            <dc:creator>${escapeXml(creator)}</dc:creator>
+            <cp:keywords>${escapeXml(keywords.join(', '))}</cp:keywords>
+            <dc:description>${escapeXml(description)}</dc:description>
+            <cp:lastModifiedBy>${escapeXml(lastModifiedBy)}</cp:lastModifiedBy>
             <cp:revision>${revision}</cp:revision>
-            <dcterms:created xsi:type="dcterms:W3CDTF">${
-              createdAt instanceof Date ? toLocalWithZ(createdAt) : toLocalWithZ(new Date())
-            }</dcterms:created>
-            <dcterms:modified xsi:type="dcterms:W3CDTF">${
-              modifiedAt instanceof Date
-                ? toLocalWithZ(modifiedAt)
-                : toLocalWithZ(new Date())
-            }</dcterms:modified>
+            <dcterms:created xsi:type="dcterms:W3CDTF">${formatMetadataDate(
+              createdAt
+            )}</dcterms:created>
+            <dcterms:modified xsi:type="dcterms:W3CDTF">${formatMetadataDate(
+              modifiedAt
+            )}</dcterms:modified>
         </cp:coreProperties>
     `
 
