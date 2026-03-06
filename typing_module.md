@@ -47,3 +47,6 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/schemas/generic-rels.ts
 - src/schemas/rels.ts
 - src/schemas/settings.ts
+- src/constants.ts
+- vitest.config.ts
+- tsdown.config.ts

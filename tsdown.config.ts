@@ -11,6 +11,10 @@ const BANNER = `/**
  * @preserve
  */`
 
+const NEVER_BUNDLE_DEPS = ['sharp'] as const
+const BROWSER_FORMATS = ['esm'] as const
+const NODE_FORMATS = ['esm', 'cjs'] as const
+
 const baseConfig = {
   target: 'es2020',
   dts: {
@@ -25,7 +29,7 @@ const baseConfig = {
     exports: 'named',
   },
   deps: {
-    neverBundle: ['sharp'],
+    neverBundle: NEVER_BUNDLE_DEPS,
     onlyAllowBundle: false,
   },
   failOnWarn: 'ci-only' as const,
@@ -39,7 +43,7 @@ export default defineConfig([
     entry: {
       browser: 'src/browser.ts',
     },
-    format: ['esm'],
+    format: BROWSER_FORMATS,
     platform: 'browser',
     alias: {
       './utils/image': path.resolve('src/utils/image-browser.ts'),
@@ -53,7 +57,7 @@ export default defineConfig([
       index: 'src/node.ts',
       node: 'src/node.ts',
     },
-    format: ['esm', 'cjs'],
+    format: NODE_FORMATS,
     fixedExtension: false,
     platform: 'node',
   },

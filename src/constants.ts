@@ -17,6 +17,7 @@ export type ListStyleType =
   | 'upper-roman'
 
 export type VerticalAlign = 'bottom' | 'middle' | 'top'
+export type SvgUnit = '%' | 'cm' | 'em' | 'in' | 'mm' | 'pc' | 'pt' | 'px' | 'rem'
 
 export type Margins = {
   bottom: number
@@ -186,7 +187,7 @@ const defaultTableBorderAttributeOptions: TableBorderAttributeOptions = {
   stroke: 'single',
 }
 
-const SVG_UNIT_TO_PIXEL_CONVERSIONS: Record<string, number> = {
+const SVG_UNIT_TO_PIXEL_CONVERSIONS: Readonly<Record<SvgUnit, number>> = {
   '%': 1,
   cm: 37.7952755906,
   em: 16,
@@ -378,8 +379,8 @@ const paragraphBordersObject: ParagraphBorders = {
     spacing: 3,
   },
 }
-const colorlessColors: string[] = ['transparent', 'auto']
-const verticalAlignValues: VerticalAlign[] = ['top', 'middle', 'bottom']
+const colorlessColors: ReadonlyArray<string> = ['transparent', 'auto']
+const verticalAlignValues: ReadonlyArray<VerticalAlign> = ['top', 'middle', 'bottom']
 
 export {
   applicationName,
