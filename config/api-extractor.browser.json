@@ -15,7 +15,7 @@
   },
   "dtsRollup": {
     "enabled": true,
-    "untrimmedFilePath": "<projectFolder>/tmp/api-extractor/browser.rollup.d.ts"
+    "untrimmedFilePath": "<projectFolder>/api-surface/browser.rollup.d.ts"
   },
   "messages": {
     "compilerMessageReporting": {

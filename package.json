@@ -109,7 +109,7 @@
     "build:dev": "NODE_ENV=development tsdown",
     "build:prod": "NODE_ENV=production tsdown",
     "diff:docx": "node scripts/diff-docx.js",
-    "prepare": "husky install",
+    "prepare": "lefthook install",
     "test:ts-example": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/typescript-example.ts"
   },
   "repository": {
@@ -159,7 +159,7 @@
     "@vitest/coverage-v8": "4.0.18",
     "cross-env": "10.1.0",
     "diff": "8.0.3",
-    "husky": "9.1.7",
+    "lefthook": "^1.11.13",
     "lint-staged": "16.3.2",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.23.0",

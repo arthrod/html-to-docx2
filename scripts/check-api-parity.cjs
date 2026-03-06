@@ -4,7 +4,7 @@ const path = require('path')
 const { createTwoFilesPatch } = require('diff')
 
 const ROOT_DIR = path.resolve(__dirname, '..')
-const API_DIR = path.join(ROOT_DIR, 'tmp', 'api-extractor')
+const API_DIR = path.join(ROOT_DIR, 'api-surface')
 const BROWSER_ROLLUP = path.join(API_DIR, 'browser.rollup.d.ts')
 const NODE_ROLLUP = path.join(API_DIR, 'node.rollup.d.ts')
 
