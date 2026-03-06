@@ -1,6 +1,25 @@
+// @ts-check
+
 const fs = require('fs')
 const path = require('path')
 const JSZip = require('jszip')
+
+/**
+ * @typedef {'change' | 'new_media' | 'content_change' | 'style_change' | 'relationship_change' | 'binary_change' | 'new_file' | 'deleted_file'} DifferenceType
+ */
+
+/**
+ * @typedef {'info' | 'warn' | 'error'} DifferenceSeverity
+ */
+
+/**
+ * @typedef {{
+ *   type: DifferenceType
+ *   severity: DifferenceSeverity
+ *   needsReview: boolean
+ *   description: string
+ * }} DifferenceCategory
+ */
 
 /**
  * Extracts a DOCX file (which is just a ZIP archive) to a directory
@@ -18,6 +37,7 @@ async function extractDocx(docxPath, extractDir) {
   }
 
   // Extract all files
+  /** @type {Promise<void>[]} */
   const promises = []
   zip.forEach((relativePath, file) => {
     const filePath = path.join(extractDir, relativePath)
@@ -144,9 +164,10 @@ function shouldIgnoreFile(filePath) {
  * Categorizes a file difference
  * @param {string} filePath - Relative file path
  * @param {string} diff - Diff content
- * @returns {Object} Category and metadata
+ * @returns {DifferenceCategory} Category and metadata
  */
 function categorizeDifference(filePath, diff) {
+  /** @type {DifferenceCategory} */
   const category = {
     type: 'change',
     severity: 'info',

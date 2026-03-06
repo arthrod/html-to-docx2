@@ -85,3 +85,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/schemas/numbering.ts
 - src/utils/xmlbuilder2.ts
 - src/utils/url.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- scripts/diff-utils.js
+- scripts/diff-docx.js
+- tests/example-inline-svg.js
+- tests/example-svg.js
+- tests/example-rtl.js

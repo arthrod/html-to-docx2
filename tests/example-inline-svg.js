@@ -1,7 +1,44 @@
+// @ts-check
+
 const fs = require('fs')
 // Use the built version, or install via: npm install @turbodocx/html-to-docx
 // const HTMLtoDOCX = require('@turbodocx/html-to-docx');
 const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+
+/**
+ * @typedef {'convert' | 'native'} SvgHandlingMode
+ */
+
+/**
+ * @typedef {{
+ *   orientation: 'portrait' | 'landscape'
+ *   title: string
+ *   creator: string
+ *   imageProcessing: {
+ *     svgHandling: SvgHandlingMode
+ *     verboseLogging: boolean
+ *   }
+ * }} ExampleDocxOptions
+ */
+
+/**
+ * @typedef {(html: string, header: string | null, options: ExampleDocxOptions) => Promise<Uint8Array | Buffer | Blob>} HtmlToDocxFn
+ */
+
+/** @type {HtmlToDocxFn} */
+const htmlToDocx = HTMLtoDOCX
+
+/**
+ * @param {Uint8Array | Buffer | Blob} result
+ * @returns {Promise<Uint8Array | Buffer>}
+ */
+async function toNodeBinary(result) {
+  if (result instanceof Uint8Array || Buffer.isBuffer(result)) {
+    return result
+  }
+
+  return Buffer.from(await result.arrayBuffer())
+}
 
 // Simple HTML with inline SVG element
 const htmlContent = `
@@ -50,7 +87,7 @@ async function generateDocument() {
   try {
     // Test with SVG→PNG conversion (default, requires sharp)
     console.log('📄 Generating document with SVG→PNG conversion...')
-    const docx = await HTMLtoDOCX(htmlContent, null, {
+    const convertOptions = /** @type {const} */ ({
       orientation: 'portrait',
       title: 'Inline SVG Test',
       creator: '@turbodocx/html-to-docx',
@@ -59,14 +96,15 @@ async function generateDocument() {
         verboseLogging: true,
       },
     })
+    const docx = await htmlToDocx(htmlContent, null, convertOptions)
 
-    fs.writeFileSync('./example-inline-svg-convert.docx', docx)
+    fs.writeFileSync('./example-inline-svg-convert.docx', await toNodeBinary(docx))
     console.log('✅ Created: example-inline-svg-convert.docx')
     console.log('   → Inline SVGs converted to PNG\n')
 
     // Test with native SVG support
     console.log('📄 Generating document with native SVG support...')
-    const docxNative = await HTMLtoDOCX(htmlContent, null, {
+    const nativeOptions = /** @type {const} */ ({
       orientation: 'portrait',
       title: 'Inline SVG Test - Native',
       creator: '@turbodocx/html-to-docx',
@@ -75,8 +113,9 @@ async function generateDocument() {
         verboseLogging: true,
       },
     })
+    const docxNative = await htmlToDocx(htmlContent, null, nativeOptions)
 
-    fs.writeFileSync('./example-inline-svg-native.docx', docxNative)
+    fs.writeFileSync('./example-inline-svg-native.docx', await toNodeBinary(docxNative))
     console.log('✅ Created: example-inline-svg-native.docx')
     console.log('   → Inline SVGs embedded as native SVG\n')
 

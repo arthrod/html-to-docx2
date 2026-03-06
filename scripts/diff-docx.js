@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+// @ts-check
+
 const fs = require('fs')
 const path = require('path')
 const { diffLines } = require('diff')
@@ -13,6 +15,40 @@ const {
   filesAreIdentical,
   isXMLFile,
 } = require('./diff-utils')
+
+/**
+ * @typedef {import('diff').Change} DiffChange
+ */
+
+/**
+ * @typedef {DiffChange[] & { prettyDiff?: DiffChange[] }} DiffResult
+ */
+
+/**
+ * @typedef {import('./diff-utils').DifferenceCategory} DifferenceCategory
+ */
+
+/**
+ * @typedef {{
+ *   file: string
+ *   category: DifferenceCategory
+ *   diff?: DiffResult | null
+ * }} ReportChange
+ */
+
+/**
+ * @typedef {{
+ *   summary: {
+ *     identical: number
+ *     changed: number
+ *     new: number
+ *     deleted: number
+ *   }
+ *   changes: ReportChange[]
+ *   warnings: ReportChange[]
+ *   errors: ReportChange[]
+ * }} DiffReport
+ */
 
 /**
  * Main diff script for comparing two DOCX files
@@ -64,9 +100,13 @@ async function main() {
 
   // Find new, deleted, and common files
   const allFiles = new Set([...baselineFiles, ...currentFiles])
+  /** @type {string[]} */
   const newFiles = []
+  /** @type {string[]} */
   const deletedFiles = []
+  /** @type {string[]} */
   const identicalFiles = []
+  /** @type {string[]} */
   const changedFiles = []
 
   for (const file of allFiles) {
@@ -94,6 +134,7 @@ async function main() {
   }
 
   // Analyze changes
+  /** @type {DiffReport} */
   const report = {
     summary: {
       identical: identicalFiles.length,
@@ -111,7 +152,9 @@ async function main() {
     const baselineFile = path.join(baselineDir, file)
     const currentFile = path.join(currentDir, file)
 
+    /** @type {DiffResult | null} */
     let diff = null
+    /** @type {DifferenceCategory | null} */
     let category = null
 
     if (isXMLFile(file)) {
@@ -123,7 +166,7 @@ async function main() {
 
       if (baselineContent !== currentContent) {
         // Diff normalized content for detection
-        diff = diffLines(baselineContent, currentContent)
+        diff = /** @type {DiffResult} */ (diffLines(baselineContent, currentContent))
         const diffText = diff
           .filter((part) => part.added || part.removed)
           .map((part) => (part.added ? `+ ${part.value}` : `- ${part.value}`))
@@ -147,6 +190,7 @@ async function main() {
     }
 
     if (category) {
+      /** @type {ReportChange} */
       const change = {
         file,
         category,
@@ -164,6 +208,7 @@ async function main() {
   // Process new files
   for (const file of newFiles) {
     const category = categorizeDifference(file, '')
+    /** @type {ReportChange} */
     const change = {
       file,
       category: {
@@ -181,6 +226,7 @@ async function main() {
 
   // Process deleted files
   for (const file of deletedFiles) {
+    /** @type {ReportChange} */
     const change = {
       file,
       category: {
@@ -223,7 +269,12 @@ async function main() {
   process.exit(0)
 }
 
+/**
+ * @param {DiffReport} report
+ * @returns {string}
+ */
 function generateReport(report) {
+  /** @type {string[]} */
   const lines = []
 
   lines.push('# TurboDocx DOCX Diff Report\n')
@@ -275,18 +326,24 @@ function generateReport(report) {
   }
 
   // OOXML Content Diff section - show actual changes
-  const xmlChanges = report.changes.filter(
-    (c) => (c.diff && c.file.endsWith('.xml')) || c.file.endsWith('.rels')
-  )
+  const xmlChanges = report.changes.filter((change) => {
+    if (change.file.endsWith('.rels')) return true
+    return Boolean(change.diff && change.file.endsWith('.xml'))
+  })
   if (xmlChanges.length > 0) {
     lines.push('## 🔍 OOXML Content Diff\n')
     lines.push('> Expand each section to see the actual OOXML changes\n')
 
     for (const change of xmlChanges) {
       // Use prettified diff if available, otherwise use normalized diff
+      if (!change.diff) {
+        continue
+      }
+
       const diffToUse = change.diff.prettyDiff || change.diff
 
       // Format diff lines with context (show unchanged lines around changes)
+      /** @type {string[]} */
       const diffOutput = []
       const contextLines = 3 // Number of unchanged lines to show before/after changes
 
@@ -296,20 +353,20 @@ function generateReport(report) {
         if (part.added) {
           part.value
             .split('\n')
-            .filter((l) => l.trim())
+            .filter((line) => line.trim())
             .forEach((line) => {
               diffOutput.push(`+ ${line}`)
             })
         } else if (part.removed) {
           part.value
             .split('\n')
-            .filter((l) => l.trim())
+            .filter((line) => line.trim())
             .forEach((line) => {
               diffOutput.push(`- ${line}`)
             })
         } else {
           // Unchanged content - add context lines
-          const partLines = part.value.split('\n').filter((l) => l.trim())
+          const partLines = part.value.split('\n').filter((line) => line.trim())
 
           // Check if previous or next part is a change
           const prevIsChange = i > 0 && (diffToUse[i - 1].added || diffToUse[i - 1].removed)

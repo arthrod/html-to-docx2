@@ -1,8 +1,62 @@
 /* eslint-disable no-console */
+// @ts-check
+
 const fs = require('fs')
 // Use the built version, or install via: npm install @turbodocx/html-to-docx
 // const HTMLtoDOCX = require('@turbodocx/html-to-docx');
 const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+
+/**
+ * @typedef {'convert' | 'native'} SvgHandlingMode
+ */
+
+/**
+ * @typedef {{
+ *   orientation: 'portrait' | 'landscape'
+ *   title: string
+ *   creator: string
+ *   imageProcessing: {
+ *     svgHandling: SvgHandlingMode
+ *     verboseLogging: boolean
+ *   }
+ * }} ExampleDocxOptions
+ */
+
+/**
+ * @typedef {(html: string, header: string | null, options: ExampleDocxOptions) => Promise<Uint8Array | Buffer | Blob>} HtmlToDocxFn
+ */
+
+/** @type {HtmlToDocxFn} */
+const htmlToDocx = HTMLtoDOCX
+
+/**
+ * @param {Uint8Array | Buffer | Blob} result
+ * @returns {Promise<Uint8Array | Buffer>}
+ */
+async function toNodeBinary(result) {
+  if (result instanceof Uint8Array || Buffer.isBuffer(result)) {
+    return result
+  }
+
+  return Buffer.from(await result.arrayBuffer())
+}
+
+/**
+ * @param {unknown} error
+ * @returns {{ message: string; stack?: string }}
+ */
+function toErrorDetails(error) {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      stack: error.stack,
+    }
+  }
+
+  return {
+    message: String(error),
+  }
+}
 
 // Sample SVG images as base64 data URLs
 const circleSVG =
@@ -133,7 +187,7 @@ async function generateDocuments() {
   try {
     // 1. Generate document with PNG conversion (default)
     console.log('📄 Generating document with SVG→PNG conversion (default)...')
-    const docxConvert = await HTMLtoDOCX(htmlContent, null, {
+    const convertOptions = /** @type {const} */ ({
       orientation: 'portrait',
       title: 'SVG Support Demo - PNG Conversion',
       creator: '@turbodocx/html-to-docx',
@@ -142,13 +196,14 @@ async function generateDocuments() {
         verboseLogging: false,
       },
     })
-    fs.writeFileSync('./example-svg-convert.docx', docxConvert)
+    const docxConvert = await htmlToDocx(htmlContent, null, convertOptions)
+    fs.writeFileSync('./example-svg-convert.docx', await toNodeBinary(docxConvert))
     console.log('✅ Created: example-svg-convert.docx')
     console.log('   → SVGs converted to PNG for maximum compatibility\n')
 
     // 2. Generate document with native SVG support
     console.log('📄 Generating document with native SVG support (Office 2019+)...')
-    const docxNative = await HTMLtoDOCX(htmlContent, null, {
+    const nativeOptions = /** @type {const} */ ({
       orientation: 'portrait',
       title: 'SVG Support Demo - Native SVG',
       creator: '@turbodocx/html-to-docx',
@@ -157,7 +212,8 @@ async function generateDocuments() {
         verboseLogging: false,
       },
     })
-    fs.writeFileSync('./example-svg-native.docx', docxNative)
+    const docxNative = await htmlToDocx(htmlContent, null, nativeOptions)
+    fs.writeFileSync('./example-svg-native.docx', await toNodeBinary(docxNative))
     console.log('✅ Created: example-svg-native.docx')
     console.log('   → SVGs embedded natively (requires Office 2019+)\n')
 
@@ -185,8 +241,11 @@ async function generateDocuments() {
 
     console.log('✨ Done! Check the example/ directory for the generated files.')
   } catch (error) {
-    console.error('❌ Error generating documents:', error.message)
-    console.error(error.stack)
+    const errorDetails = toErrorDetails(error)
+    console.error('❌ Error generating documents:', errorDetails.message)
+    if (errorDetails.stack) {
+      console.error(errorDetails.stack)
+    }
     process.exit(1)
   }
 }
