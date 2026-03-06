@@ -50,3 +50,8 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/constants.ts
 - vitest.config.ts
 - tsdown.config.ts
+- index.ts
+- src/utils/index.ts
+- src/html-to-docx.spec.ts
+- src/utils/color-conversion.spec.ts
+- src/utils/unit-conversion.spec.ts
