@@ -29,9 +29,8 @@ export type ListStyle = {
 
 class ListStyleBuilder {
   private readonly defaults: ListStyleDefaults
-  private static readonly defaultListStyleByDocxType: Record<
-    DocxListStyleType,
-    ListStyleType
+  private static readonly defaultListStyleByDocxType: Readonly<
+    Record<DocxListStyleType, ListStyleType>
   > = {
     decimal: 'decimal',
     lowerLetter: 'lower-alpha',
@@ -41,7 +40,7 @@ class ListStyleBuilder {
   }
 
   constructor(defaults?: ListStyleDefaults) {
-    this.defaults = defaults || { defaultOrderedListStyleType: 'decimal' }
+    this.defaults = defaults ?? { defaultOrderedListStyleType: 'decimal' }
   }
 
   getListStyleType(listType: ListStyleType | undefined): DocxListStyleType {

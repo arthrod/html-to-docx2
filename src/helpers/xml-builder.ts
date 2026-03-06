@@ -25,7 +25,6 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return bytes
 }
 
-// @ts-expect-error - no types available
 import colorNames from 'color-name'
 
 import {

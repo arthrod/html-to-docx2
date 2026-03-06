@@ -68,3 +68,12 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/utils/image-to-base64.ts
 - src/utils/image.ts
 - src/utils/image-browser.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/docx-document.ts
+- src/helpers/render-document-file.ts
+- src/helpers/xml-builder.ts
+- src/html-to-docx.ts
+- src/utils/list.ts
+- src/types/color-name.d.ts

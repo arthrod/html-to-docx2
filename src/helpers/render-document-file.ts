@@ -132,12 +132,25 @@ const INLINE_ELEMENTS = [
   'mark',
   'a',
   'code',
-]
+] as const
+
+const asVNode = (node: VNodeType | VTextType): VNodeType | null => {
+  if (typeof node !== 'object' || node === null || Array.isArray(node)) {
+    return null
+  }
+  return 'tagName' in node ? (node as VNodeType) : null
+}
+
+const asVText = (node: VNodeType | VTextType): VTextType | null => {
+  if (typeof node !== 'object' || node === null || Array.isArray(node)) {
+    return null
+  }
+  return typeof (node as VTextType).text === 'string' ? (node as VTextType) : null
+}
 
 // Check if a vNode is an inline element
 const isInlineElement = (node: VNodeType | VTextType): boolean =>
-  isVText(node) ||
-  (isVNode(node) && INLINE_ELEMENTS.includes((node as VNodeType).tagName || ''))
+  isVText(node) || INLINE_ELEMENTS.includes(asVNode(node)?.tagName ?? '')
 
 // Elements that need special handling and should not be wrapped in inline grouping
 const SPECIAL_BLOCK_ELEMENTS = [
@@ -158,12 +171,12 @@ const SPECIAL_BLOCK_ELEMENTS = [
   'video',
   'audio',
   'iframe',
-]
+] as const
 
 // Recursively check if a vNode contains any special block elements
 const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
-  if (!isVNode(node)) return false
-  const vNode = node as VNodeType
+  const vNode = asVNode(node)
+  if (!vNode) return false
   if (SPECIAL_BLOCK_ELEMENTS.includes(vNode.tagName || '')) return true
   if (vNodeHasChildren(vNode)) {
     return (vNode.children || []).some((child) => containsSpecialElements(child))
@@ -172,14 +185,15 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
 }
 
 const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
-  if ((node as VTextType).text) {
-    return (node as VTextType).text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
+  const textNode = asVText(node)
+  if (textNode) {
+    return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   }
 
-  const vNode = node as VNodeType
+  const vNode = asVNode(node)
+  if (!vNode) {
+    return ''
+  }
   if (!vNode.tagName) {
     return ''
   }
@@ -218,7 +232,7 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
 
   svg += '>'
   children.forEach((child) => {
-    svg += serializeVNodeToSVG(child as VNodeType | VTextType, false)
+    svg += serializeVNodeToSVG(child, false)
   })
   svg += `</${vNode.tagName}>`
 

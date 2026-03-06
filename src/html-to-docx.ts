@@ -8,14 +8,18 @@ import {
   commentsExtensibleRelationshipType,
   commentsIdsRelationshipType,
   commentsType,
+  type Direction,
   defaultDocumentOptions,
   defaultHTMLString,
   documentFileName,
   footerFileName,
+  type HeaderFooterType,
   footerType,
   headerFileName,
   headerType,
   internalRelationship,
+  type LineNumberRestart,
+  type Orientation,
   peopleRelationshipType,
   relsFolderName,
   themeFileName,
@@ -56,13 +60,13 @@ interface NormalizedDocumentOptions {
   decodeUnicode?: boolean
   lang?: string
   description?: string
-  direction?: 'ltr' | 'rtl'
+  direction?: Direction
   font?: string
   fontSize?: number | null
   footer?: boolean
-  footerType?: 'default' | 'even' | 'first'
+  footerType?: HeaderFooterType
   header?: boolean
-  headerType?: 'default' | 'even' | 'first'
+  headerType?: HeaderFooterType
   heading?: DocumentOptions['heading']
   imageProcessing?: DocumentOptions['imageProcessing']
   keywords?: string[]
@@ -72,7 +76,7 @@ interface NormalizedDocumentOptions {
   margins?: NormalizedMargins | null
   modifiedAt?: Date
   numbering?: NumberingOptions
-  orientation?: 'landscape' | 'portrait'
+  orientation?: Orientation
   pageNumber?: boolean
   pageSize?: NormalizedPageSize | null
   revision?: number
@@ -84,12 +88,14 @@ interface NormalizedDocumentOptions {
 
 interface LineNumberOptions {
   countBy?: number
-  restart?: 'continuous' | 'newPage' | 'newSection'
+  restart?: LineNumberRestart
   start?: number
 }
 
+type DocumentNumberingOptions = NonNullable<DocumentOptions['numbering']>
+
 interface NumberingOptions {
-  defaultOrderedListStyleType?: string
+  defaultOrderedListStyleType?: DocumentNumberingOptions['defaultOrderedListStyleType']
 }
 
 interface TableOptions {
@@ -141,12 +147,17 @@ const normalizeUnits = (
   dimensioningObject: Margins | PageSize | null | undefined,
   defaultDimensionsProperty: NormalizedMargins | NormalizedPageSize
 ): NormalizedMargins | NormalizedPageSize | null => {
-  let normalizedUnitResult: Record<string, number> = {}
+  const normalizedUnitResult: Record<string, number> = {}
+  const dimensioningRecord = dimensioningObject as
+    | Record<string, number | string | undefined>
+    | null
+    | undefined
+  const defaultRecord = defaultDimensionsProperty as Record<string, number>
 
   if (typeof dimensioningObject === 'object' && dimensioningObject !== null) {
-    Object.keys(dimensioningObject).forEach((key) => {
-      const value = (dimensioningObject as Record<string, number | string | undefined>)[key]
-      const defaultValue = (defaultDimensionsProperty as Record<string, number>)[key]
+    Object.keys(dimensioningRecord).forEach((key) => {
+      const value = dimensioningRecord[key]
+      const defaultValue = defaultRecord[key]
 
       if (typeof value === 'string' && pixelRegex.test(value)) {
         const matchedParts = value.match(pixelRegex)
@@ -231,13 +242,13 @@ const normalizeDocumentOptions = (
   if (documentOptions.pageSize !== undefined) {
     result.pageSize = normalizeUnits(
       documentOptions.pageSize,
-      defaultDocumentOptions.pageSize as NormalizedPageSize
+      defaultDocumentOptions.pageSize
     ) as NormalizedPageSize | null
   }
   if (documentOptions.margins !== undefined) {
     result.margins = normalizeUnits(
       documentOptions.margins,
-      defaultDocumentOptions.margins as NormalizedMargins
+      defaultDocumentOptions.margins
     ) as NormalizedMargins | null
   }
 

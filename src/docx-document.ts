@@ -16,12 +16,16 @@ import {
   commentsExtensibleContentType,
   commentsIdsContentType,
   commentsType,
+  type Direction,
   defaultDirection,
   defaultDocumentOptions,
   defaultFont,
   defaultFontSize,
+  type HeaderFooterType,
   defaultLang,
+  type LineNumberRestart,
   defaultOrientation,
+  type Orientation,
   documentFileName,
   footerType as footerFileType,
   headerType as headerFileType,
@@ -95,7 +99,7 @@ export interface PageSize {
 /** Line number options */
 export interface LineNumberOptions {
   countBy?: number
-  restart?: string
+  restart?: LineNumberRestart
   start?: number
 }
 
@@ -113,14 +117,14 @@ export interface TableOptions {
 export interface HeaderObject {
   headerId: number
   relationshipId: number
-  type: string
+  type: HeaderFooterType
 }
 
 /** Footer object stored in the document */
 export interface FooterObject {
   footerId: number
   relationshipId: number
-  type: string
+  type: HeaderFooterType
 }
 
 /** Relationship object */
@@ -197,14 +201,14 @@ export interface DocxDocumentProperties {
   complexScriptFontSize?: number | null
   createdAt?: Date
   creator?: string
-  direction?: string
+  direction?: Direction
   description?: string
   font?: string
   fontSize?: number | null
   footer?: boolean
-  footerType?: string
+  footerType?: HeaderFooterType
   header?: boolean
-  headerType?: string
+  headerType?: HeaderFooterType
   heading?: typeof defaultDocumentOptions.heading
   htmlString: string | null
   imageProcessing?: typeof defaultDocumentOptions.imageProcessing
@@ -216,7 +220,7 @@ export interface DocxDocumentProperties {
   margins?: Margins | null
   modifiedAt?: Date
   numbering?: ListStyleDefaults
-  orientation?: string
+  orientation?: Orientation
   pageNumber?: boolean
   pageSize?: PageSize | null
   revision?: number
@@ -277,7 +281,7 @@ function generateSectionReferenceXML(
   }
 }
 
-function generateXMLString(xmlString: string, direction?: string): string {
+function generateXMLString(xmlString: string, direction?: Direction): string {
   const xmlDocumentString = create({ encoding: 'UTF-8', standalone: true }, xmlString)
 
   if (direction === 'rtl') {
@@ -366,16 +370,16 @@ class DocxDocument {
   createdAt: Date
   creator: string
   description: string
-  direction: string
+  direction: Direction
   documentXML: XMLBuilder | null
   font: string
   fontSize: number
   footer: boolean
   footerObjects: FooterObject[]
-  footerType: string
+  footerType: HeaderFooterType
   header: boolean
   headerObjects: HeaderObject[]
-  headerType: string
+  headerType: HeaderFooterType
   heading: typeof defaultDocumentOptions.heading
   height: number
   htmlString: string | null
@@ -394,7 +398,7 @@ class DocxDocument {
   modifiedAt: Date
   numberingObjects: NumberingObject[]
   fontTableObjects: FontTableObject[]
-  orientation: string
+  orientation: Orientation
   pageNumber: boolean
   pageSize: PageSize
   relationshipFilename: string
