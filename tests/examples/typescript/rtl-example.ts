@@ -15,6 +15,7 @@ if (!fs.existsSync(outputDirectory)) {
 
 type RuntimeName = 'browser' | 'node'
 type HTMLtoDOCXFn = typeof HTMLtoDOCXNode
+type DocResult = Awaited<ReturnType<HTMLtoDOCXFn>>
 
 /**
  * RTL (Right-to-Left) Language Support Example
@@ -125,7 +126,7 @@ const mixedContentHtml = `<!DOCTYPE html>
 </html>`
 
 async function saveDocxFile(
-  docResult: Buffer | ArrayBuffer | Blob,
+  docResult: DocResult,
   fileName: string,
   docType: string,
   runtime: RuntimeName
@@ -152,10 +153,12 @@ async function saveDocxFile(
 
 async function generateRTLDocuments() {
   try {
-    const { default: HTMLtoDOCXBrowser } = await import('../../../dist/browser.js')
+    const browserModule: { default: HTMLtoDOCXFn } =
+      await import('../../../dist/browser.js')
+    const { default: HTMLtoDOCXBrowser } = browserModule
     const runtimes: { convert: HTMLtoDOCXFn; runtime: RuntimeName }[] = [
-      { convert: HTMLtoDOCXNode as HTMLtoDOCXFn, runtime: 'node' },
-      { convert: HTMLtoDOCXBrowser as HTMLtoDOCXFn, runtime: 'browser' },
+      { convert: HTMLtoDOCXNode, runtime: 'node' },
+      { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
     ]
 
     for (const { convert, runtime } of runtimes) {

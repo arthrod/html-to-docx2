@@ -15,6 +15,7 @@ if (!fs.existsSync(outputDirectory)) {
 
 type RuntimeName = 'browser' | 'node'
 type HTMLtoDOCXFn = typeof HTMLtoDOCXNode
+type DocResult = Awaited<ReturnType<HTMLtoDOCXFn>>
 
 /**
  * This file demonstrates how to use html-to-docx with TypeScript
@@ -63,7 +64,7 @@ const headerHtml = `<p style="text-align: right;">TurboDocx Example</p>`
 const footerHtml = `<p style="text-align: center;">Page <span id="pageNumber">X</span> of <span id="totalPages">Y</span></p>`
 
 async function saveDocxFile(
-  docResult: Buffer | ArrayBuffer | Blob,
+  docResult: DocResult,
   fileName: string,
   docType: string,
   runtime: RuntimeName
@@ -79,8 +80,8 @@ async function saveDocxFile(
     docData = Buffer.from(arrayBuffer)
   } else {
     console.error(`Unexpected result type for ${docType}:`, typeof docResult)
-    // @ts-expect-error
-    console.log(`${docType} constructor name:`, docResult?.constructor?.name)
+    const valueWithConstructor = docResult as { constructor?: { name?: string } }
+    console.log(`${docType} constructor name:`, valueWithConstructor.constructor?.name)
     return
   }
 
@@ -92,10 +93,12 @@ async function saveDocxFile(
 
 async function generateDocuments() {
   try {
-    const { default: HTMLtoDOCXBrowser } = await import('../../../dist/browser.js')
+    const browserModule: { default: HTMLtoDOCXFn } =
+      await import('../../../dist/browser.js')
+    const { default: HTMLtoDOCXBrowser } = browserModule
     const runtimes: { convert: HTMLtoDOCXFn; runtime: RuntimeName }[] = [
-      { convert: HTMLtoDOCXNode as HTMLtoDOCXFn, runtime: 'node' },
-      { convert: HTMLtoDOCXBrowser as HTMLtoDOCXFn, runtime: 'browser' },
+      { convert: HTMLtoDOCXNode, runtime: 'node' },
+      { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
     ]
 
     for (const { convert, runtime } of runtimes) {

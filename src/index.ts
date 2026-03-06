@@ -149,6 +149,10 @@ export type DocumentOptions = {
 // Utility types
 // ============================================================================
 
+export type BrowserDocxResult = Blob
+export type NodeDocxResult = Buffer | Uint8Array
+export type HtmlToDocxResult = BrowserDocxResult | NodeDocxResult
+
 export type { ImageDimensions } from './utils/image-dimensions'
 export type { VNode } from './utils/vnode'
 

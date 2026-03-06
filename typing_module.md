@@ -55,3 +55,8 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/html-to-docx.spec.ts
 - src/utils/color-conversion.spec.ts
 - src/utils/unit-conversion.spec.ts
+- tests/examples/typescript/rtl-example.ts
+- tests/examples/typescript/typescript-example.ts
+- tests/examples/typescript/type-test.ts
+- src/index.ts
+- src/html-to-docx.ts

@@ -5,6 +5,8 @@
 
 import HTMLtoDOCX from '../../dist/html-to-docx'
 
+type DocxResult = Blob | Uint8Array | Buffer
+
 const htmlString = `<!DOCTYPE html>
     <html lang="en">
         <head>
@@ -16,14 +18,11 @@ const htmlString = `<!DOCTYPE html>
         </body>
     </html>`
 
-// $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const _doc1 = HTMLtoDOCX(htmlString)
+const _doc1: Promise<DocxResult> = HTMLtoDOCX(htmlString)
 
-// $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const _doc2 = HTMLtoDOCX(htmlString, '<p>Header</p>')
+const _doc2: Promise<DocxResult> = HTMLtoDOCX(htmlString, '<p>Header</p>')
 
-// $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const _doc3 = HTMLtoDOCX(htmlString, null, {
+const _doc3: Promise<DocxResult> = HTMLtoDOCX(htmlString, null, {
   orientation: 'landscape',
   table: {
     row: {
@@ -32,8 +31,7 @@ const _doc3 = HTMLtoDOCX(htmlString, null, {
   },
 })
 
-// $ExpectType Promise<Blob> | Promise<ArrayBuffer>
-const _doc4 = HTMLtoDOCX(
+const _doc4: Promise<DocxResult> = HTMLtoDOCX(
   htmlString,
   null,
   {

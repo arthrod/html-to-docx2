@@ -1,6 +1,10 @@
 /// <reference types="node" />
 
 declare namespace HTMLtoDOCX {
+  type BrowserDocxResult = Blob
+  type NodeDocxResult = Buffer | Uint8Array
+  type HtmlToDocxResult = BrowserDocxResult | NodeDocxResult
+
   type DocxListStyleType =
     | 'decimal'
     | 'disc'
@@ -125,6 +129,6 @@ declare function HTMLtoDOCX(
   headerHTMLstring?: string | null,
   documentOptions?: HTMLtoDOCX.DocumentOptions,
   footerHtmlString?: string | null
-): Promise<ArrayBuffer | Blob | Buffer>
+): Promise<HTMLtoDOCX.HtmlToDocxResult>
 
 export = HTMLtoDOCX

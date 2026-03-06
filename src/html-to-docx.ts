@@ -54,7 +54,7 @@ interface NormalizedDocumentOptions {
   createdAt?: Date
   creator?: string
   decodeUnicode?: boolean
-  defaultLang?: string
+  lang?: string
   description?: string
   direction?: 'ltr' | 'rtl'
   font?: string
@@ -192,8 +192,7 @@ const normalizeDocumentOptions = (
   if (documentOptions.creator !== undefined) result.creator = documentOptions.creator
   if (documentOptions.decodeUnicode !== undefined)
     result.decodeUnicode = documentOptions.decodeUnicode
-  if (documentOptions.defaultLang !== undefined)
-    result.defaultLang = documentOptions.defaultLang
+  if (documentOptions.defaultLang !== undefined) result.lang = documentOptions.defaultLang
   if (documentOptions.description !== undefined)
     result.description = documentOptions.description
   if (documentOptions.direction !== undefined) result.direction = documentOptions.direction
@@ -286,15 +285,15 @@ async function addFilesToContainer(
     footerHTML = decode(footerHTML as string) // eslint-disable-line no-param-reassign
   }
 
-  // @ts-expect-error - complex type mismatch between normalized options and DocxDocumentProperties
   const docxDocument = new DocxDocument({
     zip,
     htmlString: contentHTML,
     ...documentOptions,
   })
   // Conversion to Word XML happens here
-  // @ts-expect-error - DocxDocument implements DocxDocumentInstance with slight variations
-  docxDocument.documentXML = await renderDocumentFile(docxDocument)
+  docxDocument.documentXML = await renderDocumentFile(
+    docxDocument as Parameters<typeof renderDocumentFile>[0]
+  )
 
   // Create comments relationship if there are comments (populated by renderDocumentFile)
   if (docxDocument.comments.length > 0) {
@@ -508,7 +507,7 @@ async function generateContainer(
   headerHTMLString?: string | null,
   documentOptions: DocumentOptions = {},
   footerHTMLString?: string | null
-) {
+): Promise<Blob | Buffer | Uint8Array> {
   const zip = new JSZip()
 
   await addFilesToContainer(
