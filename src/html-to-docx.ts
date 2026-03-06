@@ -41,7 +41,10 @@ import {
 
 interface VTree {
   children?: VTree[]
-  properties?: Record<string, unknown>
+  properties?: Record<
+    string,
+    string | number | boolean | null | undefined | Record<string, string>
+  >
   tagName?: string
   text?: string
 }

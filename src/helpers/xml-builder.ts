@@ -100,12 +100,10 @@ type VNodeType = {
   children?: (VNodeType | VTextType)[]
   properties?: VNodeProperties
   tagName?: string
-  [key: string]: unknown
 }
 
 type VTextType = {
   text: string
-  [key: string]: unknown
 }
 
 // Types for DocxDocumentInstance
@@ -928,19 +926,19 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'rPr')
   if (attributes && attributes.constructor === Object) {
-    Object.keys(attributes).forEach((key) => {
-      const value = (attributes as Record<string, unknown>)[key]
+    ;(Object.keys(attributes) as Array<keyof RunAttributes>).forEach((key) => {
+      const value = attributes[key]
 
       // Skip undefined values to prevent default 'black' being applied
       if (value === undefined) return
 
       const options: FormattingOptions = {}
       if (key === 'color' || key === 'backgroundColor' || key === 'highlightColor') {
-        options.color = value as string
+        options.color = value
       }
 
       if (key === 'fontSize' || key === 'font') {
-        ;(options as Record<string, string | number>)[key] = value as string | number
+        options[key] = value
       }
 
       const formattingFragment = buildFormatting(key, options)

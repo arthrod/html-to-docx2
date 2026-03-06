@@ -23,6 +23,8 @@ type CacheAwareDocument = {
   }
 }
 
+type LogArgument = boolean | number | string | null | undefined | { toString(): string }
+
 const toBase64 = (bytes: Uint8Array): string => {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(bytes).toString('base64')
@@ -35,7 +37,7 @@ const toBase64 = (bytes: Uint8Array): string => {
   return globalThis.btoa(binary)
 }
 
-const logVerbose = (enabled: boolean, message: string, ...args: unknown[]): void => {
+const logVerbose = (enabled: boolean, message: string, ...args: LogArgument[]): void => {
   if (enabled) {
     // eslint-disable-next-line no-console
     console.log(message, ...args)

@@ -208,18 +208,29 @@ type SVGValidationResult = {
   warnings: string[]
 }
 
-type SVGVNode = {
-  children?: Array<SVGVNode | { text: string } | string>
-  properties?: {
-    attributes?: Record<string, string>
-    [key: string]: unknown
-  }
-  tagName?: string
-  [key: string]: unknown
+type SVGAttributeValue = boolean | number | string
+type SVGAttributes = Record<string, SVGAttributeValue>
+
+type SVGVNodeProperties = {
+  attributes?: SVGAttributes
+  [key: string]: SVGAttributeValue | SVGAttributes | undefined
 }
 
-const hasDangerousProtocol = (value: unknown): boolean => {
-  if (!value || typeof value !== 'string') {
+type SVGTextNode = {
+  text: string
+}
+
+type SVGChildNode = SVGVNode | SVGTextNode | string
+
+type SVGVNode = {
+  children?: SVGChildNode[]
+  properties?: SVGVNodeProperties
+  tagName?: string
+  [key: string]: SVGAttributeValue | SVGVNodeProperties | SVGChildNode[] | undefined
+}
+
+const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): boolean => {
+  if (typeof value !== 'string' || value.length === 0) {
     return false
   }
 

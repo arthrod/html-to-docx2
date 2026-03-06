@@ -1,4 +1,14 @@
-export const escapeXml = (value: unknown): string =>
+type XmlEscapable =
+  | bigint
+  | boolean
+  | number
+  | string
+  | symbol
+  | null
+  | undefined
+  | { toString(): string }
+
+export const escapeXml = (value: XmlEscapable): string =>
   String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
