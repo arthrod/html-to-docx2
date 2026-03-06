@@ -194,7 +194,7 @@ const Properties: Record<string, PropertyConfig> = {
 }
 /* eslint-enable no-bitwise */
 
-const PropertyToAttributeMapping = {
+const PropertyToAttributeMapping: Partial<Record<keyof typeof Properties, string>> = {
   className: 'class',
   htmlFor: 'for',
   httpEquiv: 'http-equiv',
@@ -368,6 +368,9 @@ function convertTagAttributes(tag: ParsedNode): VNodeProperties {
 
 type VNodeLike = VNode | VText
 type ConverterGetVNodeKey = (props: NodeAttributes) => string | number | null | undefined
+type ConvertHTMLOptions = {
+  getVNodeKey?: ConverterGetVNodeKey
+}
 
 function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
   const isElementNode = (node: ParsedNode) =>
@@ -538,20 +541,8 @@ function parseHTML(html: string): ParsedNode[] {
  * Main converter function
  */
 function convertHTML(html: string): VNode[] | VNode | VText
-function convertHTML(
-  options: {
-    getVNodeKey?: (props: Record<string, string>) => string | number | null | undefined
-  },
-  html: string
-): VNode[] | VNode | VText
-function convertHTML(
-  optionsOrHTML:
-    | string
-    | {
-        getVNodeKey?: (props: Record<string, string>) => string | number | null | undefined
-      },
-  html?: string
-) {
+function convertHTML(options: ConvertHTMLOptions, html: string): VNode[] | VNode | VText
+function convertHTML(optionsOrHTML: string | ConvertHTMLOptions, html?: string) {
   const shouldUseOptions = typeof optionsOrHTML === 'object'
   const opts = shouldUseOptions ? optionsOrHTML : undefined
   const htmlString = (typeof optionsOrHTML === 'string' ? optionsOrHTML : html) || ''

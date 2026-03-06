@@ -1,4 +1,5 @@
-const SUPPORTED_PROTOCOLS = new Set(['http:', 'https:'])
+type SupportedProtocol = 'http:' | 'https:'
+const SUPPORTED_PROTOCOLS: ReadonlySet<SupportedProtocol> = new Set(['http:', 'https:'])
 
 const isValidUrl = (urlString: string | null | undefined): boolean => {
   if (!urlString || typeof urlString !== 'string') {
@@ -7,7 +8,7 @@ const isValidUrl = (urlString: string | null | undefined): boolean => {
 
   try {
     const url = new URL(urlString)
-    return SUPPORTED_PROTOCOLS.has(url.protocol)
+    return SUPPORTED_PROTOCOLS.has(url.protocol as SupportedProtocol)
   } catch {
     return false
   }

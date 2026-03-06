@@ -30,7 +30,7 @@ import {
 import DocxDocument from './docx-document'
 import { renderDocumentFile } from './helpers'
 import createHTMLToVDOM from './helpers/html-parser'
-import type { DocumentOptions, Margins, PageSize } from './index'
+import type { DocumentOptions } from './index'
 import { relsXML } from './schemas'
 import {
   cmRegex,
@@ -119,6 +119,10 @@ interface NormalizedPageSize {
   width?: number
 }
 
+type UnitInputShape<T extends Record<string, number>> = {
+  [K in keyof T]?: number | string | null
+}
+
 const convertHTML = createHTMLToVDOM()
 
 const fixupFontSize = (fontSize: number | string | undefined): number | null => {
@@ -144,20 +148,22 @@ const fixupFontSize = (fontSize: number | string | undefined): number | null => 
 }
 
 const normalizeUnits = (
-  dimensioningObject: Margins | PageSize | null | undefined,
+  dimensioningObject:
+    | UnitInputShape<NormalizedMargins>
+    | UnitInputShape<NormalizedPageSize>
+    | null
+    | undefined,
   defaultDimensionsProperty: NormalizedMargins | NormalizedPageSize
 ): NormalizedMargins | NormalizedPageSize | null => {
-  const normalizedUnitResult: Record<string, number> = {}
-  const dimensioningRecord = dimensioningObject as
-    | Record<string, number | string | undefined>
-    | null
-    | undefined
-  const defaultRecord = defaultDimensionsProperty as Record<string, number>
-
   if (typeof dimensioningObject === 'object' && dimensioningObject !== null) {
-    Object.keys(dimensioningRecord).forEach((key) => {
-      const value = dimensioningRecord[key]
-      const defaultValue = defaultRecord[key]
+    const normalizedUnitResult: NormalizedMargins | NormalizedPageSize = {}
+    ;(
+      Object.keys(defaultDimensionsProperty) as Array<
+        keyof typeof defaultDimensionsProperty
+      >
+    ).forEach((key) => {
+      const value = dimensioningObject[key]
+      const defaultValue = defaultDimensionsProperty[key]
 
       if (typeof value === 'string' && pixelRegex.test(value)) {
         const matchedParts = value.match(pixelRegex)
@@ -185,12 +191,11 @@ const normalizeUnits = (
         normalizedUnitResult[key] = defaultValue
       }
     })
+    return normalizedUnitResult
   } else {
     // eslint-disable-next-line no-param-reassign
     return null
   }
-
-  return normalizedUnitResult as NormalizedMargins | NormalizedPageSize
 }
 
 const normalizeDocumentOptions = (
@@ -243,13 +248,10 @@ const normalizeDocumentOptions = (
     result.pageSize = normalizeUnits(
       documentOptions.pageSize,
       defaultDocumentOptions.pageSize
-    ) as NormalizedPageSize | null
+    )
   }
   if (documentOptions.margins !== undefined) {
-    result.margins = normalizeUnits(
-      documentOptions.margins,
-      defaultDocumentOptions.margins
-    ) as NormalizedMargins | null
+    result.margins = normalizeUnits(documentOptions.margins, defaultDocumentOptions.margins)
   }
 
   // Transform font size properties
@@ -291,9 +293,9 @@ async function addFilesToContainer(
     footerHTML = defaultHTMLString
   }
   if (documentOptions.decodeUnicode) {
-    headerHTML = decode(headerHTML as string) // eslint-disable-line no-param-reassign
-    contentHTML = decode(contentHTML as string) // eslint-disable-line no-param-reassign
-    footerHTML = decode(footerHTML as string) // eslint-disable-line no-param-reassign
+    headerHTML = decode(headerHTML ?? '') // eslint-disable-line no-param-reassign
+    contentHTML = decode(contentHTML ?? '') // eslint-disable-line no-param-reassign
+    footerHTML = decode(footerHTML ?? '') // eslint-disable-line no-param-reassign
   }
 
   const docxDocument = new DocxDocument({
@@ -302,9 +304,7 @@ async function addFilesToContainer(
     ...documentOptions,
   })
   // Conversion to Word XML happens here
-  docxDocument.documentXML = await renderDocumentFile(
-    docxDocument as Parameters<typeof renderDocumentFile>[0]
-  )
+  docxDocument.documentXML = await renderDocumentFile(docxDocument)
 
   // Create comments relationship if there are comments (populated by renderDocumentFile)
   if (docxDocument.comments.length > 0) {

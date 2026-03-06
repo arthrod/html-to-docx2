@@ -77,3 +77,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/html-to-docx.ts
 - src/utils/list.ts
 - src/types/color-name.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/html-to-docx.ts
+- src/helpers/html-parser.ts
+- src/schemas/numbering.ts
+- src/utils/xmlbuilder2.ts
+- src/utils/url.ts
