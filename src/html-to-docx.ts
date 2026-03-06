@@ -475,7 +475,19 @@ async function addFilesToContainer(
 const DOCX_MIME_TYPE =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
-const resolveRuntime = (): any => {
+type RuntimeLike = {
+  Blob?: typeof Blob
+  Buffer?: {
+    from: (input: Uint8Array) => Buffer | Uint8Array
+  }
+  process?: {
+    versions?: {
+      node?: string
+    }
+  }
+}
+
+const resolveRuntime = (): RuntimeLike => {
   if (typeof globalThis !== 'undefined') return globalThis
   if (typeof self !== 'undefined') return self
   if (typeof window !== 'undefined') return window
@@ -483,7 +495,7 @@ const resolveRuntime = (): any => {
   return {}
 }
 
-const isNodeRuntime = (runtime: any): boolean =>
+const isNodeRuntime = (runtime: RuntimeLike): boolean =>
   Boolean(
     runtime && runtime.process && runtime.process.versions && runtime.process.versions.node
   )

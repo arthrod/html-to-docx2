@@ -1,19 +1,21 @@
 import { describe, expect, it } from 'bun:test'
 
 import { buildRunsFromTextWithTokens } from './xml-builder'
+import type { CommentPayload, TrackingDocumentInstance } from '../tracking'
 
-// Mock types
-type MockDocxDocumentInstance = {
-  _trackingState?: any
-  comments: any[]
-  commentIdMap: Map<string, number>
-  lastCommentId: number
-  revisionIdMap: Map<string, number>
-  lastRevisionId: number
-  ensureComment: (data: any, parentParaId?: string) => number
-  getCommentId: (id: string) => number
-  getRevisionId: (id?: string) => number
-}
+const createMockTrackingDocument = (
+  overrides: Partial<TrackingDocumentInstance> = {}
+): TrackingDocumentInstance => ({
+  comments: [],
+  commentIdMap: new Map(),
+  lastCommentId: 0,
+  revisionIdMap: new Map(),
+  lastRevisionId: 0,
+  ensureComment: (_data: Partial<CommentPayload>, _parentParaId?: string) => 0,
+  getCommentId: () => 0,
+  getRevisionId: () => 0,
+  ...overrides,
+})
 
 describe('buildRunsFromTextWithTokens', () => {
   it('should emit commentRangeEnd for reply with custom ID', () => {
@@ -24,13 +26,8 @@ describe('buildRunsFromTextWithTokens', () => {
     const parentNumericId = 100
     const replyNumericId = 200
 
-    const mockInstance: MockDocxDocumentInstance = {
-      comments: [],
-      commentIdMap: new Map(),
-      lastCommentId: 0,
-      revisionIdMap: new Map(),
-      lastRevisionId: 0,
-      ensureComment: (data: any, _parentParaId?: string) => {
+    const mockInstance = createMockTrackingDocument({
+      ensureComment: (data: Partial<CommentPayload>, _parentParaId?: string) => {
         if (data.id === parentId) return parentNumericId
         if (data.id === compositeReplyId) return replyNumericId
         return 999
@@ -40,7 +37,7 @@ describe('buildRunsFromTextWithTokens', () => {
         return 0
       },
       getRevisionId: (_id?: string) => 0,
-    }
+    })
 
     // Populate commentIdMap as it would be during execution
     mockInstance.commentIdMap.set(parentId, parentNumericId)
@@ -53,7 +50,7 @@ describe('buildRunsFromTextWithTokens', () => {
       })
     )}]]Comment Text[[DOCX_CMT_END:${encodeURIComponent(parentId)}]]`
 
-    const fragments = buildRunsFromTextWithTokens(tokenText, {}, mockInstance as any)
+    const fragments = buildRunsFromTextWithTokens(tokenText, {}, mockInstance)
 
     expect(fragments).not.toBeNull()
     if (!fragments) return
@@ -82,13 +79,8 @@ describe('buildRunsFromTextWithTokens', () => {
     const expectedGeneratedId = `${parentId}-reply-0`
     const replyNumericId = 200
 
-    const mockInstance: MockDocxDocumentInstance = {
-      comments: [],
-      commentIdMap: new Map(),
-      lastCommentId: 0,
-      revisionIdMap: new Map(),
-      lastRevisionId: 0,
-      ensureComment: (data: any, _parentParaId?: string) => {
+    const mockInstance = createMockTrackingDocument({
+      ensureComment: (data: Partial<CommentPayload>, _parentParaId?: string) => {
         if (data.id === parentId) return parentNumericId
         if (data.id === expectedGeneratedId) return replyNumericId
         return 999
@@ -98,7 +90,7 @@ describe('buildRunsFromTextWithTokens', () => {
         return 0
       },
       getRevisionId: (_id?: string) => 0,
-    }
+    })
 
     mockInstance.commentIdMap.set(parentId, parentNumericId)
     mockInstance.commentIdMap.set(expectedGeneratedId, replyNumericId)
@@ -110,7 +102,7 @@ describe('buildRunsFromTextWithTokens', () => {
       })
     )}]]Comment Text[[DOCX_CMT_END:${encodeURIComponent(parentId)}]]`
 
-    const fragments = buildRunsFromTextWithTokens(tokenText, {}, mockInstance as any)
+    const fragments = buildRunsFromTextWithTokens(tokenText, {}, mockInstance)
 
     expect(fragments).not.toBeNull()
     if (!fragments) return

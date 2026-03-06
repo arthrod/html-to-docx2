@@ -465,13 +465,18 @@ const buildTextRunFragment = (
 const buildRunsFromTextWithTokens = (
   text: string,
   attributes: RunAttributes,
-  docxDocumentInstance: DocxDocumentInstance
+  docxDocumentInstance: Partial<TrackingDocumentInstance>
 ): XMLBuilderType[] | null => {
   // Check if document instance has tracking support
   if (
     !docxDocumentInstance.ensureComment ||
     !docxDocumentInstance.getCommentId ||
-    !docxDocumentInstance.getRevisionId
+    !docxDocumentInstance.getRevisionId ||
+    !docxDocumentInstance.comments ||
+    !docxDocumentInstance.commentIdMap ||
+    docxDocumentInstance.lastCommentId === undefined ||
+    !docxDocumentInstance.revisionIdMap ||
+    docxDocumentInstance.lastRevisionId === undefined
   ) {
     return null
   }
@@ -485,20 +490,7 @@ const buildRunsFromTextWithTokens = (
 
   const fragments: XMLBuilderType[] = []
   const trackingState = ensureTrackingState(
-    docxDocumentInstance as Required<
-      Pick<
-        DocxDocumentInstance,
-        | '_trackingState'
-        | 'comments'
-        | 'commentIdMap'
-        | 'lastCommentId'
-        | 'revisionIdMap'
-        | 'lastRevisionId'
-        | 'ensureComment'
-        | 'getCommentId'
-        | 'getRevisionId'
-      >
-    >
+    docxDocumentInstance as TrackingDocumentInstance
   )
 
   for (const part of parts) {

@@ -1,416 +1,537 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Comprehensive Regression Baseline</title>
-</head>
-<body>
-  <!-- ============================================================ -->
-  <!-- SECTION 1: Headings & Paragraph Styles                       -->
-  <!-- ============================================================ -->
-  <h1>Comprehensive DOCX Regression Baseline</h1>
-  <p>This document exercises <strong>every</strong> feature supported by html-to-docx. It is used as a regression baseline in CI to detect any formatting or structural changes between builds.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Comprehensive Regression Baseline</title>
+  </head>
+  <body>
+    <!-- ============================================================ -->
+    <!-- SECTION 1: Headings & Paragraph Styles                       -->
+    <!-- ============================================================ -->
+    <h1>Comprehensive DOCX Regression Baseline</h1>
+    <p>
+      This document exercises <strong>every</strong> feature supported by html-to-docx. It
+      is used as a regression baseline in CI to detect any formatting or structural changes
+      between builds.
+    </p>
 
-  <h2>Section 1 — Text Formatting</h2>
-  <p>
-    Normal text,
-    <strong>bold text</strong>,
-    <em>italic text</em>,
-    <u>underlined text</u>,
-    <strike>strikethrough text</strike>,
-    <sub>subscript</sub> and <sup>superscript</sup>,
-    <mark>highlighted/marked text</mark>,
-    <code>inline code</code>,
-    <kbd>keyboard input</kbd>,
-    and <a href="https://example.com">a hyperlink</a>.
-  </p>
-  <p>Combined formatting: <strong><em><u>bold italic underline</u></em></strong>, <strong><strike>bold strikethrough</strike></strong>, <em><sub>italic subscript</em></sub>.</p>
+    <h2>Section 1 — Text Formatting</h2>
+    <p>
+      Normal text,
+      <strong>bold text</strong>, <em>italic text</em>, <u>underlined text</u>,
+      <strike>strikethrough text</strike>, <sub>subscript</sub> and <sup>superscript</sup>,
+      <mark>highlighted/marked text</mark>, <code>inline code</code>,
+      <kbd>keyboard input</kbd>, and <a href="https://example.com">a hyperlink</a>.
+    </p>
+    <p>
+      Combined formatting:
+      <strong
+        ><em><u>bold italic underline</u></em></strong
+      >, <strong><strike>bold strikethrough</strike></strong
+      >, <em><sub>italic subscript</sub></em
+      >.
+    </p>
 
-  <h3>Subsection — Colors & Fonts</h3>
-  <p style="color: #FF0000;">Red text via hex color.</p>
-  <p style="color: rgb(0, 128, 0);">Green text via RGB.</p>
-  <p style="color: blue; font-weight: bold;">Blue bold text via named color.</p>
-  <p style="font-family: Georgia, serif; font-size: 14pt;">Georgia 14pt font.</p>
-  <p style="font-family: Courier New, monospace; font-size: 10pt;">Courier New 10pt monospace.</p>
-  <p style="font-family: Arial, sans-serif; font-size: 18pt; color: #8B008B;">Arial 18pt dark magenta.</p>
+    <h3>Subsection — Colors & Fonts</h3>
+    <p style="color: #ff0000">Red text via hex color.</p>
+    <p style="color: rgb(0, 128, 0)">Green text via RGB.</p>
+    <p style="color: blue; font-weight: bold">Blue bold text via named color.</p>
+    <p style="font-family: Georgia, serif; font-size: 14pt">Georgia 14pt font.</p>
+    <p
+      style="
+        font-family:
+          Courier New,
+          monospace;
+        font-size: 10pt;
+      "
+    >
+      Courier New 10pt monospace.
+    </p>
+    <p style="font-family: Arial, sans-serif; font-size: 18pt; color: #8b008b">
+      Arial 18pt dark magenta.
+    </p>
 
-  <h3>Subsection — Text Alignment</h3>
-  <p style="text-align: left;">Left-aligned paragraph.</p>
-  <p style="text-align: center;">Center-aligned paragraph.</p>
-  <p style="text-align: right;">Right-aligned paragraph.</p>
-  <p style="text-align: justify;">Justified paragraph — this text should stretch across the full width of the page with spaces distributed evenly between words to create a clean, professional appearance on both margins.</p>
+    <h3>Subsection — Text Alignment</h3>
+    <p style="text-align: left">Left-aligned paragraph.</p>
+    <p style="text-align: center">Center-aligned paragraph.</p>
+    <p style="text-align: right">Right-aligned paragraph.</p>
+    <p style="text-align: justify">
+      Justified paragraph — this text should stretch across the full width of the page with
+      spaces distributed evenly between words to create a clean, professional appearance on
+      both margins.
+    </p>
 
-  <h3>Subsection — Line Height & Spacing</h3>
-  <p style="line-height: 2;">Double-spaced paragraph. This paragraph has line-height set to 2 for wider vertical spacing between lines of text.</p>
-  <p style="line-height: 1;">Single-spaced paragraph. Tighter vertical spacing for compact display of text content.</p>
+    <h3>Subsection — Line Height & Spacing</h3>
+    <p style="line-height: 2">
+      Double-spaced paragraph. This paragraph has line-height set to 2 for wider vertical
+      spacing between lines of text.
+    </p>
+    <p style="line-height: 1">
+      Single-spaced paragraph. Tighter vertical spacing for compact display of text content.
+    </p>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 2: All Heading Levels                                -->
-  <!-- ============================================================ -->
-  <h2>Section 2 — All Heading Levels</h2>
-  <h1>Heading Level 1</h1>
-  <h2>Heading Level 2</h2>
-  <h3>Heading Level 3</h3>
-  <h4>Heading Level 4</h4>
-  <h5>Heading Level 5</h5>
-  <h6>Heading Level 6</h6>
+    <!-- ============================================================ -->
+    <!-- SECTION 2: All Heading Levels                                -->
+    <!-- ============================================================ -->
+    <h2>Section 2 — All Heading Levels</h2>
+    <h1>Heading Level 1</h1>
+    <h2>Heading Level 2</h2>
+    <h3>Heading Level 3</h3>
+    <h4>Heading Level 4</h4>
+    <h5>Heading Level 5</h5>
+    <h6>Heading Level 6</h6>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 3: Lists                                             -->
-  <!-- ============================================================ -->
-  <h2>Section 3 — Lists</h2>
+    <!-- ============================================================ -->
+    <!-- SECTION 3: Lists                                             -->
+    <!-- ============================================================ -->
+    <h2>Section 3 — Lists</h2>
 
-  <h3>Unordered List (disc)</h3>
-  <ul>
-    <li>First item</li>
-    <li>Second item with <strong>bold</strong> and <em>italic</em></li>
-    <li>Third item
-      <ul>
-        <li>Nested item A</li>
-        <li>Nested item B
-          <ul>
-            <li>Deeply nested item I</li>
-            <li>Deeply nested item II</li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li>Fourth item</li>
-  </ul>
+    <h3>Unordered List (disc)</h3>
+    <ul>
+      <li>First item</li>
+      <li>Second item with <strong>bold</strong> and <em>italic</em></li>
+      <li>
+        Third item
+        <ul>
+          <li>Nested item A</li>
+          <li>
+            Nested item B
+            <ul>
+              <li>Deeply nested item I</li>
+              <li>Deeply nested item II</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>Fourth item</li>
+    </ul>
 
-  <h3>Ordered List (decimal)</h3>
-  <ol>
-    <li>First numbered item</li>
-    <li>Second numbered item</li>
-    <li>Third numbered item
-      <ol>
-        <li>Sub-item 3.1</li>
-        <li>Sub-item 3.2
-          <ol>
-            <li>Sub-sub-item 3.2.1</li>
-            <li>Sub-sub-item 3.2.2</li>
-          </ol>
-        </li>
-      </ol>
-    </li>
-    <li>Fourth numbered item</li>
-  </ol>
+    <h3>Ordered List (decimal)</h3>
+    <ol>
+      <li>First numbered item</li>
+      <li>Second numbered item</li>
+      <li>
+        Third numbered item
+        <ol>
+          <li>Sub-item 3.1</li>
+          <li>
+            Sub-item 3.2
+            <ol>
+              <li>Sub-sub-item 3.2.1</li>
+              <li>Sub-sub-item 3.2.2</li>
+            </ol>
+          </li>
+        </ol>
+      </li>
+      <li>Fourth numbered item</li>
+    </ol>
 
-  <h3>Ordered List — Lower Alpha</h3>
-  <ol style="list-style-type: lower-alpha;">
-    <li>Alpha item a</li>
-    <li>Alpha item b</li>
-    <li>Alpha item c</li>
-  </ol>
+    <h3>Ordered List — Lower Alpha</h3>
+    <ol style="list-style-type: lower-alpha">
+      <li>Alpha item a</li>
+      <li>Alpha item b</li>
+      <li>Alpha item c</li>
+    </ol>
 
-  <h3>Ordered List — Upper Roman</h3>
-  <ol style="list-style-type: upper-roman;">
-    <li>Roman item I</li>
-    <li>Roman item II</li>
-    <li>Roman item III</li>
-  </ol>
+    <h3>Ordered List — Upper Roman</h3>
+    <ol style="list-style-type: upper-roman">
+      <li>Roman item I</li>
+      <li>Roman item II</li>
+      <li>Roman item III</li>
+    </ol>
 
-  <h3>Mixed Nested Lists</h3>
-  <ol>
-    <li>Ordered parent
-      <ul>
-        <li>Unordered child
-          <ol>
-            <li>Ordered grandchild</li>
-          </ol>
-        </li>
-      </ul>
-    </li>
-    <li>Second ordered parent</li>
-  </ol>
+    <h3>Mixed Nested Lists</h3>
+    <ol>
+      <li>
+        Ordered parent
+        <ul>
+          <li>
+            Unordered child
+            <ol>
+              <li>Ordered grandchild</li>
+            </ol>
+          </li>
+        </ul>
+      </li>
+      <li>Second ordered parent</li>
+    </ol>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 4: Tables                                            -->
-  <!-- ============================================================ -->
-  <h2>Section 4 — Tables</h2>
+    <!-- ============================================================ -->
+    <!-- SECTION 4: Tables                                            -->
+    <!-- ============================================================ -->
+    <h2>Section 4 — Tables</h2>
 
-  <h3>Basic Table with Borders</h3>
-  <table border="1">
-    <thead>
+    <h3>Basic Table with Borders</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Header A</th>
+          <th>Header B</th>
+          <th>Header C</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Cell 1A</td>
+          <td>Cell 1B</td>
+          <td>Cell 1C</td>
+        </tr>
+        <tr>
+          <td>Cell 2A</td>
+          <td>Cell 2B</td>
+          <td>Cell 2C</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Table with Column Span & Row Span</h3>
+    <table border="1" style="border-collapse: collapse">
       <tr>
-        <th>Header A</th>
-        <th>Header B</th>
+        <th colspan="2">Merged Header (2 cols)</th>
         <th>Header C</th>
       </tr>
-    </thead>
-    <tbody>
       <tr>
-        <td>Cell 1A</td>
-        <td>Cell 1B</td>
-        <td>Cell 1C</td>
+        <td rowspan="2">Row span (2 rows)</td>
+        <td>B1</td>
+        <td>C1</td>
       </tr>
       <tr>
-        <td>Cell 2A</td>
-        <td>Cell 2B</td>
-        <td>Cell 2C</td>
+        <td>B2</td>
+        <td>C2</td>
       </tr>
-    </tbody>
-  </table>
+      <tr>
+        <td colspan="3" style="text-align: center; font-weight: bold">
+          Full-width footer row
+        </td>
+      </tr>
+    </table>
 
-  <h3>Table with Column Span & Row Span</h3>
-  <table border="1" style="border-collapse: collapse;">
-    <tr>
-      <th colspan="2">Merged Header (2 cols)</th>
-      <th>Header C</th>
-    </tr>
-    <tr>
-      <td rowspan="2">Row span (2 rows)</td>
-      <td>B1</td>
-      <td>C1</td>
-    </tr>
-    <tr>
-      <td>B2</td>
-      <td>C2</td>
-    </tr>
-    <tr>
-      <td colspan="3" style="text-align: center; font-weight: bold;">Full-width footer row</td>
-    </tr>
-  </table>
+    <h3>Table with Styled Cells</h3>
+    <table border="1" style="width: 100%; border-collapse: collapse">
+      <tr>
+        <td
+          style="
+            background-color: #ffd700;
+            color: #000;
+            font-weight: bold;
+            text-align: center;
+          "
+        >
+          Gold
+        </td>
+        <td style="background-color: #4169e1; color: white; text-align: center">
+          Royal Blue
+        </td>
+        <td style="background-color: #2e8b57; color: white; text-align: center">
+          Sea Green
+        </td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; height: 60px">Top aligned</td>
+        <td style="vertical-align: middle">Middle aligned</td>
+        <td style="vertical-align: bottom">Bottom aligned</td>
+      </tr>
+      <tr>
+        <td style="border: 3px solid red">Red border</td>
+        <td style="border-top: 2px solid blue; border-bottom: 2px solid green">
+          Mixed borders
+        </td>
+        <td style="border: none">No border</td>
+      </tr>
+    </table>
 
-  <h3>Table with Styled Cells</h3>
-  <table border="1" style="width: 100%; border-collapse: collapse;">
-    <tr>
-      <td style="background-color: #FFD700; color: #000; font-weight: bold; text-align: center;">Gold</td>
-      <td style="background-color: #4169E1; color: white; text-align: center;">Royal Blue</td>
-      <td style="background-color: #2E8B57; color: white; text-align: center;">Sea Green</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top; height: 60px;">Top aligned</td>
-      <td style="vertical-align: middle;">Middle aligned</td>
-      <td style="vertical-align: bottom;">Bottom aligned</td>
-    </tr>
-    <tr>
-      <td style="border: 3px solid red;">Red border</td>
-      <td style="border-top: 2px solid blue; border-bottom: 2px solid green;">Mixed borders</td>
-      <td style="border: none;">No border</td>
-    </tr>
-  </table>
+    <h3>Table with Percentage Width</h3>
+    <table border="1" style="width: 80%">
+      <tr>
+        <td style="width: 30%">30% width</td>
+        <td style="width: 70%">70% width</td>
+      </tr>
+    </table>
 
-  <h3>Table with Percentage Width</h3>
-  <table border="1" style="width: 80%;">
-    <tr>
-      <td style="width: 30%;">30% width</td>
-      <td style="width: 70%;">70% width</td>
-    </tr>
-  </table>
+    <h3>Table with Nested Content</h3>
+    <table border="1">
+      <tr>
+        <td>
+          <p><strong>Bold paragraph</strong> inside a cell.</p>
+          <ul>
+            <li>List item inside table cell</li>
+            <li>Another list item</li>
+          </ul>
+        </td>
+        <td>
+          <p style="color: #c71585">Colored text in cell.</p>
+          <p>Multiple paragraphs in a single cell.</p>
+        </td>
+      </tr>
+    </table>
 
-  <h3>Table with Nested Content</h3>
-  <table border="1">
-    <tr>
-      <td>
-        <p><strong>Bold paragraph</strong> inside a cell.</p>
-        <ul>
-          <li>List item inside table cell</li>
-          <li>Another list item</li>
-        </ul>
-      </td>
-      <td>
-        <p style="color: #C71585;">Colored text in cell.</p>
-        <p>Multiple paragraphs in a single cell.</p>
-      </td>
-    </tr>
-  </table>
+    <!-- ============================================================ -->
+    <!-- SECTION 5: Images                                            -->
+    <!-- ============================================================ -->
+    <h2>Section 5 — Images</h2>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 5: Images                                            -->
-  <!-- ============================================================ -->
-  <h2>Section 5 — Images</h2>
+    <h3>Small Inline PNG (base64)</h3>
+    <p>
+      Here is a tiny red dot:
+      <img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="
+        alt="Red dot"
+      />
+      embedded inline.
+    </p>
 
-  <h3>Small Inline PNG (base64)</h3>
-  <p>Here is a tiny red dot: <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" alt="Red dot" /> embedded inline.</p>
+    <h3>Image with Explicit Dimensions</h3>
+    <img
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQYV2P8z8BQz0BFwMgwasCoAgBOIQYJxFQHkAAAAABJRU5ErkJggg=="
+      width="100"
+      height="100"
+      alt="100x100 image"
+    />
 
-  <h3>Image with Explicit Dimensions</h3>
-  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQYV2P8z8BQz0BFwMgwasCoAgBOIQYJxFQHkAAAAABJRU5ErkJggg==" width="100" height="100" alt="100x100 image" />
+    <h3>Image with CSS Styles</h3>
+    <img
+      style="width: 80px; height: 80px"
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQYV2P8z8BQz0BFwMgwasCoAgBOIQYJxFQHkAAAAABJRU5ErkJggg=="
+      alt="Styled image"
+    />
 
-  <h3>Image with CSS Styles</h3>
-  <img style="width: 80px; height: 80px;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQYV2P8z8BQz0BFwMgwasCoAgBOIQYJxFQHkAAAAABJRU5ErkJggg==" alt="Styled image" />
+    <h3>Image in Figure with Caption</h3>
+    <figure>
+      <img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQYV2P8z8BQz0BFwMgwasCoAgBOIQYJxFQHkAAAAABJRU5ErkJggg=="
+        width="60"
+        height="60"
+        alt="Figure image"
+      />
+      <figcaption>Figure 1: A sample image with caption.</figcaption>
+    </figure>
 
-  <h3>Image in Figure with Caption</h3>
-  <figure>
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVQYV2P8z8BQz0BFwMgwasCoAgBOIQYJxFQHkAAAAABJRU5ErkJggg==" width="60" height="60" alt="Figure image" />
-    <figcaption>Figure 1: A sample image with caption.</figcaption>
-  </figure>
+    <h3>SVG Image (Native Embed)</h3>
+    <img
+      src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+CiAgPHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmMGYwZjAiIHJ4PSI4Ii8+CiAgPGNpcmNsZSBjeD0iNjAiIGN5PSI2MCIgcj0iNDAiIGZpbGw9IiMzNDk4ZGIiIHN0cm9rZT0iIzJjM2U1MCIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPHRleHQgeD0iNjAiIHk9IjY1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIj5TVkc8L3RleHQ+Cjwvc3ZnPg=="
+      width="120"
+      height="120"
+      alt="SVG circle"
+    />
 
-  <h3>SVG Image (Native Embed)</h3>
-  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+CiAgPHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmMGYwZjAiIHJ4PSI4Ii8+CiAgPGNpcmNsZSBjeD0iNjAiIGN5PSI2MCIgcj0iNDAiIGZpbGw9IiMzNDk4ZGIiIHN0cm9rZT0iIzJjM2U1MCIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPHRleHQgeD0iNjAiIHk9IjY1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIj5TVkc8L3RleHQ+Cjwvc3ZnPg==" width="120" height="120" alt="SVG circle" />
+    <!-- ============================================================ -->
+    <!-- SECTION 6: Block Elements                                    -->
+    <!-- ============================================================ -->
+    <h2>Section 6 — Block Elements</h2>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 6: Block Elements                                    -->
-  <!-- ============================================================ -->
-  <h2>Section 6 — Block Elements</h2>
+    <h3>Blockquote</h3>
+    <blockquote>
+      <p>
+        This is a blockquote. It should have a left border and indentation to visually
+        distinguish it from normal paragraph text.
+      </p>
+    </blockquote>
 
-  <h3>Blockquote</h3>
-  <blockquote>
-    <p>This is a blockquote. It should have a left border and indentation to visually distinguish it from normal paragraph text.</p>
-  </blockquote>
+    <blockquote>
+      <p>
+        Nested blockquotes can contain <strong>formatted text</strong>, <em>emphasis</em>,
+        and even <a href="https://example.com">links</a>.
+      </p>
+    </blockquote>
 
-  <blockquote>
-    <p>Nested blockquotes can contain <strong>formatted text</strong>, <em>emphasis</em>, and even <a href="https://example.com">links</a>.</p>
-  </blockquote>
-
-  <h3>Preformatted Text</h3>
-  <pre>function helloWorld() {
+    <h3>Preformatted Text</h3>
+    <pre>
+function helloWorld() {
     console.log("Hello, World!");
     return 42;
-}</pre>
+}</pre
+    >
 
-  <h3>Horizontal Rule</h3>
-  <p>Text before the rule.</p>
-  <hr />
-  <p>Text after the rule.</p>
+    <h3>Horizontal Rule</h3>
+    <p>Text before the rule.</p>
+    <hr />
+    <p>Text after the rule.</p>
 
-  <h3>Background Color (Block)</h3>
-  <div style="display: block; background-color: #FFFFCC;">
-    <p>This paragraph has a yellow background color applied at the block level.</p>
-  </div>
-  <div style="display: block; background-color: #E6F3FF;">
-    <p>This paragraph has a light blue background.</p>
-  </div>
+    <h3>Background Color (Block)</h3>
+    <div style="display: block; background-color: #ffffcc">
+      <p>This paragraph has a yellow background color applied at the block level.</p>
+    </div>
+    <div style="display: block; background-color: #e6f3ff">
+      <p>This paragraph has a light blue background.</p>
+    </div>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 7: Page Break                                        -->
-  <!-- ============================================================ -->
-  <h2>Section 7 — Page Break</h2>
-  <p>Content before page break.</p>
-  <div class="page-break"></div>
-  <p>Content after page break — this should appear on a new page.</p>
+    <!-- ============================================================ -->
+    <!-- SECTION 7: Page Break                                        -->
+    <!-- ============================================================ -->
+    <h2>Section 7 — Page Break</h2>
+    <p>Content before page break.</p>
+    <div class="page-break"></div>
+    <p>Content after page break — this should appear on a new page.</p>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 8: Complex Table Scenarios                           -->
-  <!-- ============================================================ -->
-  <h2>Section 8 — Complex Table Scenarios</h2>
+    <!-- ============================================================ -->
+    <!-- SECTION 8: Complex Table Scenarios                           -->
+    <!-- ============================================================ -->
+    <h2>Section 8 — Complex Table Scenarios</h2>
 
-  <h3>Multi-level Header Table</h3>
-  <table border="1" style="border-collapse: collapse; width: 100%;">
-    <thead>
-      <tr>
-        <th rowspan="2">Category</th>
-        <th colspan="2">Q1 Results</th>
-        <th colspan="2">Q2 Results</th>
-      </tr>
-      <tr>
-        <th>Revenue</th>
-        <th>Profit</th>
-        <th>Revenue</th>
-        <th>Profit</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Product A</strong></td>
-        <td style="text-align: right;">$1,200,000</td>
-        <td style="text-align: right; color: green;">$340,000</td>
-        <td style="text-align: right;">$1,450,000</td>
-        <td style="text-align: right; color: green;">$410,000</td>
-      </tr>
-      <tr>
-        <td><strong>Product B</strong></td>
-        <td style="text-align: right;">$800,000</td>
-        <td style="text-align: right; color: red;">-$50,000</td>
-        <td style="text-align: right;">$920,000</td>
-        <td style="text-align: right; color: green;">$75,000</td>
-      </tr>
-      <tr>
-        <td><strong>Product C</strong></td>
-        <td style="text-align: right;">$2,100,000</td>
-        <td style="text-align: right; color: green;">$890,000</td>
-        <td style="text-align: right;">$2,340,000</td>
-        <td style="text-align: right; color: green;">$1,020,000</td>
-      </tr>
-    </tbody>
-  </table>
+    <h3>Multi-level Header Table</h3>
+    <table border="1" style="border-collapse: collapse; width: 100%">
+      <thead>
+        <tr>
+          <th rowspan="2">Category</th>
+          <th colspan="2">Q1 Results</th>
+          <th colspan="2">Q2 Results</th>
+        </tr>
+        <tr>
+          <th>Revenue</th>
+          <th>Profit</th>
+          <th>Revenue</th>
+          <th>Profit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Product A</strong></td>
+          <td style="text-align: right">$1,200,000</td>
+          <td style="text-align: right; color: green">$340,000</td>
+          <td style="text-align: right">$1,450,000</td>
+          <td style="text-align: right; color: green">$410,000</td>
+        </tr>
+        <tr>
+          <td><strong>Product B</strong></td>
+          <td style="text-align: right">$800,000</td>
+          <td style="text-align: right; color: red">-$50,000</td>
+          <td style="text-align: right">$920,000</td>
+          <td style="text-align: right; color: green">$75,000</td>
+        </tr>
+        <tr>
+          <td><strong>Product C</strong></td>
+          <td style="text-align: right">$2,100,000</td>
+          <td style="text-align: right; color: green">$890,000</td>
+          <td style="text-align: right">$2,340,000</td>
+          <td style="text-align: right; color: green">$1,020,000</td>
+        </tr>
+      </tbody>
+    </table>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 9: Inline Styles Stress Test                         -->
-  <!-- ============================================================ -->
-  <h2>Section 9 — Inline Styles Stress Test</h2>
-  <p>
-    <span style="color: #FF6347; font-size: 16pt; font-weight: bold;">Tomato 16pt bold</span>,
-    <span style="color: #4682B4; font-style: italic; text-decoration: underline;">Steel blue italic underline</span>,
-    <span style="background-color: #FFFF00;">Yellow highlight</span>,
-    <span style="font-family: 'Times New Roman'; font-size: 12pt;">Times New Roman 12pt</span>,
-    <span style="color: #800080; font-size: 20pt; font-family: Impact;">Purple Impact 20pt</span>.
-  </p>
+    <!-- ============================================================ -->
+    <!-- SECTION 9: Inline Styles Stress Test                         -->
+    <!-- ============================================================ -->
+    <h2>Section 9 — Inline Styles Stress Test</h2>
+    <p>
+      <span style="color: #ff6347; font-size: 16pt; font-weight: bold"
+        >Tomato 16pt bold</span
+      >,
+      <span style="color: #4682b4; font-style: italic; text-decoration: underline"
+        >Steel blue italic underline</span
+      >, <span style="background-color: #ffff00">Yellow highlight</span>,
+      <span style="font-family: 'Times New Roman'; font-size: 12pt"
+        >Times New Roman 12pt</span
+      >,
+      <span style="color: #800080; font-size: 20pt; font-family: Impact"
+        >Purple Impact 20pt</span
+      >.
+    </p>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 10: Edge Cases                                       -->
-  <!-- ============================================================ -->
-  <h2>Section 10 — Edge Cases</h2>
+    <!-- ============================================================ -->
+    <!-- SECTION 10: Edge Cases                                       -->
+    <!-- ============================================================ -->
+    <h2>Section 10 — Edge Cases</h2>
 
-  <h3>Empty Paragraph</h3>
-  <p></p>
+    <h3>Empty Paragraph</h3>
+    <p></p>
 
-  <h3>Paragraph with Only Whitespace</h3>
-  <p>   </p>
+    <h3>Paragraph with Only Whitespace</h3>
+    <p></p>
 
-  <h3>Very Long Paragraph</h3>
-  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula.</p>
+    <h3>Very Long Paragraph</h3>
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+      exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+      dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+      Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+      mollit anim id est laborum. Curabitur pretium tincidunt lacus. Nulla gravida orci a
+      odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus
+      magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida. Duis ac
+      tellus et risus vulputate vehicula.
+    </p>
 
-  <h3>Special Characters & Entities</h3>
-  <p>&amp; ampersand, &lt; less-than, &gt; greater-than, &quot; quote, &#39; apostrophe, &copy; copyright, &reg; registered, &trade; trademark, &mdash; em-dash, &ndash; en-dash, &hellip; ellipsis, &euro; euro, &pound; pound, &yen; yen.</p>
+    <h3>Special Characters & Entities</h3>
+    <p>
+      &amp; ampersand, &lt; less-than, &gt; greater-than, &quot; quote, &#39; apostrophe,
+      &copy; copyright, &reg; registered, &trade; trademark, &mdash; em-dash, &ndash;
+      en-dash, &hellip; ellipsis, &euro; euro, &pound; pound, &yen; yen.
+    </p>
 
-  <h3>Unicode Text</h3>
-  <p>Japanese: 日本語テスト | Chinese: 中文测试 | Korean: 한국어 테스트 | Arabic: اختبار عربي | Russian: Русский тест | Greek: Ελληνικά τεστ</p>
+    <h3>Unicode Text</h3>
+    <p>
+      Japanese: 日本語テスト | Chinese: 中文测试 | Korean: 한국어 테스트 | Arabic: اختبار
+      عربي | Russian: Русский тест | Greek: Ελληνικά τεστ
+    </p>
 
-  <h3>Nested Div Structure</h3>
-  <div>
+    <h3>Nested Div Structure</h3>
     <div>
       <div>
-        <p>Deeply nested paragraph inside three divs.</p>
+        <div>
+          <p>Deeply nested paragraph inside three divs.</p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <h3>Multiple Line Breaks</h3>
-  <p>Line one<br/>Line two<br/>Line three<br/>Line four</p>
+    <h3>Multiple Line Breaks</h3>
+    <p>Line one<br />Line two<br />Line three<br />Line four</p>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 11: Semantic Elements                                -->
-  <!-- ============================================================ -->
-  <h2>Section 11 — Semantic Elements</h2>
-  <section>
-    <p>Content inside a &lt;section&gt; element.</p>
-  </section>
-  <article>
-    <p>Content inside an &lt;article&gt; element.</p>
-  </article>
-  <main>
-    <p>Content inside a &lt;main&gt; element.</p>
-  </main>
+    <!-- ============================================================ -->
+    <!-- SECTION 11: Semantic Elements                                -->
+    <!-- ============================================================ -->
+    <h2>Section 11 — Semantic Elements</h2>
+    <section>
+      <p>Content inside a &lt;section&gt; element.</p>
+    </section>
+    <article>
+      <p>Content inside an &lt;article&gt; element.</p>
+    </article>
+    <main>
+      <p>Content inside a &lt;main&gt; element.</p>
+    </main>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 12: Indentation                                      -->
-  <!-- ============================================================ -->
-  <h2>Section 12 — Indentation</h2>
-  <p style="margin-left: 40px;">Indented paragraph (40px left margin).</p>
-  <p style="margin-left: 80px;">More indented paragraph (80px left margin).</p>
-  <p style="margin-left: 120px;">Even more indented (120px left margin).</p>
-  <p style="margin-left: 40px; margin-right: 40px;">Indented from both sides (40px each).</p>
+    <!-- ============================================================ -->
+    <!-- SECTION 12: Indentation                                      -->
+    <!-- ============================================================ -->
+    <h2>Section 12 — Indentation</h2>
+    <p style="margin-left: 40px">Indented paragraph (40px left margin).</p>
+    <p style="margin-left: 80px">More indented paragraph (80px left margin).</p>
+    <p style="margin-left: 120px">Even more indented (120px left margin).</p>
+    <p style="margin-left: 40px; margin-right: 40px">
+      Indented from both sides (40px each).
+    </p>
 
-  <!-- ============================================================ -->
-  <!-- SECTION 13: Final Mixed Content                              -->
-  <!-- ============================================================ -->
-  <h2>Section 13 — Final Mixed Content</h2>
-  <p>This final section combines many features in a single flow:</p>
-  <ol>
-    <li>A numbered list that contains <strong>bold</strong>, <em>italic</em>, and <a href="https://example.com">links</a></li>
-    <li>A second item with a table inside:
-      <table border="1">
-        <tr><td>Nested table cell A</td><td>Nested table cell B</td></tr>
-      </table>
-    </li>
-    <li>A third item with <code>inline code</code> and <mark>highlighted text</mark></li>
-  </ol>
+    <!-- ============================================================ -->
+    <!-- SECTION 13: Final Mixed Content                              -->
+    <!-- ============================================================ -->
+    <h2>Section 13 — Final Mixed Content</h2>
+    <p>This final section combines many features in a single flow:</p>
+    <ol>
+      <li>
+        A numbered list that contains <strong>bold</strong>, <em>italic</em>, and
+        <a href="https://example.com">links</a>
+      </li>
+      <li>
+        A second item with a table inside:
+        <table border="1">
+          <tr>
+            <td>Nested table cell A</td>
+            <td>Nested table cell B</td>
+          </tr>
+        </table>
+      </li>
+      <li>A third item with <code>inline code</code> and <mark>highlighted text</mark></li>
+    </ol>
 
-  <blockquote>
-    <p>A closing blockquote with <strong><em>bold italic</em></strong> text and a <a href="https://example.com">link</a> inside it.</p>
-  </blockquote>
+    <blockquote>
+      <p>
+        A closing blockquote with <strong><em>bold italic</em></strong> text and a
+        <a href="https://example.com">link</a> inside it.
+      </p>
+    </blockquote>
 
-  <p style="text-align: center; font-size: 14pt; color: #555;">— End of Regression Baseline Document —</p>
-</body>
+    <p style="text-align: center; font-size: 14pt; color: #555">
+      — End of Regression Baseline Document —
+    </p>
+  </body>
 </html>

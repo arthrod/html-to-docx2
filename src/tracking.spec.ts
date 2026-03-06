@@ -371,10 +371,11 @@ describe('DOCX Export with Tracked Changes', () => {
   })
 
   it('warns when dead tracking tokens remain in document.xml', async () => {
-    const warn = mock((..._args: unknown[]) => {})
+    const warn = mock((..._args: Parameters<typeof console.warn>) => {})
     const originalWarn = console.warn
-    console.warn = (...args: any[]) =>
-      (warn as unknown as (...callArgs: any[]) => void)(...args)
+    console.warn = (...args: Parameters<typeof console.warn>) => {
+      warn(...args)
+    }
 
     try {
       const html = '<p>[[DOCX_INS_START:invalid]]text</p>'

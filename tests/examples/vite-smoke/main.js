@@ -1,4 +1,4 @@
-import HTMLToDOCX from '../../dist/html-to-docx'
+import HTMLToDOCX from '../../../dist/browser.js'
 
 const statusEl = document.getElementById('status')
 const detailsEl = document.getElementById('details')

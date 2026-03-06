@@ -197,9 +197,7 @@ export function splitDocxTrackingTokens(text: string): ParsedToken[] {
   const parts: ParsedToken[] = []
   let lastIndex = 0
   const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
-  // biome-ignore lint/suspicious/noEvolvingTypes: regex exec result type
-  // biome-ignore lint/suspicious/noImplicitAnyLet: regex exec result type
-  let match
+  let match: RegExpExecArray | null
 
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
   while ((match = tokenRegex.exec(text)) !== null) {
@@ -244,9 +242,7 @@ export function hasTrackingTokens(text: string): boolean {
 export function findDocxTrackingTokens(text: string): string[] {
   const tokens: string[] = []
   const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
-  // biome-ignore lint/suspicious/noEvolvingTypes: regex exec result type
-  // biome-ignore lint/suspicious/noImplicitAnyLet: regex exec result type
-  let match
+  let match: RegExpExecArray | null
 
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
   while ((match = tokenRegex.exec(text)) !== null) {
