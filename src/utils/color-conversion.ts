@@ -3,17 +3,20 @@ export const hslRegex = /hsl\((\d+),\s*([\d.]+)%,\s*([\d.]+)%\)/i
 export const hexRegex = /#([0-9A-F]{6})/i
 export const hex3Regex = /#([0-9A-F])([0-9A-F])([0-9A-F])/i
 
+type ChannelInput = number | string
+type RGBChannels = readonly [number, number, number]
+
+const toByteHex = (value: ChannelInput): string => {
+  const hex = Number.parseInt(String(value), 10).toString(16)
+  return hex.length === 1 ? `0${hex}` : hex
+}
+
 export const rgbToHex = (
-  red: number | string,
-  green: number | string,
-  blue: number | string
+  red: ChannelInput,
+  green: ChannelInput,
+  blue: ChannelInput
 ): string => {
-  const hexColorCode = [red, green, blue]
-    .map((x) => {
-      const hex = Number.parseInt(String(x), 10).toString(16)
-      return hex.length === 1 ? `0${hex}` : hex
-    })
-    .join('')
+  const hexColorCode = [red, green, blue].map(toByteHex).join('')
 
   return hexColorCode
 }
@@ -45,12 +48,8 @@ export const hslToHex = (hue: number, saturation: number, luminosity: number): s
     green = hue2rgb(p, q, h)
     blue = hue2rgb(p, q, h - 1 / 3)
   }
-  return [red, green, blue]
-    .map((x) => {
-      const hex = Math.round(x * 255).toString(16)
-      return hex.length === 1 ? `0${hex}` : hex
-    })
-    .join('')
+  const channels: RGBChannels = [red, green, blue]
+  return channels.map((channel) => toByteHex(Math.round(channel * 255))).join('')
 }
 
 export const hex3ToHex = (red: string, green: string, blue: string): string => {

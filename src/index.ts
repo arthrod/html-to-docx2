@@ -3,6 +3,7 @@
  *
  * This module provides tools for converting HTML to DOCX format.
  */
+import type { DocxListStyleType } from './utils/list'
 
 // Main converter function
 export { default as HTMLtoDOCX, default } from './html-to-docx'
@@ -105,7 +106,7 @@ export type ImageProcessing = {
 }
 
 export type NumberingOptions = {
-  defaultOrderedListStyleType?: string
+  defaultOrderedListStyleType?: DocxListStyleType
 }
 
 /** Tighter version of NumberingOptions using the actual DocxListStyleType union */

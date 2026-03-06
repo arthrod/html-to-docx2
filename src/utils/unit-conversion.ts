@@ -50,7 +50,7 @@ export const pointToPixel = (pointValue: number): number =>
 
 export const EIPToPoint = (EIPValue: number): number => Math.round(EIPValue / 8)
 
-export const pointToEIP = (PointValue: number): number => Math.round(PointValue * 8)
+export const pointToEIP = (pointValue: number): number => Math.round(pointValue * 8)
 
 export const pixelToEIP = (pixelValue: number): number =>
   pointToEIP(pixelToPoint(pixelValue))

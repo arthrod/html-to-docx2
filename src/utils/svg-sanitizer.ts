@@ -229,6 +229,12 @@ type SVGVNode = {
   [key: string]: SVGAttributeValue | SVGVNodeProperties | SVGChildNode[] | undefined
 }
 
+const isSVGTextNode = (node: SVGChildNode | null): node is SVGTextNode =>
+  typeof node === 'object' && node !== null && 'text' in node
+
+const isSVGVNode = (node: SVGChildNode): node is SVGVNode =>
+  typeof node === 'object' && node !== null && !isSVGTextNode(node)
+
 const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): boolean => {
   if (typeof value !== 'string' || value.length === 0) {
     return false
@@ -287,7 +293,7 @@ export const sanitizeSVGVNode = (
 
   if (vNode.properties) {
     const attributes = vNode.properties.attributes || {}
-    const sanitizedAttributes: Record<string, string> = {}
+    const sanitizedAttributes: SVGAttributes = {}
     let removedCount = 0
 
     Object.entries(attributes).forEach(([key, value]) => {
@@ -347,12 +353,15 @@ export const sanitizeSVGVNode = (
   if (vNode.children && vNode.children.length > 0) {
     const sanitizedChildren = vNode.children
       .map((child) => {
-        if (typeof child === 'string' || (typeof child === 'object' && 'text' in child)) {
+        if (typeof child === 'string' || isSVGTextNode(child)) {
           return child
         }
-        return sanitizeSVGVNode(child as SVGVNode, options)
+        if (isSVGVNode(child)) {
+          return sanitizeSVGVNode(child, options)
+        }
+        return null
       })
-      .filter(Boolean) as SVGVNode['children']
+      .filter((child): child is SVGChildNode => child !== null)
 
     sanitizedVNode.children = sanitizedChildren
 

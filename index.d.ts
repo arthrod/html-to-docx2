@@ -1,6 +1,14 @@
 /// <reference types="node" />
 
 declare namespace HTMLtoDOCX {
+  type DocxListStyleType =
+    | 'decimal'
+    | 'disc'
+    | 'lower-alpha'
+    | 'lower-roman'
+    | 'upper-alpha'
+    | 'upper-roman'
+
   interface Margins {
     top?: number
     right?: number
@@ -86,7 +94,7 @@ declare namespace HTMLtoDOCX {
     lineNumber?: boolean
     lineNumberOptions?: LineNumberOptions
     numbering?: {
-      defaultOrderedListStyleType?: string
+      defaultOrderedListStyleType?: DocxListStyleType
     }
     heading?: HeadingConfig
     decodeUnicode?: boolean

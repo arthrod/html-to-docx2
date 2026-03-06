@@ -28,3 +28,9 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/utils/svg-sanitizer.ts
 - src/utils/xml-escape.ts
 - src/utils/xmlbuilder2.ts
+- index.d.ts
+- src/index.ts
+- src/utils/color-conversion.ts
+- src/utils/unit-conversion.ts
+- src/helpers/index.ts
+- src/schemas/index.ts
