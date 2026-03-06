@@ -1,7 +1,7 @@
 import { decode } from 'html-entities'
 /* biome-ignore-all lint: legacy code */
 import JSZip from 'jszip'
-import { create } from 'xmlbuilder2'
+import { create } from './utils/xmlbuilder2'
 
 import {
   commentsExtendedRelationshipType,

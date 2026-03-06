@@ -11,8 +11,7 @@
  */
 /** biome-ignore-all lint/style/useConsistentTypeDefinitions: legacy code */
 
-import { fragment } from 'xmlbuilder2'
-import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces'
+import { fragment, type XMLBuilder } from './utils/xmlbuilder2'
 
 import namespaces from './namespaces'
 

@@ -1,8 +1,7 @@
 /* biome-ignore-all lint: legacy code */
 import type JSZip from 'jszip'
 import { nanoid } from 'nanoid'
-import { create, fragment } from 'xmlbuilder2'
-import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces'
+import { create, fragment, type XMLBuilder } from './utils/xmlbuilder2'
 
 import {
   COMMENTS_EXTENDED_TEMPLATE,

@@ -4,8 +4,7 @@
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { cloneDeep } from 'es-toolkit'
-import { fragment } from 'xmlbuilder2'
-import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces'
+import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
 
