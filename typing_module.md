@@ -42,3 +42,8 @@ Files inspected for `any` (explicit/implicit) and ending this run with none:
 - src/schemas/numbering.ts
 - src/schemas/web-settings.ts
 - src/schemas/font-table.ts
+- src/namespaces.ts
+- src/schemas/content-types.ts
+- src/schemas/generic-rels.ts
+- src/schemas/rels.ts
+- src/schemas/settings.ts

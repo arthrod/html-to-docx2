@@ -1,4 +1,4 @@
-const contentTypesXML: string = `
+const contentTypesXML = `
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
     <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -17,6 +17,6 @@ const contentTypesXML: string = `
         <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
         <Override PartName="/word/webSettings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.webSettings+xml"/>
     </Types>
-`
+` as const
 
 export default contentTypesXML
