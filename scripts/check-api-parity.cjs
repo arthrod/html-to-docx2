@@ -1,3 +1,4 @@
+// @ts-check
 /* eslint-disable no-console */
 const fs = require('fs')
 const path = require('path')
@@ -8,6 +9,10 @@ const API_DIR = path.join(ROOT_DIR, 'api-surface')
 const BROWSER_ROLLUP = path.join(API_DIR, 'browser.rollup.d.ts')
 const NODE_ROLLUP = path.join(API_DIR, 'node.rollup.d.ts')
 
+/**
+ * @param {string} filePath
+ * @returns {string}
+ */
 function readRequiredFile(filePath) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`Missing required file: ${filePath}`)
@@ -16,6 +21,10 @@ function readRequiredFile(filePath) {
   return fs.readFileSync(filePath, 'utf8')
 }
 
+/**
+ * @param {string} content
+ * @returns {string}
+ */
 function normalize(content) {
   return (
     content

@@ -1,9 +1,11 @@
+// @ts-check
 /* eslint-disable no-console */
 const fs = require('fs')
 const path = require('path')
 // FIXME: Incase you have the npm package
 // const HTMLtoDOCX = require('html-to-docx');
 const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
+/** @typedef {Blob | Buffer | Uint8Array | ArrayBuffer} HtmlToDocxResult */
 
 const outputDirectory = path.resolve(__dirname, '../tmp')
 if (!fs.existsSync(outputDirectory)) {
@@ -14,6 +16,10 @@ if (fs.existsSync(legacyBrowserOutput)) {
   fs.rmSync(legacyBrowserOutput, { force: true })
 }
 
+/**
+ * @param {HtmlToDocxResult} docResult
+ * @returns {Promise<Buffer>}
+ */
 const toBuffer = async (docResult) => {
   if (Buffer.isBuffer(docResult)) return docResult
   if (docResult instanceof ArrayBuffer) return Buffer.from(docResult)
@@ -21,7 +27,7 @@ const toBuffer = async (docResult) => {
     const arrayBuffer = await docResult.arrayBuffer()
     return Buffer.from(arrayBuffer)
   }
-  if (docResult && docResult.buffer && typeof docResult.length === 'number') {
+  if (ArrayBuffer.isView(docResult)) {
     return Buffer.from(docResult)
   }
 

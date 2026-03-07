@@ -802,4 +802,4 @@ export declare const wordFolder = "word";
  */
 export declare function wrapRunWithSuggestion(runFragment: XMLBuilder, suggestion: ActiveSuggestion): XMLBuilder;
 
-
+export { }

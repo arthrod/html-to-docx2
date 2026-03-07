@@ -101,3 +101,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/examples/vite-smoke/shims/vm.js
 - tests/examples/vite-smoke/shims/zlib.js
 - tests/fixtures/index.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- tests/example-node.cjs
+- tests/example-browser-images.cjs
+- tests/example-heading-styles.cjs
+- tests/generate-validation-docx.cjs
+- scripts/check-api-parity.cjs

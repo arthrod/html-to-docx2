@@ -1,8 +1,24 @@
+// @ts-check
 /* eslint-disable no-console */
 const fs = require('fs')
 const path = require('path')
 const { execFileSync } = require('child_process')
 const { chromium } = require('playwright')
+/**
+ * @typedef {'convert' | 'native'} SvgHandlingMode
+ */
+/**
+ * @typedef {(html: string, headerHtml: string | null, options: {
+ *   title?: string
+ *   creator?: string
+ *   footer?: boolean
+ *   pageNumber?: boolean
+ *   imageProcessing?: { svgHandling?: SvgHandlingMode }
+ * }) => Promise<Blob | ArrayBuffer | Uint8Array>} BrowserHtmlToDocx
+ */
+/**
+ * @typedef {{ base64: string | null; error: string | null }} BrowserGenerationResult
+ */
 
 const ROOT_DIR = path.resolve(__dirname, '..')
 const OUTPUT_DIR = path.join(ROOT_DIR, 'tmp')
@@ -64,6 +80,10 @@ const bundleBrowserEntrypoint = () => {
   )
 }
 
+/**
+ * @param {string} html
+ * @returns {Promise<Buffer>}
+ */
 const generateInBrowser = async (html) => {
   const browser = await chromium.launch({ headless: true })
 
@@ -72,8 +92,16 @@ const generateInBrowser = async (html) => {
     await page.setContent('<!doctype html><html><body>Generating...</body></html>')
     await page.addScriptTag({ path: BUNDLE_OUTPUT_PATH })
 
+    /** @type {BrowserGenerationResult} */
     const result = await page.evaluate(
+      /**
+       * @param {{ inputHtml: string }} payload
+       */
       async ({ inputHtml }) => {
+        /**
+         * @param {Uint8Array} bytes
+         * @returns {string}
+         */
         const toBase64 = (bytes) => {
           let binary = ''
           const chunkSize = 0x8000
@@ -85,11 +113,14 @@ const generateInBrowser = async (html) => {
         }
 
         try {
-          if (typeof globalThis.__HTMLtoDOCX !== 'function') {
+          /** @type {{ __HTMLtoDOCX?: BrowserHtmlToDocx }} */
+          const typedGlobal = globalThis
+          const convert = typedGlobal.__HTMLtoDOCX
+          if (typeof convert !== 'function') {
             throw new Error('Browser HTMLtoDOCX entrypoint is unavailable')
           }
 
-          const docResult = await globalThis.__HTMLtoDOCX(inputHtml, null, {
+          const docResult = await convert(inputHtml, null, {
             title: 'Browser Image Example',
             creator: 'html-to-docx browser example',
             footer: true,

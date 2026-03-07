@@ -1,7 +1,25 @@
+// @ts-check
 /* eslint-disable no-console */
 const fs = require('fs')
 const path = require('path')
 const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
+/** @typedef {Blob | Buffer | Uint8Array | ArrayBuffer} HtmlToDocxResult */
+/**
+ * @typedef {{
+ *   font: string
+ *   fontSize: number
+ *   bold: boolean
+ *   spacing: { before: number; after: number }
+ *   keepLines: boolean
+ *   keepNext: boolean
+ *   outlineLevel: number
+ * }} HeadingStyleDefinition
+ */
+/** @typedef {Partial<Record<'heading1' | 'heading2' | 'heading3' | 'heading4' | 'heading5' | 'heading6', HeadingStyleDefinition>>} HeadingOptions */
+/** @typedef {{ heading?: HeadingOptions; title?: string; subject?: string; creator?: string; description?: string }} DocumentOptions */
+/**
+ * @typedef {(html: string, headerHtml: string | null, options: DocumentOptions) => Promise<HtmlToDocxResult>} HtmlToDocxConvert
+ */
 
 /**
  * This example demonstrates the customizable heading styles feature
@@ -13,6 +31,10 @@ if (!fs.existsSync(outputDirectory)) {
   fs.mkdirSync(outputDirectory, { recursive: true })
 }
 
+/**
+ * @param {HtmlToDocxResult} docResult
+ * @returns {Promise<Buffer>}
+ */
 const toBuffer = async (docResult) => {
   if (Buffer.isBuffer(docResult)) return docResult
   if (docResult instanceof ArrayBuffer) return Buffer.from(docResult)
@@ -20,7 +42,7 @@ const toBuffer = async (docResult) => {
     const arrayBuffer = await docResult.arrayBuffer()
     return Buffer.from(arrayBuffer)
   }
-  if (docResult && docResult.buffer && typeof docResult.length === 'number') {
+  if (ArrayBuffer.isView(docResult)) {
     return Buffer.from(docResult)
   }
 
@@ -69,6 +91,7 @@ void (async () => {
   console.log('🎨 Creating DOCX with customizable heading styles...\n')
 
   // Define custom heading styles
+  /** @type {HeadingOptions} */
   const customHeadingOptions = {
     heading1: {
       font: 'Arial',
@@ -131,6 +154,7 @@ void (async () => {
 
   try {
     const { default: HTMLtoDOCXBrowser } = await import('../dist/browser.js')
+    /** @type {Array<{ convert: HtmlToDocxConvert; runtime: 'node' | 'browser' }>} */
     const runtimes = [
       { convert: HTMLtoDOCXNode, runtime: 'node' },
       { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
