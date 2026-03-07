@@ -125,3 +125,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/examples/react-example/src/index.js
 - tests/examples/react-example/src/App.test.js
 - tests/examples/react-example/src/setupTests.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- tests/xml-escape.test.js
+- tests/inline-svg-element.test.js
+- tests/utils-coverage.test.js
+- tests/vtree-iteration.test.js
+- tests/htmlparser2-compatibility.test.js

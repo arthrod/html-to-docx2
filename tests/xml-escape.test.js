@@ -1,3 +1,5 @@
+// @ts-check
+
 import { escapeXml } from '../src/utils/xml-escape'
 
 describe('xml-escape utility', () => {

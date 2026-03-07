@@ -1,3 +1,5 @@
+// @ts-check
+
 // Unit tests for utility modules with low coverage
 // Targets: url.ts, list.ts, font-family-conversion.ts, image-to-base64.ts
 

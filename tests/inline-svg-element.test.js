@@ -1,8 +1,35 @@
+// @ts-check
+
 // Unit tests for inline SVG element handling
 // Tests inline <svg> tags (not img tags with SVG sources)
 
 import HTMLtoDOCX from '../index.ts'
 import { parseDOCX } from './helpers/docx-assertions'
+
+/**
+ * @typedef {string | number | boolean | null | undefined} DocxScalar
+ */
+
+/**
+ * @typedef {Object} ParsedParagraph
+ * @property {DocxScalar[]} [runs] Run-level extracted values.
+ * @property {Object.<string, DocxScalar>} [properties] Paragraph properties by key.
+ * @property {string} [text] Flattened paragraph text.
+ */
+
+/**
+ * @typedef {Object} ParsedDocx
+ * @property {ParsedParagraph[]} paragraphs Parsed paragraph list.
+ * @property {string} xml Main document XML payload.
+ */
+
+/**
+ * @param {Buffer | Uint8Array} docx
+ * @returns {Promise<ParsedDocx>}
+ */
+async function parseTypedDOCX(docx) {
+  return /** @type {ParsedDocx} */ (await parseDOCX(docx))
+}
 
 describe('Inline SVG Element Handling', () => {
   describe('Basic inline SVG support', () => {
@@ -21,7 +48,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
 
       // Should create document with paragraphs and SVG as image
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
@@ -42,7 +69,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
     })
 
@@ -65,7 +92,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(3)
     })
 
@@ -86,7 +113,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
       // Native mode keeps .svg extension
       expect(parsed.xml).toMatch(/image-.*\.svg/)
@@ -105,7 +132,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
     })
   })
@@ -128,7 +155,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
     })
 
@@ -148,7 +175,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
     })
   })
@@ -176,7 +203,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(4)
       // Should have SVG files for both types
       expect(parsed.xml).toMatch(/image-.*\.svg/)
@@ -197,7 +224,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       // Should still create document with text paragraphs
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
     })
@@ -215,7 +242,7 @@ describe('Inline SVG Element Handling', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseTypedDOCX(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
     })
   })
