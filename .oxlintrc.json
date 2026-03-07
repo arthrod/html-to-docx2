@@ -9,15 +9,15 @@
   "rules": {
     "import/no-named-as-default": "error",
     "no-explicit-any": "error",
-    "import/no-unassigned-import": "warn",
+    "import/no-unassigned-import": "error",
     "jest/expect-expect": "error",
     "typescript/use-unknown-in-catch-callback-variable": "error",
     "jest/no-conditional-expect": "error",
     "jest/require-to-throw-message": "error",
-    "no-shadow": "warn",
-    "no-unused-vars": "warn",
-    "no-useless-concat": "warn",
-    "preserve-caught-error": "warn",
+    "no-shadow": "error",
+    "no-unused-vars": "error",
+    "no-useless-concat": "error",
+    "preserve-caught-error": "error",
     "typescript/no-unsafe-type-assertion": "warn",
     "typescript/no-floating-promises": "error"
   },
@@ -32,7 +32,6 @@
     "coverage/**",
     "templates/**",
     "api-surface/**",
-   /// "src/helpers/xml-builder.ts",
     "mockServiceWorker.js",
     "tsconfig.build.json"
   ]
