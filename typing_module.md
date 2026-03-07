@@ -133,3 +133,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/utils-coverage.test.js
 - tests/vtree-iteration.test.js
 - tests/htmlparser2-compatibility.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- tests/examples/react-example/src/example-rtl.js
+- tests/inline-image-caching.test.js
+- tests/numbering.test.js
+- tests/svg-handling.test.js
+- tests/vdom.test.js

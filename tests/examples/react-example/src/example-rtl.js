@@ -1,7 +1,21 @@
+// @ts-check
+
 /* eslint-disable no-console */
 const fs = require('fs')
 // const HTMLtoDOCX = require('html-to-docx');
 const { default: HTMLtoDOCX } = require('../../../dist/index.cjs')
+
+/**
+ * @param {import('../../../src').HtmlToDocxResult} value
+ * @returns {Promise<Uint8Array>}
+ */
+async function toNodeBinary(value) {
+  if (value instanceof Uint8Array) {
+    return value
+  }
+
+  return new Uint8Array(await value.arrayBuffer())
+}
 
 async function generateDoc() {
   const html = `
@@ -15,7 +29,7 @@ async function generateDoc() {
     height: 15840,
   }
 
-  const docxBuffer = await HTMLtoDOCX(html, null, {
+  const docxResult = await HTMLtoDOCX(html, null, {
     title: options.title || 'Document',
     margins: {
       top: 400,
@@ -34,6 +48,7 @@ async function generateDoc() {
     lang: 'he-IL', // Hebrew locale
     direction: 'rtl', // 🔑 enables RTL in the generated DOCX
   })
+  const docxBuffer = await toNodeBinary(docxResult)
 
   // Save the buffer to file
   fs.writeFileSync('example-rtl.docx', docxBuffer)

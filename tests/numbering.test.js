@@ -1,3 +1,5 @@
+// @ts-check
+
 // Robust numbering/list tests
 // Tests ordered lists, unordered lists, nested lists, list style types, and numbering XML output
 

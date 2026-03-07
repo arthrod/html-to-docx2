@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * Unit tests for VNode and VText classes
  * Tests the virtual DOM implementation that replaces virtual-dom package

@@ -1,3 +1,5 @@
+// @ts-check
+
 // Unit tests for inline image caching functionality
 // Tests that inline images (via buildRun in xml-builder) use the same caching mechanism as block images
 
@@ -6,6 +8,18 @@ import { JPEG_1x1_BASE64, PNG_1x1_BASE64 } from './fixtures/index'
 import { parseDOCX } from './helpers/docx-assertions'
 
 // Helper to create a mock fetch response from a base64 string
+/**
+ * @param {string} base64
+ * @param {string} [contentType]
+ * @returns {Promise<{
+ *   ok: boolean
+ *   status: number
+ *   statusText: string
+ *   headers: Headers
+ *   arrayBuffer: () => Promise<ArrayBuffer>
+ *   blob: () => Promise<Blob>
+ * }>}
+ */
 function mockFetchFromBase64(base64, contentType = 'image/png') {
   const buffer = Buffer.from(base64, 'base64')
   const arrayBuffer = buffer.buffer.slice(

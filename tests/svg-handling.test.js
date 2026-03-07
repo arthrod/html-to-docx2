@@ -1,3 +1,5 @@
+// @ts-check
+
 // Unit tests for SVG handling functionality
 // Tests SVG to PNG conversion, native SVG support, and configuration options
 
