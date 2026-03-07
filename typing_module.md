@@ -220,3 +220,12 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/types/justjshtml/run-serializer-tests-script.d.ts
 - src/types/justjshtml/run-stream-tests-script.d.ts
 - tests/html-to-docx-options.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/run-tokenizer-tests-script.d.ts
+- src/types/justjshtml/run-tree-construction-tests-script.d.ts
+- src/types/justjshtml/smoke-script.d.ts
+- tests/render-document-file-build-image.test.js
+- tests/render-document-file-build-list.test.js
+- tests/render-document-file-convert-vtree.test.js
