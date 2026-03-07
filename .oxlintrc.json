@@ -11,7 +11,7 @@
     "no-explicit-any": "warn",
     "import/no-unassigned-import": "warn",
     "jest/expect-expect": "error",
-    "no-implicit-any-catch": "warn",
+    "typescript/use-unknown-in-catch-callback-variable": "warn",
     "jest/no-conditional-expect": "error",
     "jest/require-to-throw-message": "error",
     "no-shadow": "warn",
