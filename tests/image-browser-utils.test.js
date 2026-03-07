@@ -57,6 +57,7 @@ describe('image-browser helpers', () => {
     expect(guessMimeTypeFromBase64(toBase64([0x89, 0x50, 0x4e, 0x47]))).toBe('image/png')
     expect(guessMimeTypeFromBase64(toBase64([0x47, 0x49, 0x46]))).toBe('image/gif')
     expect(guessMimeTypeFromBase64(toBase64([0x42, 0x4d]))).toBe('image/bmp')
+    expect(guessMimeTypeFromBase64(toBase64([0x49, 0x49, 0x2a, 0x00]))).toBe('image/tiff')
     expect(guessMimeTypeFromBase64(toBase64([0x4d, 0x4d, 0x00, 0x2a]))).toBe('image/tiff')
     expect(guessMimeTypeFromBase64(toBase64([0x00, 0x01, 0x02]))).toBe(false)
   })
@@ -92,6 +93,14 @@ describe('image-browser helpers', () => {
     expect(parseSVGDimensions('<svg height="150" viewBox="0 0 200 100"></svg>')).toEqual({
       height: 150,
       width: 300,
+    })
+    expect(parseSVGDimensions('<svg width="300" viewBox="0 0 200 100"></svg>')).toEqual({
+      height: 150,
+      width: 300,
+    })
+    expect(parseSVGDimensions('<svg viewBox="0 0 400 300"></svg>')).toEqual({
+      height: 300,
+      width: 400,
     })
 
     expect(parseSVGDimensions('<svg></svg>')).toEqual({
@@ -138,6 +147,36 @@ describe('image-browser helpers', () => {
     const result = await convertSVGtoPNG(toBase64([0x3c, 0x73, 0x76, 0x67]), 20, 10)
 
     expect(result).toBeNull()
+  })
+
+  it('uses btoa fallback for svg->png conversion when Buffer is unavailable', async () => {
+    const originalBuffer = globalThis.Buffer
+    const expectedBase64 = originalBuffer
+      .from(Uint8Array.from([0xde, 0xad, 0xbe, 0xef]))
+      .toString('base64')
+    const svgBase64 = toBase64([0x3c, 0x73, 0x76, 0x67])
+
+    Reflect.deleteProperty(globalThis, 'Buffer')
+    globalThis.btoa = vi.fn((binary) =>
+      originalBuffer.from(binary, 'binary').toString('base64')
+    )
+    globalThis.OffscreenCanvas = makeOffscreenCanvas({ pngBytes: [0xde, 0xad, 0xbe, 0xef] })
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      blob: async () => new Blob([Uint8Array.from([0x3c, 0x73, 0x76, 0x67])]),
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+    })
+    globalThis.createImageBitmap = vi.fn().mockResolvedValue({})
+
+    try {
+      const result = await convertSVGtoPNG(svgBase64, 20, 10)
+      expect(result).toBe(expectedBase64)
+      expect(globalThis.btoa).toHaveBeenCalledTimes(1)
+    } finally {
+      globalThis.Buffer = originalBuffer
+      Reflect.deleteProperty(globalThis, 'btoa')
+    }
   })
 
   it('downloads binary image data as base64', async () => {
@@ -207,6 +246,40 @@ describe('image-browser helpers', () => {
     } finally {
       globalThis.Buffer = originalBuffer
       Reflect.deleteProperty(globalThis, 'btoa')
+    }
+  })
+
+  it('normalizes non-Error thrown values in downloadImageToBase64', async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue('network down')
+    await expect(downloadImageToBase64('https://example.com/string-error')).rejects.toThrow(
+      'network down'
+    )
+
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue({ message: 'object failure', name: 'Oops' })
+    await expect(
+      downloadImageToBase64('https://example.com/object-error')
+    ).rejects.toMatchObject({
+      message: 'object failure',
+      name: 'Oops',
+    })
+  })
+
+  it('decodes base64 headers via atob when Buffer is unavailable', () => {
+    const originalBuffer = globalThis.Buffer
+    const jpgBase64 = toBase64([0xff, 0xd8, 0xff])
+    Reflect.deleteProperty(globalThis, 'Buffer')
+    globalThis.atob = vi.fn((encoded) =>
+      originalBuffer.from(encoded, 'base64').toString('binary')
+    )
+
+    try {
+      expect(guessMimeTypeFromBase64(jpgBase64)).toBe('image/jpeg')
+      expect(globalThis.atob).toHaveBeenCalledTimes(1)
+    } finally {
+      globalThis.Buffer = originalBuffer
+      Reflect.deleteProperty(globalThis, 'atob')
     }
   })
 })

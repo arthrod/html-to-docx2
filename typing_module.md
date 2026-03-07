@@ -211,3 +211,12 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/font-family-conversion.test.js
 - tests/unit-conversion-extra.test.js
 - tests/xmlbuilder2-guards.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/run-encoding-tests-script.d.ts
+- src/types/justjshtml/run-markdown-tests-script.d.ts
+- src/types/justjshtml/run-selector-tests-script.d.ts
+- src/types/justjshtml/run-serializer-tests-script.d.ts
+- src/types/justjshtml/run-stream-tests-script.d.ts
+- tests/html-to-docx-options.test.js
