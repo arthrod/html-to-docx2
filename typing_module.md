@@ -237,3 +237,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/types/justjshtml/parser-alias.d.ts
 - src/types/justjshtml/stream-alias.d.ts
 - src/types/justjshtml/tokenizer-alias.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/constants-alias.d.ts
+- src/types/justjshtml/encoding-alias.d.ts
+- src/types/justjshtml/entities-alias.d.ts
+- src/types/justjshtml/selector-alias.d.ts
+- src/types/justjshtml/serialize-alias.d.ts
