@@ -1,8 +1,41 @@
+// @ts-check
+
 // Comprehensive HTML-to-DOCX integration tests
 // Generates realistic HTML content and validates the DOCX output structure
 
 import HTMLtoDOCX from '../index.ts'
 import { parseDOCX } from './helpers/docx-assertions'
+
+/**
+ * @typedef {{
+ *   xml: string
+ *   paragraphs: Array<{ text: string; runs: Array<{ text?: string }> }>
+ * }} ParsedDocx
+ */
+
+/**
+ * @param {Uint8Array | ArrayBuffer | Buffer} docx
+ * @returns {Promise<ParsedDocx>}
+ */
+async function parseDocx(docx) {
+  const parsed = await parseDOCX(docx)
+
+  if (
+    parsed &&
+    typeof parsed === 'object' &&
+    'xml' in parsed &&
+    typeof parsed.xml === 'string' &&
+    'paragraphs' in parsed &&
+    Array.isArray(parsed.paragraphs)
+  ) {
+    return {
+      xml: parsed.xml,
+      paragraphs: parsed.paragraphs,
+    }
+  }
+
+  throw new Error('Invalid parsed DOCX shape')
+}
 
 describe('Comprehensive HTML to DOCX', () => {
   describe('Rich HTML content', () => {
@@ -44,7 +77,7 @@ describe('Comprehensive HTML to DOCX', () => {
       `
 
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       // Should produce substantial content
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(10)
@@ -76,7 +109,7 @@ describe('Comprehensive HTML to DOCX', () => {
       `
 
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(4)
       expect(parsed.xml).toContain('First level')
@@ -91,7 +124,7 @@ describe('Comprehensive HTML to DOCX', () => {
       `
 
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
       expect(parsed.xml).toContain('هذا نص باللغة العربية')
@@ -108,7 +141,7 @@ describe('Comprehensive HTML to DOCX', () => {
       `
 
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(4)
       expect(parsed.xml).toContain('Red large Arial text')
@@ -118,7 +151,7 @@ describe('Comprehensive HTML to DOCX', () => {
       const html = `<p>Line one<br/>Line two<br/>Line three</p>`
 
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
       // br should produce w:br elements
@@ -133,7 +166,7 @@ describe('Comprehensive HTML to DOCX', () => {
       `
 
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
     })
@@ -158,7 +191,7 @@ describe('Comprehensive HTML to DOCX', () => {
       `
 
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.xml).toMatch(/w:tbl/)
       expect(parsed.xml).toContain('Header spanning 2 cols')
@@ -177,7 +210,7 @@ describe('Comprehensive HTML to DOCX', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.xml).toMatch(/w:top="720"/)
       expect(parsed.xml).toMatch(/w:bottom="720"/)
     })
@@ -188,7 +221,7 @@ describe('Comprehensive HTML to DOCX', () => {
         orientation: 'landscape',
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.xml).toMatch(/w:orient="landscape"/)
     })
 
@@ -201,7 +234,7 @@ describe('Comprehensive HTML to DOCX', () => {
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.xml).toMatch(/w:w="11906"/)
       expect(parsed.xml).toMatch(/w:h="16838"/)
     })
@@ -213,20 +246,20 @@ describe('Comprehensive HTML to DOCX', () => {
       `
 
       const docx = await HTMLtoDOCX(html, null, {
-        headingStyles: {
-          h1: {
+        heading: {
+          heading1: {
             fontSize: 32,
             color: '#333333',
             spacing: { before: 240, after: 120 },
           },
-          h2: {
+          heading2: {
             fontSize: 24,
             color: '#666666',
           },
         },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(2)
     })
 
@@ -238,7 +271,7 @@ describe('Comprehensive HTML to DOCX', () => {
         footer: true,
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(1)
     })
 
@@ -250,7 +283,7 @@ describe('Comprehensive HTML to DOCX', () => {
         lineNumberOptions: { countBy: 5, start: 1, restart: 'newPage' },
       })
 
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(3)
       // Should contain lnNumType element with our options
       expect(parsed.xml).toMatch(/lnNumType/)
@@ -261,20 +294,20 @@ describe('Comprehensive HTML to DOCX', () => {
   describe('Edge cases', () => {
     test('should handle empty HTML', async () => {
       const docx = await HTMLtoDOCX('')
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.xml).toBeDefined()
     })
 
     test('should handle HTML with only whitespace', async () => {
       const docx = await HTMLtoDOCX('   \n\t  ')
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
       expect(parsed.xml).toBeDefined()
     })
 
     test('should handle deeply nested elements', async () => {
       const html = '<div><div><div><div><p>Deep content</p></div></div></div></div>'
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.xml).toContain('Deep content')
     })
@@ -282,7 +315,7 @@ describe('Comprehensive HTML to DOCX', () => {
     test('should handle special characters', async () => {
       const html = '<p>&lt;script&gt;alert("xss")&lt;/script&gt;</p>'
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       // Special characters should be properly escaped
       expect(parsed.xml).not.toContain('<script>')
@@ -292,7 +325,7 @@ describe('Comprehensive HTML to DOCX', () => {
       const html =
         '<p>Chinese: 你好世界 | Japanese: こんにちは | Korean: 안녕하세요 | Emoji: 🎉</p>'
       const docx = await HTMLtoDOCX(html)
-      const parsed = await parseDOCX(docx)
+      const parsed = await parseDocx(docx)
 
       expect(parsed.xml).toContain('你好世界')
     })

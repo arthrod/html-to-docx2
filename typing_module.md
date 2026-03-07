@@ -141,3 +141,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/numbering.test.js
 - tests/svg-handling.test.js
 - tests/vdom.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/index-base.ts
+- tests/comprehensive-html.test.js
+- tests/heading-integration.test.js
+- tests/heading-styles.test.js
+- tests/ooxml-validation.test.js

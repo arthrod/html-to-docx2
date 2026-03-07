@@ -1,5 +1,36 @@
+// @ts-check
+
 import { defaultHeadingOptions } from '../src/constants'
 import generateStylesXML from '../src/schemas/styles'
+
+/**
+ * @param {string} source
+ * @param {RegExp} pattern
+ * @param {string} label
+ * @returns {string}
+ */
+function extractRequiredMatch(source, pattern, label) {
+  const match = source.match(pattern)
+  if (!match) {
+    throw new Error(`Expected match not found for ${label}`)
+  }
+  return match[0]
+}
+
+/**
+ * @param {string} stylesXML
+ * @param {'Heading1' | 'Heading2' | 'Heading3' | 'Heading4' | 'Heading5' | 'Heading6'} headingStyleId
+ * @returns {string}
+ */
+function extractHeadingStyleSection(stylesXML, headingStyleId) {
+  return extractRequiredMatch(
+    stylesXML,
+    new RegExp(
+      `<w:style w:type="paragraph" w:styleId="${headingStyleId}">[\\s\\S]*?<\\/w:style>`
+    ),
+    headingStyleId
+  )
+}
 
 describe('Heading Styles Generation', () => {
   describe('Default heading styles', () => {
@@ -119,9 +150,7 @@ describe('Heading Styles Generation', () => {
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
       // Heading 3 section should not contain bold tag
-      const heading3Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading3">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading3Section = extractHeadingStyleSection(stylesXML, 'Heading3')
 
       expect(heading3Section).not.toContain('<w:b />')
     })
@@ -140,9 +169,7 @@ describe('Heading Styles Generation', () => {
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
       // Should be clamped to max value of 5
-      const heading1Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading1">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading1Section = extractHeadingStyleSection(stylesXML, 'Heading1')
 
       expect(heading1Section).toContain('<w:outlineLvl w:val="5" />')
     })
@@ -158,9 +185,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading2Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading2">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading2Section = extractHeadingStyleSection(stylesXML, 'Heading2')
 
       expect(heading2Section).toContain('<w:outlineLvl w:val="0" />')
     })
@@ -176,9 +201,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading4Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading4">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading4Section = extractHeadingStyleSection(stylesXML, 'Heading4')
 
       // Should not contain w:sz tag for heading 4
       expect(heading4Section).not.toContain('<w:sz')
@@ -195,9 +218,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading5Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading5">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading5Section = extractHeadingStyleSection(stylesXML, 'Heading5')
 
       // Should not contain font size tag since 0 is invalid
       expect(heading5Section).not.toContain('<w:sz')
@@ -214,9 +235,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading6Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading6">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading6Section = extractHeadingStyleSection(stylesXML, 'Heading6')
 
       // Should not contain font size tag since negative is invalid
       expect(heading6Section).not.toContain('<w:sz')
@@ -239,11 +258,13 @@ describe('Heading Styles Generation', () => {
 
       expect(stylesXML).toContain('w:before="300"')
       // Should not have w:after since it's undefined
-      const heading1Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading1">[\s\S]*?<\/w:style>/
-      )[0]
-      const spacingMatch = heading1Section.match(/<w:spacing[^>]*>/)
-      expect(spacingMatch[0]).not.toContain('w:after=')
+      const heading1Section = extractHeadingStyleSection(stylesXML, 'Heading1')
+      const spacingMatch = extractRequiredMatch(
+        heading1Section,
+        /<w:spacing[^>]*>/,
+        'Heading1 spacing'
+      )
+      expect(spacingMatch).not.toContain('w:after=')
     })
 
     // https://github.com/TurboDocx/html-to-docx/pull/129
@@ -294,9 +315,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading4Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading4">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading4Section = extractHeadingStyleSection(stylesXML, 'Heading4')
 
       // Should contain default spacing since config merges with defaults
       expect(heading4Section).toContain('<w:spacing')
@@ -315,9 +334,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading5Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading5">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading5Section = extractHeadingStyleSection(stylesXML, 'Heading5')
 
       // Should not render spacing tag when both before and after are undefined
       expect(heading5Section).not.toContain('<w:spacing')
@@ -335,9 +352,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading1Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading1">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading1Section = extractHeadingStyleSection(stylesXML, 'Heading1')
 
       // Should have custom fontSize
       expect(heading1Section).toContain('<w:sz w:val="60" />')
@@ -360,9 +375,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading2Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading2">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading2Section = extractHeadingStyleSection(stylesXML, 'Heading2')
 
       // Should have default H2 fontSize (36 = 18pt)
       expect(heading2Section).toContain('<w:sz w:val="36" />')
@@ -402,14 +415,10 @@ describe('Heading Styles Generation', () => {
     test('should include semiHidden for H3-H6', () => {
       const stylesXML = generateStylesXML()
 
-      const heading3Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading3">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading3Section = extractHeadingStyleSection(stylesXML, 'Heading3')
       expect(heading3Section).toContain('<w:semiHidden />')
 
-      const heading1Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading1">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading1Section = extractHeadingStyleSection(stylesXML, 'Heading1')
       expect(heading1Section).not.toContain('<w:semiHidden />')
     })
 
@@ -417,14 +426,10 @@ describe('Heading Styles Generation', () => {
     test('should include unhideWhenUsed for H2-H6', () => {
       const stylesXML = generateStylesXML()
 
-      const heading2Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading2">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading2Section = extractHeadingStyleSection(stylesXML, 'Heading2')
       expect(heading2Section).toContain('<w:unhideWhenUsed />')
 
-      const heading1Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading1">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading1Section = extractHeadingStyleSection(stylesXML, 'Heading1')
       expect(heading1Section).not.toContain('<w:unhideWhenUsed />')
     })
   })
@@ -474,9 +479,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML(defaultFont, 22, 22, 'en-US', customConfig)
 
-      const heading3Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading3">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading3Section = extractHeadingStyleSection(stylesXML, 'Heading3')
 
       // Current implementation renders font tag when heading font is set
       // (even if it matches the default document font)
@@ -497,9 +500,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading4Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading4">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading4Section = extractHeadingStyleSection(stylesXML, 'Heading4')
 
       expect(heading4Section).not.toContain('<w:keepLines />')
     })
@@ -515,9 +516,7 @@ describe('Heading Styles Generation', () => {
 
       const stylesXML = generateStylesXML('Calibri', 22, 22, 'en-US', customConfig)
 
-      const heading5Section = stylesXML.match(
-        /<w:style w:type="paragraph" w:styleId="Heading5">[\s\S]*?<\/w:style>/
-      )[0]
+      const heading5Section = extractHeadingStyleSection(stylesXML, 'Heading5')
 
       expect(heading5Section).not.toContain('<w:keepNext />')
     })

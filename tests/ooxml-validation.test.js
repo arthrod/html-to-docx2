@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * OOXML Schema Validation Tests
  *
@@ -36,12 +38,53 @@ try {
 const canValidate = validatorAvailable && pythonAvailable
 
 /**
+ * @param {Uint8Array | ArrayBuffer | Buffer} value
+ * @returns {Buffer}
+ */
+function toNodeBuffer(value) {
+  if (Buffer.isBuffer(value)) {
+    return value
+  }
+  if (value instanceof Uint8Array) {
+    return Buffer.from(value)
+  }
+  return Buffer.from(new Uint8Array(value))
+}
+
+/**
+ * @param {unknown} errorValue
+ * @returns {string}
+ */
+function normalizeExecErrorOutput(errorValue) {
+  if (errorValue && typeof errorValue === 'object') {
+    if (
+      'stdout' in errorValue &&
+      typeof errorValue.stdout === 'string' &&
+      errorValue.stdout.length > 0
+    ) {
+      return errorValue.stdout
+    }
+    if (
+      'stderr' in errorValue &&
+      typeof errorValue.stderr === 'string' &&
+      errorValue.stderr.length > 0
+    ) {
+      return errorValue.stderr
+    }
+  }
+  return String(errorValue)
+}
+
+/**
  * Run the OOXML schema validator on a DOCX buffer.
  * Returns { passed: boolean, output: string }
+ * @param {Uint8Array | ArrayBuffer | Buffer} docxBuffer
+ * @param {string} filename
+ * @returns {{ passed: boolean, output: string }}
  */
 function validateDOCX(docxBuffer, filename) {
   const filePath = join(process.cwd(), filename)
-  writeFileSync(filePath, Buffer.from(docxBuffer))
+  writeFileSync(filePath, toNodeBuffer(docxBuffer))
 
   try {
     const output = execSync(`python3 "${VALIDATOR_PATH}" "${filePath}" -v`, {
@@ -50,7 +93,10 @@ function validateDOCX(docxBuffer, filename) {
     })
     return { passed: true, output }
   } catch (err) {
-    return { passed: false, output: err.stdout || err.stderr || String(err) }
+    return {
+      passed: false,
+      output: normalizeExecErrorOutput(err),
+    }
   } finally {
     try {
       unlinkSync(filePath)

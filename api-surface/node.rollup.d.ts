@@ -163,9 +163,9 @@ declare type DocumentOptions$1 = {
     font: string;
     fontSize: number;
     footer: boolean;
-    footerType: HeaderFooterType;
+    footerType: HeaderFooterType$1;
     header: boolean;
-    headerType: HeaderFooterType;
+    headerType: HeaderFooterType$1;
     heading: HeadingOptions$1;
     imageProcessing: ImageProcessingOptions;
     keywords: string[];
@@ -192,13 +192,13 @@ export declare type DocumentOptions = {
     decodeUnicode?: boolean;
     defaultLang?: string;
     description?: string;
-    direction?: 'ltr' | 'rtl';
+    direction?: TextDirection;
     font?: string;
     fontSize?: number | string;
     footer?: boolean;
-    footerType?: 'default' | 'even' | 'first';
+    footerType?: HeaderFooterType;
     header?: boolean;
-    headerType?: 'default' | 'even' | 'first';
+    headerType?: HeaderFooterType;
     heading?: HeadingOptions;
     imageProcessing?: ImageProcessing;
     keywords?: string[];
@@ -208,7 +208,7 @@ export declare type DocumentOptions = {
     margins?: Margins;
     modifiedAt?: Date;
     numbering?: NumberingOptions;
-    orientation?: 'landscape' | 'portrait';
+    orientation?: PageOrientation;
     pageNumber?: boolean;
     pageSize?: PageSize;
     revision?: number;
@@ -246,9 +246,9 @@ export declare interface DocxDocumentProperties {
     font?: string;
     fontSize?: number | null;
     footer?: boolean;
-    footerType?: HeaderFooterType;
+    footerType?: HeaderFooterType$1;
     header?: boolean;
-    headerType?: HeaderFooterType;
+    headerType?: HeaderFooterType$1;
     heading?: typeof defaultDocumentOptions.heading;
     htmlString: string | null;
     imageProcessing?: typeof defaultDocumentOptions.imageProcessing;
@@ -302,7 +302,7 @@ export declare const footerFileName = "footer1";
 export declare interface FooterObject {
     footerId: number;
     relationshipId: number;
-    type: HeaderFooterType;
+    type: HeaderFooterType$1;
 }
 
 /** Section footer result */
@@ -327,13 +327,15 @@ export declare function hasTrackingTokens(text: string): boolean;
 
 export declare const headerFileName = "header1";
 
+declare type HeaderFooterType$1 = 'default' | 'even' | 'first';
+
 export declare type HeaderFooterType = 'default' | 'even' | 'first';
 
 /** Header object stored in the document */
 export declare interface HeaderObject {
     headerId: number;
     relationshipId: number;
-    type: HeaderFooterType;
+    type: HeaderFooterType$1;
 }
 
 /** Section header result */
@@ -598,6 +600,8 @@ export declare type OoxmlNamespaces = typeof namespaces;
 
 export declare type Orientation = 'landscape' | 'portrait';
 
+export declare type PageOrientation = 'landscape' | 'portrait';
+
 /** Page size configuration */
 declare interface PageSize$1 {
     height?: number;
@@ -748,6 +752,8 @@ export declare type TableOptions = {
 export declare type TableRowOptions = {
     cantSplit: boolean;
 };
+
+export declare type TextDirection = 'ltr' | 'rtl';
 
 export declare const themeFileName = "theme1";
 

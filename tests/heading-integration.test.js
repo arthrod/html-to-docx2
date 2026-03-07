@@ -1,3 +1,5 @@
+// @ts-check
+
 import HTMLtoDOCX from '../index.ts'
 import { defaultHeadingOptions } from '../src/constants'
 import {
@@ -5,6 +7,37 @@ import {
   assertParagraphCount,
   assertParagraphText,
 } from './helpers/docx-assertions.js'
+
+/**
+ * @typedef {{
+ *   xml: string
+ *   paragraphs: Array<{ text: string; runs: Array<{ text?: string }> }>
+ * }} ParsedDocx
+ */
+
+/**
+ * @param {Uint8Array | ArrayBuffer | Buffer} docx
+ * @returns {Promise<ParsedDocx>}
+ */
+async function parseDocx(docx) {
+  const parsed = await parseDOCX(docx)
+
+  if (
+    parsed &&
+    typeof parsed === 'object' &&
+    'xml' in parsed &&
+    typeof parsed.xml === 'string' &&
+    'paragraphs' in parsed &&
+    Array.isArray(parsed.paragraphs)
+  ) {
+    return {
+      xml: parsed.xml,
+      paragraphs: parsed.paragraphs,
+    }
+  }
+
+  throw new Error('Invalid parsed DOCX shape')
+}
 
 describe('Heading Styles Integration Tests', () => {
   describe('End-to-end document generation', () => {
@@ -20,7 +53,7 @@ describe('Heading Styles Integration Tests', () => {
       `
 
       const result = await HTMLtoDOCX(htmlString, {})
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -56,7 +89,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -77,7 +110,7 @@ describe('Heading Styles Integration Tests', () => {
       `
 
       const result = await HTMLtoDOCX(htmlString, {})
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -108,7 +141,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -133,7 +166,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -151,7 +184,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -176,7 +209,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -202,7 +235,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -228,7 +261,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -255,7 +288,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -277,7 +310,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -299,7 +332,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -321,7 +354,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -343,7 +376,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -366,7 +399,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -402,7 +435,7 @@ describe('Heading Styles Integration Tests', () => {
       `
 
       const result = await HTMLtoDOCX(htmlString, {})
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -444,7 +477,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -476,7 +509,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -503,7 +536,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -532,7 +565,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -557,7 +590,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -579,7 +612,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
@@ -601,7 +634,7 @@ describe('Heading Styles Integration Tests', () => {
       }
 
       const result = await HTMLtoDOCX(htmlString, options)
-      const parsed = await parseDOCX(result)
+      const parsed = await parseDocx(result)
 
       expect(parsed.paragraphs.length).toBeGreaterThan(0)
 

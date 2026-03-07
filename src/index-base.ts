@@ -109,6 +109,10 @@ export type NumberingOptions = {
 /** Tighter version of NumberingOptions using the actual DocxListStyleType union */
 export type { DocxListStyleType, ListStyle, ListStyleDefaults } from './utils/list'
 
+export type HeaderFooterType = 'default' | 'even' | 'first'
+export type PageOrientation = 'landscape' | 'portrait'
+export type TextDirection = 'ltr' | 'rtl'
+
 export type DocumentOptions = {
   complexScriptFontSize?: number | string
   createdAt?: Date
@@ -116,13 +120,13 @@ export type DocumentOptions = {
   decodeUnicode?: boolean
   defaultLang?: string
   description?: string
-  direction?: 'ltr' | 'rtl'
+  direction?: TextDirection
   font?: string
   fontSize?: number | string
   footer?: boolean
-  footerType?: 'default' | 'even' | 'first'
+  footerType?: HeaderFooterType
   header?: boolean
-  headerType?: 'default' | 'even' | 'first'
+  headerType?: HeaderFooterType
   heading?: HeadingOptions
   imageProcessing?: ImageProcessing
   keywords?: string[]
@@ -132,7 +136,7 @@ export type DocumentOptions = {
   margins?: Margins
   modifiedAt?: Date
   numbering?: NumberingOptions
-  orientation?: 'landscape' | 'portrait'
+  orientation?: PageOrientation
   pageNumber?: boolean
   pageSize?: PageSize
   revision?: number
