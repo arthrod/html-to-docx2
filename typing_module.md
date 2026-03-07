@@ -93,3 +93,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/example-inline-svg.js
 - tests/example-svg.js
 - tests/example-rtl.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- tests/examples/vite-smoke/main.js
+- tests/examples/vite-smoke/shims/sharp.js
+- tests/examples/vite-smoke/shims/vm.js
+- tests/examples/vite-smoke/shims/zlib.js
+- tests/fixtures/index.js
