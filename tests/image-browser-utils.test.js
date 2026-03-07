@@ -28,10 +28,27 @@ const makeBlobResponse = (bytes) => {
   }
 }
 
+const makeOffscreenCanvas = (options = {}) => {
+  const drawImage = vi.fn()
+  const context = options.noContext ? null : { drawImage }
+
+  return class FakeOffscreenCanvas {
+    getContext() {
+      return context
+    }
+
+    async convertToBlob() {
+      const pngBytes = options.pngBytes ?? [0x89, 0x50, 0x4e, 0x47]
+      return new Blob([Uint8Array.from(pngBytes)], { type: 'image/png' })
+    }
+  }
+}
+
 afterEach(() => {
   vi.restoreAllMocks()
   Reflect.deleteProperty(globalThis, 'OffscreenCanvas')
   Reflect.deleteProperty(globalThis, 'fetch')
+  Reflect.deleteProperty(globalThis, 'createImageBitmap')
 })
 
 describe('image-browser helpers', () => {
@@ -88,6 +105,41 @@ describe('image-browser helpers', () => {
     expect(result).toBeNull()
   })
 
+  it('converts svg->png through canvas path when browser APIs exist', async () => {
+    globalThis.OffscreenCanvas = makeOffscreenCanvas({ pngBytes: [0xde, 0xad, 0xbe, 0xef] })
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      blob: async () => new Blob([Uint8Array.from([0x3c, 0x73, 0x76, 0x67])]),
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+    })
+    globalThis.createImageBitmap = vi.fn().mockResolvedValue({})
+
+    const result = await convertSVGtoPNG(toBase64([0x3c, 0x73, 0x76, 0x67]), 20, 10)
+
+    expect(result).toBe(toBase64([0xde, 0xad, 0xbe, 0xef]))
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      `data:image/svg+xml;base64,${toBase64([0x3c, 0x73, 0x76, 0x67])}`
+    )
+    expect(globalThis.createImageBitmap).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns null when canvas context cannot be acquired', async () => {
+    globalThis.OffscreenCanvas = makeOffscreenCanvas({ noContext: true })
+    const result = await convertSVGtoPNG(toBase64([0x3c, 0x73, 0x76, 0x67]), 20, 10)
+    expect(result).toBeNull()
+  })
+
+  it('returns null when bitmap conversion throws', async () => {
+    globalThis.OffscreenCanvas = makeOffscreenCanvas()
+    globalThis.fetch = vi.fn().mockResolvedValue(makeBlobResponse([0x3c, 0x73, 0x76, 0x67]))
+    globalThis.createImageBitmap = vi.fn().mockRejectedValue(new Error('decode failed'))
+
+    const result = await convertSVGtoPNG(toBase64([0x3c, 0x73, 0x76, 0x67]), 20, 10)
+
+    expect(result).toBeNull()
+  })
+
   it('downloads binary image data as base64', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue(makeBlobResponse([0x89, 0x50, 0x4e, 0x47]))
 
@@ -135,5 +187,26 @@ describe('image-browser helpers', () => {
     await expect(downloadImageToBase64('https://example.com/missing')).rejects.toThrow(
       'HTTP 404: Not Found'
     )
+  })
+
+  it('uses btoa fallback when Buffer is unavailable', async () => {
+    const originalBuffer = globalThis.Buffer
+    const expectedBase64 = originalBuffer
+      .from(Uint8Array.from([0x01, 0x02, 0x03]))
+      .toString('base64')
+    Reflect.deleteProperty(globalThis, 'Buffer')
+    globalThis.btoa = vi.fn((binary) =>
+      originalBuffer.from(binary, 'binary').toString('base64')
+    )
+    globalThis.fetch = vi.fn().mockResolvedValue(makeBlobResponse([0x01, 0x02, 0x03]))
+
+    try {
+      const encoded = await downloadImageToBase64('https://example.com/no-buffer')
+      expect(encoded).toBe(expectedBase64)
+      expect(globalThis.btoa).toHaveBeenCalledTimes(1)
+    } finally {
+      globalThis.Buffer = originalBuffer
+      Reflect.deleteProperty(globalThis, 'btoa')
+    }
   })
 })

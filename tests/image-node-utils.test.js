@@ -15,9 +15,27 @@ import {
  */
 const toBase64 = (values) => Buffer.from(Uint8Array.from(values)).toString('base64')
 
+const makeOffscreenCanvas = (options = {}) => {
+  const drawImage = vi.fn()
+  const context = options.noContext ? null : { drawImage }
+
+  return class FakeOffscreenCanvas {
+    getContext() {
+      return context
+    }
+
+    async convertToBlob() {
+      const pngBytes = options.pngBytes ?? [0x89, 0x50, 0x4e, 0x47]
+      return new Blob([Uint8Array.from(pngBytes)], { type: 'image/png' })
+    }
+  }
+}
+
 afterEach(() => {
   vi.restoreAllMocks()
   Reflect.deleteProperty(globalThis, 'fetch')
+  Reflect.deleteProperty(globalThis, 'OffscreenCanvas')
+  Reflect.deleteProperty(globalThis, 'createImageBitmap')
 })
 
 describe('image node utilities', () => {
@@ -64,6 +82,43 @@ describe('image node utilities', () => {
     ).resolves.toBeNull()
   })
 
+  test('converts svg via canvas when browser APIs are present', async () => {
+    globalThis.OffscreenCanvas = makeOffscreenCanvas({ pngBytes: [0x10, 0x20, 0x30] })
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      blob: async () => new Blob([Uint8Array.from([0x3c, 0x73, 0x76, 0x67])]),
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+    })
+    globalThis.createImageBitmap = vi.fn().mockResolvedValue({})
+
+    await expect(convertSVGtoPNG(toBase64([0x3c, 0x73, 0x76, 0x67]), 12, 12)).resolves.toBe(
+      toBase64([0x10, 0x20, 0x30])
+    )
+  })
+
+  test('returns null when canvas context is unavailable', async () => {
+    globalThis.OffscreenCanvas = makeOffscreenCanvas({ noContext: true })
+    await expect(
+      convertSVGtoPNG(toBase64([0x3c, 0x73, 0x76, 0x67]), 12, 12)
+    ).resolves.toBeNull()
+  })
+
+  test('returns null when canvas bitmap decode fails', async () => {
+    globalThis.OffscreenCanvas = makeOffscreenCanvas()
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      blob: async () => new Blob([Uint8Array.from([0x3c, 0x73, 0x76, 0x67])]),
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+    })
+    globalThis.createImageBitmap = vi.fn().mockRejectedValue(new Error('decode failed'))
+
+    await expect(
+      convertSVGtoPNG(toBase64([0x3c, 0x73, 0x76, 0x67]), 12, 12)
+    ).resolves.toBeNull()
+  })
+
   test('downloads image payloads and base64-encodes them', async () => {
     const blob = new Blob([Uint8Array.from([0x89, 0x50, 0x4e, 0x47])], {
       type: 'application/octet-stream',
@@ -76,7 +131,7 @@ describe('image node utilities', () => {
       statusText: 'OK',
     })
 
-    globalThis.fetch = /** @type {typeof fetch} */ (fetchMock)
+    globalThis.fetch = fetchMock
 
     await expect(downloadImageToBase64('https://example.com/x.png', 100)).resolves.toBe(
       toBase64([0x89, 0x50, 0x4e, 0x47])
@@ -96,7 +151,7 @@ describe('image node utilities', () => {
         toString: () => 'fetch-failure',
       })
 
-    globalThis.fetch = /** @type {typeof fetch} */ (fetchMock)
+    globalThis.fetch = fetchMock
 
     await expect(downloadImageToBase64('https://example.com/timeout', 10)).rejects.toThrow(
       'Request timeout after 10ms'
@@ -104,5 +159,35 @@ describe('image node utilities', () => {
     await expect(downloadImageToBase64('https://example.com/failure')).rejects.toThrow(
       'custom-fetch-error'
     )
+  })
+
+  test('encodes with btoa path when Buffer is unavailable', async () => {
+    const originalBuffer = globalThis.Buffer
+    const expectedBase64 = originalBuffer
+      .from(Uint8Array.from([0x11, 0x22, 0x33]))
+      .toString('base64')
+    Reflect.deleteProperty(globalThis, 'Buffer')
+    globalThis.btoa = vi.fn((binary) =>
+      originalBuffer.from(binary, 'binary').toString('base64')
+    )
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      blob: async () =>
+        new Blob([Uint8Array.from([0x11, 0x22, 0x33])], {
+          type: 'application/octet-stream',
+        }),
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+    })
+
+    try {
+      await expect(downloadImageToBase64('https://example.com/no-buffer')).resolves.toBe(
+        expectedBase64
+      )
+      expect(globalThis.btoa).toHaveBeenCalledTimes(1)
+    } finally {
+      globalThis.Buffer = originalBuffer
+      Reflect.deleteProperty(globalThis, 'btoa')
+    }
   })
 })

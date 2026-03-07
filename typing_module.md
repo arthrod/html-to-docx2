@@ -189,3 +189,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/image-dimensions.test.js
 - tests/image-node-utils.test.js
 - tests/color-conversion.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/justhtml.d.ts
+- src/types/justjshtml/markdown.d.ts
+- src/types/justjshtml/selector.d.ts
+- src/types/justjshtml/serialize.d.ts
+- src/types/justjshtml/treebuilder.d.ts
