@@ -414,7 +414,7 @@ function generateReport(report) {
   return lines.join('\n')
 }
 
-main().catch((error) => {
+main().catch((/** @type {unknown} */ error) => {
   console.error('Fatal error:', error)
   process.exit(1)
 })

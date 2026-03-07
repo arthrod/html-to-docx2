@@ -320,7 +320,7 @@ async function main() {
   // Keep bundle artifacts under tmp for debugging/repro; overwrite on next run.
 }
 
-main().catch((error) => {
+main().catch((/** @type {unknown} */ error) => {
   console.error('Failed to generate browser baseline:', toError(error))
   process.exit(1)
 })

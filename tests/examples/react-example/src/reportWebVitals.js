@@ -5,7 +5,7 @@
  */
 
 /**
- * @param {ReportHandler | undefined} onPerfEntry
+ * @param {((metric: unknown) => void) | undefined} onPerfEntry
  * @returns {Promise<void>}
  */
 const reportWebVitals = async (onPerfEntry) => {

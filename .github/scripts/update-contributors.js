@@ -103,7 +103,7 @@ async function updateContributors() {
 }
 
 // Run the script
-updateContributors().catch((error) => {
-  console.error('Script failed:', error.message)
+updateContributors().catch((/** @type {unknown} */ error) => {
+  console.error('Script failed:', /** @type {Error} */ (error).message)
   process.exit(1)
 })

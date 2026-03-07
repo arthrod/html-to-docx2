@@ -174,7 +174,7 @@ void (async () => {
   const docBuffer = await generateInBrowser(browserImagesHtml)
   fs.writeFileSync(OUTPUT_PATH, docBuffer)
   console.log(`Docx file created successfully: ${OUTPUT_PATH}`)
-})().catch((error) => {
+})().catch((/** @type {unknown} */ error) => {
   console.error('Failed to generate browser image example:', error)
   process.exit(1)
 })

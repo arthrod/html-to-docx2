@@ -187,7 +187,7 @@ async function main() {
   console.log(`File size: ${(fs.statSync(outPath).size / 1024).toFixed(1)} KB`)
 }
 
-main().catch((error) => {
+main().catch((/** @type {unknown} */ error) => {
   console.error('Failed to generate baseline:', toError(error))
   process.exit(1)
 })

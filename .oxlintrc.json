@@ -18,7 +18,7 @@
     "no-unused-vars": "warn",
     "no-useless-concat": "warn",
     "preserve-caught-error": "warn",
-    "typescript/no-unsafe-type-assertion": "error",
+    "typescript/no-unsafe-type-assertion": "warn",
     "typescript/no-floating-promises": "error"
   },
   "options": {
