@@ -79,6 +79,7 @@
     "README.md",
     "LICENSE"
   ],
+  "sideEffects": false,
   "scripts": {
     "test": "bun run build && node tests/example-node.cjs",
     "test:comprehensive-svg": "bun run build && node tests/comprehensive-svg-test.js",
@@ -180,7 +181,6 @@
     "html-entities": "^2.3.3",
     "jszip": "^3.7.1",
     "justjshtml": "github:simonw/justjshtml#a415d0af40c34bf9a856e956d841513f482867e3",
-    "lru-cache": "11.2.6",
     "nanoid": "5.1.6",
     "xmlbuilder2": "4.0.3"
   },

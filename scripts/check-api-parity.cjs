@@ -34,12 +34,39 @@ function normalize(content) {
   )
 }
 
+/**
+ * Strip known, intentional browser-vs-node type differences so parity checks
+ * still catch unexpected API drift.
+ *
+ * @param {string} content
+ * @returns {string}
+ */
+function stripKnownPlatformTypeDiffs(content) {
+  return (
+    content
+      // Return-type divergence in platform entrypoints.
+      .replace(/Promise<\s*Blob\s*>/g, 'Promise<__DOCX_RESULT__>')
+      .replace(/Promise<\s*Buffer\s*\|\s*Uint8Array\s*>/g, 'Promise<__DOCX_RESULT__>')
+      // Platform result aliases and references.
+      .replace(/\bBrowserDocxResult\b/g, '__DOCX_RESULT__')
+      .replace(/\bNodeDocxResult\b/g, '__DOCX_RESULT__')
+      .replace(/\bHtmlToDocxResult\b/g, '__DOCX_RESULT__')
+      // Remove the now-normalized alias declaration lines.
+      .replace(/^(?:export\s+)?declare\s+type\s+__DOCX_RESULT__\s*=\s*[^;]+;\n?/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+  )
+}
+
 function main() {
-  const browserRollup = normalize(readRequiredFile(BROWSER_ROLLUP))
-  const nodeRollup = normalize(readRequiredFile(NODE_ROLLUP))
+  const browserRollup = stripKnownPlatformTypeDiffs(
+    normalize(readRequiredFile(BROWSER_ROLLUP))
+  )
+  const nodeRollup = stripKnownPlatformTypeDiffs(normalize(readRequiredFile(NODE_ROLLUP)))
 
   if (browserRollup === nodeRollup) {
-    console.log('API parity check passed: browser and node rollups are identical.')
+    console.log(
+      'API parity check passed: browser and node rollups match after expected platform type diffs.'
+    )
     return
   }
 

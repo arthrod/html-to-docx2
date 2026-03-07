@@ -26,8 +26,6 @@ export declare type BorderSide = {
     spacing: number;
 };
 
-export declare type BrowserDocxResult = Blob;
-
 /**
  * Build a comment end token string.
  */
@@ -315,7 +313,7 @@ export declare interface FooterResult {
 
 export declare const footerType = "footer";
 
-declare function generateContainer(htmlString: string, headerHTMLString?: string | null, documentOptions?: DocumentOptions, footerHTMLString?: string | null): Promise<Blob | Buffer | Uint8Array>;
+declare const generateContainer: (htmlString: string, headerHTMLString?: string | null, documentOptions?: DocumentOptions, footerHTMLString?: string | null) => Promise<Buffer | Uint8Array>;
 export { generateContainer as HTMLtoDOCX }
 export default generateContainer;
 
@@ -396,13 +394,13 @@ export declare type HeadingStyleOptions = {
     underline?: boolean;
 };
 
-export declare type HtmlToDocxResult = BrowserDocxResult | NodeDocxResult;
+export declare type HtmlToDocxResult = Buffer | Uint8Array;
 
 export declare const hyperlinkType = "hyperlink";
 
 /**
  * Browser-compatible image dimension parser
- * Parses image dimensions from a Buffer without using Node.js fs module
+ * Parses image dimensions from byte arrays without using Node.js fs module
  */
 export declare type ImageDimensions = {
     height: number;

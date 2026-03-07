@@ -1,6 +1,6 @@
 /**
  * Browser-compatible image dimension parser
- * Parses image dimensions from a Buffer without using Node.js fs module
+ * Parses image dimensions from byte arrays without using Node.js fs module
  */
 
 export type ImageDimensions = {

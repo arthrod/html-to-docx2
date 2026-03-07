@@ -30,7 +30,7 @@ import {
 import DocxDocument from './docx-document'
 import { renderDocumentFile } from './helpers'
 import createHTMLToVDOM from './helpers/html-parser'
-import type { DocumentOptions } from './index'
+import type { DocumentOptions } from './index-base'
 import { relsXML } from './schemas'
 import {
   cmRegex,

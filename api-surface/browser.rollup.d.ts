@@ -315,7 +315,7 @@ export declare interface FooterResult {
 
 export declare const footerType = "footer";
 
-declare function generateContainer(htmlString: string, headerHTMLString?: string | null, documentOptions?: DocumentOptions, footerHTMLString?: string | null): Promise<Blob | Buffer | Uint8Array>;
+declare const generateContainer: (htmlString: string, headerHTMLString?: string | null, documentOptions?: DocumentOptions, footerHTMLString?: string | null) => Promise<Blob>;
 export { generateContainer as HTMLtoDOCX }
 export default generateContainer;
 
@@ -396,13 +396,13 @@ export declare type HeadingStyleOptions = {
     underline?: boolean;
 };
 
-export declare type HtmlToDocxResult = BrowserDocxResult | NodeDocxResult;
+export declare type HtmlToDocxResult = Blob;
 
 export declare const hyperlinkType = "hyperlink";
 
 /**
  * Browser-compatible image dimension parser
- * Parses image dimensions from a Buffer without using Node.js fs module
+ * Parses image dimensions from byte arrays without using Node.js fs module
  */
 export declare type ImageDimensions = {
     height: number;
@@ -567,8 +567,6 @@ export declare const namespaces: {
     readonly xsd: "http://www.w3.org/2001/XMLSchema";
     readonly xsi: "http://www.w3.org/2001/XMLSchema-instance";
 };
-
-export declare type NodeDocxResult = Buffer | Uint8Array;
 
 /** Numbering object */
 export declare interface NumberingObject {
