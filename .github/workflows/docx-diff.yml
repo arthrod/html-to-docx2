@@ -25,7 +25,7 @@ jobs:
           echo "head_ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
 
       - name: Checkout base branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
@@ -50,7 +50,7 @@ jobs:
           mv example-node.docx ../baseline.docx
 
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: current
 
