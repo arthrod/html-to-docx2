@@ -44,7 +44,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: add ${{ github.event.pull_request.user.login }} to contributors'
