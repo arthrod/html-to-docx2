@@ -27,17 +27,16 @@ const headingKeys: Array<keyof HeadingOptions> = [
 
 const mergeHeadingConfig = (
   overrides: HeadingOptions = defaultHeadingOptions
-): HeadingOptions =>
-  headingKeys.reduce<HeadingOptions>(
-    (acc, key) => {
-      acc[key] = {
-        ...defaultHeadingOptions[key],
-        ...overrides[key],
-      }
-      return acc
-    },
-    { ...defaultHeadingOptions }
-  )
+): HeadingOptions => {
+  const result: HeadingOptions = { ...defaultHeadingOptions }
+  for (const key of headingKeys) {
+    result[key] = {
+      ...defaultHeadingOptions[key],
+      ...overrides[key],
+    }
+  }
+  return result
+}
 
 const generateHeadingStyleXML = (
   headingId: string,

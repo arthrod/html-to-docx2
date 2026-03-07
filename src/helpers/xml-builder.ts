@@ -3,7 +3,7 @@
 /* biome-ignore-all lint/performance/useTopLevelRegex: legacy code */
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
-import { cloneDeep } from 'es-toolkit'
+import { cloneDeep } from 'es-toolkit/compat'
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
@@ -328,13 +328,12 @@ const buildTableRowHeight = (tableRowHeight: number): XMLBuilderType =>
     .up()
 
 const buildVerticalAlignment = (verticalAlignment: string): XMLBuilderType => {
-  if (verticalAlignment.toLowerCase() === 'middle') {
-    verticalAlignment = 'center'
-  }
+  const alignment =
+    verticalAlignment.toLowerCase() === 'middle' ? 'center' : verticalAlignment
 
   return fragment({ namespaceAlias: { w: namespaces.w } })
     .ele('@w', 'vAlign')
-    .att('@w', 'val', verticalAlignment)
+    .att('@w', 'val', alignment)
     .up()
 }
 
@@ -914,6 +913,8 @@ const buildFormatting = (
       return buildFontSize(options?.fontSize ? options.fontSize : 10)
     case 'hyperlink':
       return buildRunStyleFragment('Hyperlink')
+    default:
+      break
   }
 
   return null
@@ -988,14 +989,15 @@ const buildRun = async (
 
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
     // create temp run fragments to split the paragraph into different runs
-    let tempAttributes: RunAttributes = cloneDeep(attributes)
+    let baseAttributes: ParagraphAttributes = attributes
+    let tempAttributes: RunAttributes = cloneDeep(baseAttributes)
     let tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     while (vNodes.length) {
       const tempVNode = vNodes.shift()!
       if (isVText(tempVNode)) {
         const textContent = (tempVNode as VTextType).text
-        const mergedAttributes = { ...attributes, ...tempAttributes }
+        const mergedAttributes = { ...baseAttributes, ...tempAttributes }
 
         // Check for tracking tokens in text
         if (docxDocumentInstance && hasTrackingTokens(textContent)) {
@@ -1007,7 +1009,7 @@ const buildRun = async (
           if (trackingFragments) {
             runFragmentsArray.push(...trackingFragments)
             // re initialize temp run fragments with new fragment
-            tempAttributes = cloneDeep(attributes)
+            tempAttributes = cloneDeep(baseAttributes)
             tempRunFragment = fragment({
               namespaceAlias: { w: namespaces.w },
             }).ele('@w', 'r')
@@ -1023,7 +1025,7 @@ const buildRun = async (
         runFragmentsArray.push(tempRunFragment)
 
         // re initialize temp run fragments with new fragment
-        tempAttributes = cloneDeep(attributes)
+        tempAttributes = cloneDeep(baseAttributes)
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
@@ -1080,6 +1082,8 @@ const buildRun = async (
             case 'kbd':
               tempAttributes.kbd = true
               break
+            default:
+              break
           }
           const formattingFragment = buildFormatting(tempVn.tagName || '')
 
@@ -1090,14 +1094,14 @@ const buildRun = async (
         } else if (tempVn.tagName === 'span') {
           const spanFragment = await buildRunOrRuns(
             tempVn,
-            { ...attributes, ...tempAttributes },
+            { ...baseAttributes, ...tempAttributes },
             docxDocumentInstance
           )
 
           // if spanFragment is an array, we need to add each fragment to the runFragmentsArray. If the fragment is an array, perform a depth first search on the array to add each fragment to the runFragmentsArray
           if (Array.isArray(spanFragment)) {
-            spanFragment.flat(Number.POSITIVE_INFINITY)
-            runFragmentsArray.push(...spanFragment)
+            const flatSpanFragments = spanFragment.flat(Number.POSITIVE_INFINITY)
+            runFragmentsArray.push(...flatSpanFragments)
           } else {
             runFragmentsArray.push(spanFragment)
           }
@@ -1111,7 +1115,7 @@ const buildRun = async (
       const tempVn = tempVNode as VNodeType
       if (tempVn.children?.length) {
         if (tempVn.children.length > 1) {
-          attributes = { ...attributes, ...tempAttributes }
+          baseAttributes = Object.assign({}, baseAttributes, tempAttributes)
         }
 
         vNodes = tempVn.children.slice().concat(vNodes)
@@ -1395,12 +1399,10 @@ const buildPStyle = (style = 'Normal'): XMLBuilderType =>
     .up()
 
 const buildHorizontalAlignment = (horizontalAlignment: string): XMLBuilderType => {
-  if (horizontalAlignment === 'justify') {
-    horizontalAlignment = 'both'
-  }
+  const alignment = horizontalAlignment === 'justify' ? 'both' : horizontalAlignment
   return fragment({ namespaceAlias: { w: namespaces.w } })
     .ele('@w', 'jc')
-    .att('@w', 'val', horizontalAlignment)
+    .att('@w', 'val', alignment)
     .up()
 }
 
@@ -2020,7 +2022,10 @@ const buildTableCellProperties = (
 
     // 1. tcW
     if (attributes.width !== undefined) {
-      const widthValue = attributes.width != null ? String(attributes.width) : undefined
+      const widthValue =
+        attributes.width !== null && attributes.width !== undefined
+          ? String(attributes.width)
+          : undefined
       const widthFragment = buildTableCellWidth(widthValue)
       if (widthFragment) {
         tableCellPropertiesFragment.import(widthFragment)
@@ -2028,10 +2033,12 @@ const buildTableCellProperties = (
       attributes.width = undefined
     }
 
-    // 2. gridSpan
+    // 2. gridSpan (only emit when spanning more than 1 column)
     if (attributes.colSpan !== undefined) {
-      const gridSpanFragment = buildGridSpanFragment(attributes.colSpan)
-      tableCellPropertiesFragment.import(gridSpanFragment)
+      if (attributes.colSpan > 1) {
+        const gridSpanFragment = buildGridSpanFragment(attributes.colSpan)
+        tableCellPropertiesFragment.import(gridSpanFragment)
+      }
       attributes.colSpan = undefined
     }
 
@@ -2374,7 +2381,7 @@ const buildTableRowProperties = (
     Object.keys(attributes).forEach((key) => {
       switch (key) {
         case 'tableRowHeight': {
-          if (attributes[key] != null) {
+          if (attributes[key] !== null && attributes[key] !== undefined) {
             const tableRowHeightFragment = buildTableRowHeight(attributes[key])
             tableRowPropertiesFragment.import(tableRowHeightFragment)
           }
@@ -2392,6 +2399,8 @@ const buildTableRowProperties = (
 
             attributes.rowCantSplit = undefined
           }
+          break
+        default:
           break
       }
     })
@@ -2538,12 +2547,13 @@ const buildTableGridFromTableRow = (
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'tblGrid')
   if (vNodeHasChildren(vNode)) {
-    const numberOfGridColumns = (vNode.children || []).reduce((accumulator, childVNode) => {
+    let numberOfGridColumns = 0
+    for (const childVNode of vNode.children || []) {
       const child = childVNode as VNodeType
       const colSpan = child.properties?.colSpan || child.properties?.style?.['column-span']
 
-      return accumulator + (colSpan ? Number.parseInt(String(colSpan), 10) : 1)
-    }, 0)
+      numberOfGridColumns += colSpan ? Number.parseInt(String(colSpan), 10) : 1
+    }
     const gridWidth = (attributes.maximumWidth || 0) / numberOfGridColumns
 
     for (let index = 0; index < numberOfGridColumns; index++) {

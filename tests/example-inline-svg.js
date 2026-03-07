@@ -1,6 +1,6 @@
 // @ts-check
 
-const fs = require('fs')
+const fs = require('node:fs')
 // Use the built version, or install via: npm install @turbodocx/html-to-docx
 // const HTMLtoDOCX = require('@turbodocx/html-to-docx');
 const { default: HTMLtoDOCX } = require('../dist/index.cjs')
@@ -125,7 +125,7 @@ async function generateDocument() {
     console.log('- Native SVG version requires Office 2019+ or Microsoft 365')
   } catch (error) {
     console.error('❌ Error generating document:', error)
-    process.exit(1)
+    throw error
   }
 }
 

@@ -849,7 +849,7 @@ class DocxDocument {
             'val',
             type === 'ol'
               ? this.ListStyleBuilder.getListPrefixSuffix(properties.style, level)
-              : this.ListStyleBuilder.getUnorderedListPrefixSuffix(properties.style)
+              : ListStyleBuilder.getUnorderedListPrefixSuffix(properties.style)
           )
           .up()
           .ele('@w', 'lvlJc')
@@ -1066,11 +1066,11 @@ class DocxDocument {
     return lastRelsId
   }
 
-  generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
+   async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
     return this.generateSectionXML(vTree, 'header') as Promise<HeaderResult>
   }
 
-  generateFooterXML(vTree: VTree): Promise<FooterResult> {
+   async generateFooterXML(vTree: VTree): Promise<FooterResult> {
     return this.generateSectionXML(vTree, 'footer') as Promise<FooterResult>
   }
 

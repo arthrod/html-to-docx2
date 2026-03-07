@@ -1,10 +1,21 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["eslint", "oxc", "unicorn", "typescript", "import", "vitest", "jsdoc", "node", "promise"],
+  "plugins": [
+    "eslint",
+    "oxc",
+    "unicorn",
+    "typescript",
+    "import",
+    "vitest",
+    "jsdoc",
+    "node",
+    "promise"
+  ],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
-    "perf": "error"
+    "perf": "error",
+    "restriction": "warn"
   },
   "rules": {
     "import/no-named-as-default": "error",
@@ -19,7 +30,20 @@
     "no-useless-concat": "error",
     "preserve-caught-error": "error",
     "typescript/no-unsafe-type-assertion": "warn",
-    "typescript/no-floating-promises": "error"
+    "typescript/no-floating-promises": "error",
+    "unicorn/no-process-exit": "error",
+    "oxc/no-barrel-file": "error",
+    "no-empty-function": "error",
+    "class-methods-use-this": "error",
+    "unicorn/no-array-reduce": "error",
+    "no-param-reassign": "error",
+    "default-case": "error",
+    "node/no-process-env": "error",
+    "no-eq-null": "error",
+    "typescript/no-invalid-void-type": "error",
+    "typescript/explicit-module-boundary-types": "error",
+    "import/no-cycle": "error",
+    "no-empty": "error"
   },
   "options": {
     "typeAware": true

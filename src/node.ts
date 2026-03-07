@@ -1,3 +1,4 @@
+/* eslint-disable oxc/no-barrel-file -- public API surface */
 import { default as _generateContainer } from './html-to-docx'
 import type { DocumentOptions } from './index-base'
 

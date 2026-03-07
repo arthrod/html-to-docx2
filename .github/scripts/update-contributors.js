@@ -1,17 +1,22 @@
 #!/usr/bin/env node
 
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 
 // Configuration
 const PACKAGE_JSON_PATH = path.join(process.cwd(), 'package.json')
 const EXCLUDED_USERS = new Set(['dependabot[bot]', 'dependabot', 'github-actions[bot]'])
 
+// eslint-disable-next-line node/no-process-env -- CI script needs env vars
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN
+// eslint-disable-next-line node/no-process-env -- CI script needs env vars
+const PR_AUTHOR = process.env.PR_AUTHOR
+
 async function getGitHubUserEmail(username) {
   try {
     const response = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
-        Authorization: `token ${process.env.GITHUB_TOKEN}`,
+        Authorization: `token ${GITHUB_TOKEN}`,
         'User-Agent': 'contributor-bot',
       },
     })
@@ -42,7 +47,7 @@ function isContributorAlreadyListed(contributors, username) {
 }
 
 async function updateContributors() {
-  const prAuthor = process.env.PR_AUTHOR
+  const prAuthor = PR_AUTHOR
 
   if (!prAuthor) {
     console.log('No PR author found in environment variables')

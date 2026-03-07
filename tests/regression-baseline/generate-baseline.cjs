@@ -9,8 +9,8 @@
  * This file is also invoked by the OOXML validation test to ensure the
  * baseline always passes schema validation.
  */
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 
 const OUT_DIR = path.resolve(__dirname, '../../tmp')
 
@@ -189,5 +189,5 @@ async function main() {
 
 main().catch((/** @type {unknown} */ error) => {
   console.error('Failed to generate baseline:', toError(error))
-  process.exit(1)
+  throw error
 })

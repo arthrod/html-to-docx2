@@ -95,7 +95,7 @@ declare namespace HTMLtoDOCX {
     table?: Table
     pageNumber?: boolean
     skipFirstHeaderFooter?: boolean
-    lineNumber?: boolean
+    lineNumber?: boolean | LineNumberOptions
     lineNumberOptions?: LineNumberOptions
     numbering?: {
       defaultOrderedListStyleType?: DocxListStyleType
@@ -104,9 +104,6 @@ declare namespace HTMLtoDOCX {
     decodeUnicode?: boolean
     lang?: string
     direction?: 'ltr' | 'rtl'
-    preprocessing?: {
-      skipHTMLMinify?: boolean
-    }
     imageProcessing?: {
       maxRetries?: number
       verboseLogging?: boolean
@@ -118,7 +115,7 @@ declare namespace HTMLtoDOCX {
       minImageSize?: number
       maxCacheSize?: number
       maxCacheEntries?: number
-      svgHandling?: 'convert' | 'native' | 'auto'
+      svgHandling?: 'convert' | 'native'
       suppressSharpWarning?: boolean
     }
   }

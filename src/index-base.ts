@@ -1,3 +1,4 @@
+/* eslint-disable oxc/no-barrel-file -- public API surface */
 /**
  * HTML to DOCX converter
  *

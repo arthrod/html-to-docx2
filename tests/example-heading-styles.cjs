@@ -1,7 +1,7 @@
 // @ts-check
 /* eslint-disable no-console */
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
 /** @typedef {Blob | Buffer | Uint8Array | ArrayBuffer} HtmlToDocxResult */
 /**
@@ -160,22 +160,24 @@ void (async () => {
       { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
     ]
 
-    for (const { convert, runtime } of runtimes) {
-      const docResult = await convert(htmlString, null, {
-        heading: customHeadingOptions,
-        title: 'Customizable Heading Styles Demo',
-        subject: 'Demonstrating PR #129 - Customizable Heading Styles',
-        creator: 'TurboDocx Example',
-        description: 'This document showcases the customizable heading styles feature',
-      })
+    await Promise.all(
+      runtimes.map(async ({ convert, runtime }) => {
+        const docResult = await convert(htmlString, null, {
+          heading: customHeadingOptions,
+          title: 'Customizable Heading Styles Demo',
+          subject: 'Demonstrating PR #129 - Customizable Heading Styles',
+          creator: 'TurboDocx Example',
+          description: 'This document showcases the customizable heading styles feature',
+        })
 
-      const outputPath = path.join(
-        outputDirectory,
-        `example-heading-styles-${runtime}.docx`
-      )
-      fs.writeFileSync(outputPath, await toBuffer(docResult))
-      console.log(`✅ Docx file created successfully: ${outputPath}`)
-    }
+        const outputPath = path.join(
+          outputDirectory,
+          `example-heading-styles-${runtime}.docx`
+        )
+        fs.writeFileSync(outputPath, await toBuffer(docResult))
+        console.log(`✅ Docx file created successfully: ${outputPath}`)
+      })
+    )
 
     console.log('\n📖 Open the files to see:')
     console.log('   • Custom fonts for different heading levels')

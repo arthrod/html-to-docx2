@@ -371,7 +371,9 @@ describe('DOCX Export with Tracked Changes', () => {
   })
 
   it('warns when dead tracking tokens remain in document.xml', async () => {
-    const warn = mock((..._args: Parameters<typeof console.warn>) => {})
+    const warn = mock((..._args: Parameters<typeof console.warn>) => {
+      // intentional no-op mock
+    })
     const originalWarn = console.warn
     console.warn = (...args: Parameters<typeof console.warn>) => {
       warn(...args)

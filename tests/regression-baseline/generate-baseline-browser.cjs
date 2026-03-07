@@ -7,9 +7,9 @@
  *
  * Produces:  tmp/regression-baseline-browser.docx
  */
-const fs = require('fs')
-const path = require('path')
-const { execFileSync } = require('child_process')
+const fs = require('node:fs')
+const path = require('node:path')
+const { execFileSync } = require('node:child_process')
 const { chromium } = require('playwright')
 
 const ROOT_DIR = path.resolve(__dirname, '../..')
@@ -224,7 +224,8 @@ async function generateViaHeadlessBrowser(html, headerHtml, options, footerHtml)
          * @param {Uint8Array} bytes
          * @returns {string}
          */
-        const toBase64 = (bytes) => { // eslint-disable-line unicorn/consistent-function-scoping -- must be inside page.evaluate()
+        const toBase64 = (bytes) => {
+          // eslint-disable-line unicorn/consistent-function-scoping -- must be inside page.evaluate()
           let binary = ''
           const chunkSize = 0x8000
 
@@ -322,5 +323,5 @@ async function main() {
 
 main().catch((/** @type {unknown} */ error) => {
   console.error('Failed to generate browser baseline:', toError(error))
-  process.exit(1)
+  throw error
 })

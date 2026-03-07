@@ -1,7 +1,7 @@
-import * as fs from 'fs'
-import * as path from 'path'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { dirname } from 'node:path'
 import { HTMLtoDOCX as HTMLtoDOCXNode } from '../../../dist/node.cjs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -161,51 +161,53 @@ async function generateRTLDocuments() {
       { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
     ]
 
-    for (const { convert, runtime } of runtimes) {
-      // Arabic RTL document
-      const arabicDoc = await convert(arabicHtmlString, null, {
-        direction: 'rtl',
-        defaultLang: 'ar-SA',
-        font: 'Arial',
-        title: 'Arabic RTL Example',
-        creator: 'TurboDocx RTL Test',
-      })
-      await saveDocxFile(arabicDoc, 'arabic-rtl-test.docx', 'Arabic RTL', runtime)
+    await Promise.all(
+      runtimes.map(async ({ convert, runtime }) => {
+        // Arabic RTL document
+        const arabicDoc = await convert(arabicHtmlString, null, {
+          direction: 'rtl',
+          defaultLang: 'ar-SA',
+          font: 'Arial',
+          title: 'Arabic RTL Example',
+          creator: 'TurboDocx RTL Test',
+        })
+        await saveDocxFile(arabicDoc, 'arabic-rtl-test.docx', 'Arabic RTL', runtime)
 
-      // Hebrew RTL document
-      const hebrewDoc = await convert(hebrewHtmlString, null, {
-        direction: 'rtl',
-        defaultLang: 'he-IL',
-        font: 'Arial',
-        title: 'Hebrew RTL Example',
-        creator: 'TurboDocx RTL Test',
-      })
-      await saveDocxFile(hebrewDoc, 'hebrew-rtl-test.docx', 'Hebrew RTL', runtime)
+        // Hebrew RTL document
+        const hebrewDoc = await convert(hebrewHtmlString, null, {
+          direction: 'rtl',
+          defaultLang: 'he-IL',
+          font: 'Arial',
+          title: 'Hebrew RTL Example',
+          creator: 'TurboDocx RTL Test',
+        })
+        await saveDocxFile(hebrewDoc, 'hebrew-rtl-test.docx', 'Hebrew RTL', runtime)
 
-      // Mixed content document (default LTR with RTL sections)
-      const mixedDoc = await convert(mixedContentHtml, null, {
-        direction: 'ltr', // Default direction
-        defaultLang: 'en-US',
-        font: 'Arial',
-        title: 'Mixed Content Example',
-        creator: 'TurboDocx RTL Test',
-      })
-      await saveDocxFile(mixedDoc, 'mixed-content-test.docx', 'Mixed Content', runtime)
-
-      // LTR document for comparison
-      const ltrDoc = await convert(
-        `<h1>Left-to-Right Document</h1><p>This is a standard LTR document for comparison.</p>`,
-        null,
-        {
-          direction: 'ltr',
+        // Mixed content document (default LTR with RTL sections)
+        const mixedDoc = await convert(mixedContentHtml, null, {
+          direction: 'ltr', // Default direction
           defaultLang: 'en-US',
           font: 'Arial',
-          title: 'LTR Example',
+          title: 'Mixed Content Example',
           creator: 'TurboDocx RTL Test',
-        }
-      )
-      await saveDocxFile(ltrDoc, 'ltr-comparison-test.docx', 'LTR Comparison', runtime)
-    }
+        })
+        await saveDocxFile(mixedDoc, 'mixed-content-test.docx', 'Mixed Content', runtime)
+
+        // LTR document for comparison
+        const ltrDoc = await convert(
+          `<h1>Left-to-Right Document</h1><p>This is a standard LTR document for comparison.</p>`,
+          null,
+          {
+            direction: 'ltr',
+            defaultLang: 'en-US',
+            font: 'Arial',
+            title: 'LTR Example',
+            creator: 'TurboDocx RTL Test',
+          }
+        )
+        await saveDocxFile(ltrDoc, 'ltr-comparison-test.docx', 'LTR Comparison', runtime)
+      })
+    )
   } catch (error) {
     console.error('Error generating RTL documents:', error)
   }

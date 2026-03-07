@@ -1,6 +1,6 @@
 // @ts-check
 /* eslint-disable no-console */
-const fs = require('fs')
+const fs = require('node:fs')
 const { default: htmlToDocxUntyped } = require('../dist/index.cjs')
 
 /**
@@ -93,7 +93,7 @@ async function testVariousSVGs() {
     const normalizedError = toError(error)
     console.error('❌ Error:', normalizedError.message)
     console.error(normalizedError.stack)
-    process.exit(1)
+    throw normalizedError
   }
 }
 

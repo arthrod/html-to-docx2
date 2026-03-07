@@ -15,6 +15,7 @@ import { downloadAndCacheImage } from '../utils/image-to-base64'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
 import { vNodeHasChildren } from '../utils/vnode'
 // FIXME: remove the cyclic dependency
+// eslint-disable-next-line import/no-cycle -- FIXME: known cyclic dependency
 import * as xmlBuilder from './xml-builder'
 
 // Types for Virtual DOM
@@ -258,7 +259,15 @@ export const clearImageCache = (docxDocumentInstance?: DocxDocumentInstance): nu
   return cacheSize
 }
 
-export const getImageCacheStats = (docxDocumentInstance?: DocxDocumentInstance) => {
+export const getImageCacheStats = (
+  docxDocumentInstance?: DocxDocumentInstance
+): {
+  size: number
+  urls: string[]
+  successCount: number
+  failureCount: number
+  retryStats: { totalAttempts: number; successAfterRetry: number; finalFailures: number }
+} => {
   if (!docxDocumentInstance || !docxDocumentInstance._imageCache) {
     return {
       size: 0,
@@ -325,7 +334,7 @@ export const buildImage = async (
       response = await docxDocumentInstance.createMediaFile(base64Uri)
     }
   } catch {
-    // NOOP
+    // Silently skip images that fail to download or process
   }
   if (response) {
     docxDocumentInstance.zip
@@ -378,9 +387,7 @@ export const buildList = async (
   xmlFragment: XMLBuilderType,
   existingNumberingId: number | null = null,
   baseIndentLevel = 0
-): Promise<void[]> => {
-  const listElements: void[] = []
-
+): Promise<void> => {
   let vNodeObjects: VNodeObject[] = [
     {
       node: vNode,
@@ -423,68 +430,62 @@ export const buildList = async (
       tempNode.children.length &&
       ['ul', 'ol', 'li'].includes(tempNode.tagName || '')
     ) {
-      const tempVNodeObjects = tempNode.children.reduce<VNodeObject[]>(
-        (accumulator, childVNode) => {
-          const childNode = childVNode as VNodeType
-          if (['ul', 'ol'].includes(childNode.tagName || '')) {
-            accumulator.push({
-              node: childVNode,
-              level: tempVNodeObject.level + 1,
-              type: childNode.tagName || '',
-              numberingId: docxDocumentInstance.createNumbering(
-                (childNode.tagName || 'ul') as 'ol' | 'ul',
-                childNode.properties
-              ),
-            })
-          } else if (
-            accumulator.length > 0 &&
-            isVNode(accumulator[accumulator.length - 1].node) &&
-            (
-              (accumulator[accumulator.length - 1].node as VNodeType).tagName || ''
-            ).toLowerCase() === 'p' &&
-            // Don't append <li> elements to paragraphs - they need separate processing
-            (childNode.tagName || '').toLowerCase() !== 'li'
-          ) {
-            const lastNode = accumulator[accumulator.length - 1].node as VNodeType
-            if (lastNode.children) {
-              lastNode.children.push(childVNode)
-            }
-          } else {
-            const paragraphVNode = new VNode(
-              'p',
-              null,
-              isVText(childVNode)
-                ? [childVNode]
-                : isVNode(childVNode)
-                  ? (childNode.tagName || '').toLowerCase() === 'li'
-                    ? [...(childNode.children || [])]
-                    : [childVNode]
-                  : []
-            )
-            accumulator.push({
-              node: isVNode(childVNode)
-                ? (childNode.tagName || '').toLowerCase() === 'li'
-                  ? childVNode
-                  : (childNode.tagName || '').toLowerCase() !== 'p'
-                    ? paragraphVNode
-                    : childVNode
-                : paragraphVNode,
-              level: tempVNodeObject.level,
-              type: tempVNodeObject.type,
-              numberingId: tempVNodeObject.numberingId,
-            })
+      const tempVNodeObjects: VNodeObject[] = []
+      for (const childVNode of tempNode.children) {
+        const childNode = childVNode as VNodeType
+        if (['ul', 'ol'].includes(childNode.tagName || '')) {
+          tempVNodeObjects.push({
+            node: childVNode,
+            level: tempVNodeObject.level + 1,
+            type: childNode.tagName || '',
+            numberingId: docxDocumentInstance.createNumbering(
+              (childNode.tagName || 'ul') as 'ol' | 'ul',
+              childNode.properties
+            ),
+          })
+        } else if (
+          tempVNodeObjects.length > 0 &&
+          isVNode(tempVNodeObjects[tempVNodeObjects.length - 1].node) &&
+          (
+            (tempVNodeObjects[tempVNodeObjects.length - 1].node as VNodeType).tagName || ''
+          ).toLowerCase() === 'p' &&
+          // Don't append <li> elements to paragraphs - they need separate processing
+          (childNode.tagName || '').toLowerCase() !== 'li'
+        ) {
+          const lastNode = tempVNodeObjects[tempVNodeObjects.length - 1].node as VNodeType
+          if (lastNode.children) {
+            lastNode.children.push(childVNode)
           }
-
-          return accumulator
-        },
-        []
-      )
+        } else {
+          const paragraphVNode = new VNode(
+            'p',
+            null,
+            isVText(childVNode)
+              ? [childVNode]
+              : isVNode(childVNode)
+                ? (childNode.tagName || '').toLowerCase() === 'li'
+                  ? [...(childNode.children || [])]
+                  : [childVNode]
+                : []
+          )
+          tempVNodeObjects.push({
+            node: isVNode(childVNode)
+              ? (childNode.tagName || '').toLowerCase() === 'li'
+                ? childVNode
+                : (childNode.tagName || '').toLowerCase() !== 'p'
+                  ? paragraphVNode
+                  : childVNode
+              : paragraphVNode,
+            level: tempVNodeObject.level,
+            type: tempVNodeObject.type,
+            numberingId: tempVNodeObject.numberingId,
+          })
+        }
+      }
       vNodeObjects = tempVNodeObjects.concat(vNodeObjects)
     }
   }
   /* eslint-enable no-await-in-loop */
-
-  return listElements
 }
 
 type ContentGroup = {
@@ -566,8 +567,8 @@ async function findXMLEquivalent(
 
       xmlFragment.import(paragraphFragment)
       return
-    } catch {
-      console.warn('Failed to parse OMML for block equation')
+    } catch (ommlError: unknown) {
+      console.warn('Failed to parse OMML for block equation', ommlError)
     }
   }
 
@@ -972,6 +973,8 @@ async function findXMLEquivalent(
     }
     case 'head':
       return
+    default:
+      break
   }
   if (vNodeHasChildren(vNode)) {
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */

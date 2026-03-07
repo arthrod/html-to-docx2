@@ -1,11 +1,14 @@
 // @ts-check
 /* eslint-disable no-console */
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 // FIXME: Incase you have the npm package
 // const HTMLtoDOCX = require('html-to-docx');
 const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
 /** @typedef {Blob | Buffer | Uint8Array | ArrayBuffer} HtmlToDocxResult */
+
+// eslint-disable-next-line node/no-process-env -- test script reads CI env var
+const DETERMINISTIC_IDS = process.env.DETERMINISTIC_IDS === 'true'
 
 const outputDirectory = path.resolve(__dirname, '../tmp')
 if (!fs.existsSync(outputDirectory)) {
@@ -2085,7 +2088,7 @@ void (async () => {
     // This option makes image filenames sequential (image-0.png, image-1.png)
     // instead of random UUIDs, allowing automated regression testing.
     // ===================================================================
-    deterministicIds: process.env.DETERMINISTIC_IDS === 'true',
+    deterministicIds: DETERMINISTIC_IDS,
   })
 
   const outputPath = path.join(outputDirectory, 'example-node-node.docx')

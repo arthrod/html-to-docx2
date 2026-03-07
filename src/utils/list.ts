@@ -88,7 +88,7 @@ class ListStyleBuilder {
     }
   }
 
-  getUnorderedListPrefixSuffix(style: ListStyle | null | undefined): string {
+  static getUnorderedListPrefixSuffix(style: ListStyle | null | undefined): string {
     const listType = style?.['list-style-type'] || ''
 
     switch (listType) {

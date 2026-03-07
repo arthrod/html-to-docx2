@@ -246,13 +246,13 @@ function getPropertyInfo(attributeName: string): PropertyInfo {
  */
 function parseStyles(input: string): Record<string, string> {
   const attributes = input.split(';')
-  const styles = attributes.reduce<Record<string, string>>((object, attribute) => {
+  const styles: Record<string, string> = {}
+  for (const attribute of attributes) {
     const entry = attribute.split(/:(.*)/)
     if (entry[0] && entry[1]) {
-      object[entry[0].trim()] = entry[1].trim()
+      styles[entry[0].trim()] = entry[1].trim()
     }
-    return object
-  }, {})
+  }
   return styles
 }
 
@@ -315,9 +315,10 @@ function setVNodeProperty(
     return
   }
 
+  let convertedValue = value
   if (Object.hasOwn(propertyValueConversions, propName)) {
     valueConverter = propertyValueConversions[propName]
-    value = valueConverter(
+    convertedValue = valueConverter(
       typeof value === 'string'
         ? value
         : typeof value === 'object'
@@ -326,7 +327,7 @@ function setVNodeProperty(
     )
   }
 
-  properties[propInfo.propertyName] = getPropertyValue(propInfo, value)
+  properties[propInfo.propertyName] = getPropertyValue(propInfo, convertedValue)
 }
 
 function getAttributeValue(propInfo: PropertyInfo, value: string): string {
@@ -577,6 +578,6 @@ function convertHTML(optionsOrHTML: string | ConvertHTMLOptions, html?: string) 
 /**
  * Factory function for HTML to VNode conversion
  */
-export default function createHTMLtoVDOM() {
+export default function createHTMLtoVDOM(): typeof convertHTML {
   return convertHTML
 }

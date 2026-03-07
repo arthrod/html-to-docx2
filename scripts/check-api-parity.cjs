@@ -1,7 +1,7 @@
 // @ts-check
 /* eslint-disable no-console */
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 const { createTwoFilesPatch } = require('diff')
 
 const ROOT_DIR = path.resolve(__dirname, '..')
@@ -82,7 +82,7 @@ function main() {
 
   console.error('API parity check failed: browser and node rollups differ.')
   console.error(patch)
-  process.exit(1)
+  throw new Error('API parity check failed: browser and node rollups differ.')
 }
 
 main()

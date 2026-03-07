@@ -1,3 +1,4 @@
+/* eslint-disable oxc/no-barrel-file -- public API surface */
 export * from './index-base'
 export { default as HTMLtoDOCX, default } from './html-to-docx'
 

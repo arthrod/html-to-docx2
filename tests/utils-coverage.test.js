@@ -102,21 +102,25 @@ describe('ListStyleBuilder', () => {
 
   describe('getUnorderedListPrefixSuffix', () => {
     test('should return correct bullet types', () => {
-      expect(builder.getUnorderedListPrefixSuffix({ 'list-style-type': 'circle' })).toBe(
-        'o'
-      )
+      expect(
+        ListStyleBuilder.getUnorderedListPrefixSuffix({ 'list-style-type': 'circle' })
+      ).toBe('o')
       // square and disc return special Unicode bullet characters
-      const square = builder.getUnorderedListPrefixSuffix({ 'list-style-type': 'square' })
+      const square = ListStyleBuilder.getUnorderedListPrefixSuffix({
+        'list-style-type': 'square',
+      })
       expect(square.length).toBe(1)
-      const disc = builder.getUnorderedListPrefixSuffix({ 'list-style-type': 'disc' })
+      const disc = ListStyleBuilder.getUnorderedListPrefixSuffix({
+        'list-style-type': 'disc',
+      })
       expect(disc.length).toBe(1)
     })
 
     test('should handle null/undefined', () => {
       // Returns default bullet char (not empty string)
-      const nullResult = builder.getUnorderedListPrefixSuffix(null)
+      const nullResult = ListStyleBuilder.getUnorderedListPrefixSuffix(null)
       expect(nullResult.length).toBe(1)
-      const undefResult = builder.getUnorderedListPrefixSuffix(undefined)
+      const undefResult = ListStyleBuilder.getUnorderedListPrefixSuffix(undefined)
       expect(undefResult.length).toBe(1)
     })
   })

@@ -111,7 +111,7 @@ export class VNode {
     this.tagName = tagName
     this.properties = vnodeProperties
     this.children = vnodeChildren
-    this.key = key != null ? String(key) : undefined
+    this.key = key !== null && key !== undefined ? String(key) : undefined
     this.namespace = typeof namespace === 'string' ? namespace : null
 
     const count = (vnodeChildren && vnodeChildren.length) || 0

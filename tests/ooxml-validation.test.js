@@ -9,9 +9,9 @@
  * element correctness, relationship IDs, paraId/durableId constraints, comment markers.
  */
 
-import { execSync } from 'child_process'
-import { existsSync, writeFileSync, unlinkSync } from 'fs'
-import { join } from 'path'
+import { execSync } from 'node:child_process'
+import { existsSync, writeFileSync, unlinkSync } from 'node:fs'
+import { join } from 'node:path'
 import HTMLtoDOCX from '../index.ts'
 import {
   buildSuggestionStartToken,
@@ -54,7 +54,9 @@ function validateDOCX(docxBuffer, filename) {
   } finally {
     try {
       unlinkSync(filePath)
-    } catch {}
+    } catch {
+      /* cleanup */
+    }
   }
 }
 

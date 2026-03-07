@@ -104,8 +104,14 @@ describe('VNode class', () => {
   describe('Hooks handling', () => {
     test('should detect hooks in properties when they have unhook', () => {
       class VHook {
-        hook() {}
-        unhook() {}
+        // eslint-disable-next-line class-methods-use-this
+        hook() {
+          // intentional no-op for test stub
+        }
+        // eslint-disable-next-line class-methods-use-this
+        unhook() {
+          // intentional no-op for test stub
+        }
       }
       const hook = new VHook()
       const vnode = new VNode('div', { myHook: hook })
@@ -116,7 +122,9 @@ describe('VNode class', () => {
 
     test('should not detect hooks without unhook method', () => {
       const notAHook = {
-        hook: () => {},
+        hook: () => {
+          /* no-op */
+        },
       }
       const vnode = new VNode('div', { myHook: notAHook })
 
@@ -125,8 +133,14 @@ describe('VNode class', () => {
 
     test('should track descendantHooks from children', () => {
       class VHook {
-        hook() {}
-        unhook() {}
+        // eslint-disable-next-line class-methods-use-this
+        hook() {
+          // intentional no-op for test stub
+        }
+        // eslint-disable-next-line class-methods-use-this
+        unhook() {
+          // intentional no-op for test stub
+        }
       }
       const hook = new VHook()
       const child = new VNode('span', { myHook: hook })

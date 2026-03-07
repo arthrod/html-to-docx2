@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 // @ts-check
 
-const fs = require('fs')
+const fs = require('node:fs')
 // Use the built version, or install via: npm install @turbodocx/html-to-docx
 // const HTMLtoDOCX = require('@turbodocx/html-to-docx');
 const { default: HTMLtoDOCX } = require('../dist/index.cjs')
@@ -246,7 +246,7 @@ async function generateDocuments() {
     if (errorDetails.stack) {
       console.error(errorDetails.stack)
     }
-    process.exit(1)
+    throw error
   }
 }
 

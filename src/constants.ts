@@ -1,4 +1,4 @@
-import { cloneDeep } from 'es-toolkit'
+import { cloneDeep } from 'es-toolkit/compat'
 
 export type Orientation = 'landscape' | 'portrait'
 

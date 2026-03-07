@@ -1,8 +1,8 @@
 // @ts-check
 /* eslint-disable no-console */
-const { execSync } = require('child_process')
-const fs = require('fs')
-const path = require('path')
+const { execSync } = require('node:child_process')
+const fs = require('node:fs')
+const path = require('node:path')
 
 const API_SURFACE_DIR = path.resolve(__dirname, '..', 'api-surface')
 /** @type {readonly ['browser.rollup.d.ts', 'node.rollup.d.ts']} */
@@ -30,7 +30,7 @@ function main() {
     console.warn('\x1b[33m⚠  API surface files missing:\x1b[0m')
     console.warn(`   ${missing.join('\n   ')}`)
     console.warn('   Run \x1b[36mbun run api:check\x1b[0m to generate them.')
-    process.exit(1)
+    throw new Error(`API surface files missing: ${missing.join(', ')}`)
   }
 
   // Check if api-surface files have unstaged changes (developer forgot to stage)
@@ -40,7 +40,7 @@ function main() {
     console.warn('\x1b[33m⚠  API surface files have unstaged changes:\x1b[0m')
     console.warn(`   ${unstaged.split('\n').join('\n   ')}`)
     console.warn('   Run \x1b[36mbun run api:check\x1b[0m and stage the updated files.')
-    process.exit(1)
+    throw new Error('API surface files have unstaged changes')
   }
 
   // Check if api-surface files are staged (intentional change)
