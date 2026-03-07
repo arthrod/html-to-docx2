@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * Test Helper Constants
  *
@@ -21,6 +23,7 @@
  *   <w:r><w:t>Hello World</w:t></w:r>
  * </w:p>
  */
+/** @type {RegExp} */
 export const PARAGRAPH_REGEX = /<w:p\b[^>]*>[\s\S]*?<\/w:p>/g
 
 /**
@@ -32,6 +35,7 @@ export const PARAGRAPH_REGEX = /<w:p\b[^>]*>[\s\S]*?<\/w:p>/g
  *
  * Example: <w:jc w:val="center"/> → captures "center"
  */
+/** @type {RegExp} */
 export const ALIGNMENT_REGEX = /<w:jc w:val="([^"]+)"/
 
 /**
@@ -43,6 +47,7 @@ export const ALIGNMENT_REGEX = /<w:jc w:val="([^"]+)"/
  *
  * Example: <w:spacing w:before="240"/> → captures "240"
  */
+/** @type {RegExp} */
 export const SPACING_BEFORE_REGEX = /<w:spacing[^>]*w:before="([^"]+)"/
 
 /**
@@ -54,6 +59,7 @@ export const SPACING_BEFORE_REGEX = /<w:spacing[^>]*w:before="([^"]+)"/
  *
  * Example: <w:spacing w:after="120"/> → captures "120"
  */
+/** @type {RegExp} */
 export const SPACING_AFTER_REGEX = /<w:spacing[^>]*w:after="([^"]+)"/
 
 // =============================================================================
@@ -73,6 +79,7 @@ export const SPACING_AFTER_REGEX = /<w:spacing[^>]*w:after="([^"]+)"/
  *   <w:t>Bold red text</w:t>
  * </w:r>
  */
+/** @type {RegExp} */
 export const RUN_REGEX = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g
 
 /**
@@ -84,6 +91,7 @@ export const RUN_REGEX = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g
  *
  * Example: <w:t>Hello</w:t> → captures "Hello"
  */
+/** @type {RegExp} */
 export const TEXT_REGEX = /<w:t[^>]*>(.*?)<\/w:t>/g
 
 /**
@@ -96,6 +104,7 @@ export const TEXT_REGEX = /<w:t[^>]*>(.*?)<\/w:t>/g
  * Note: Can also include w:hAnsi, w:cs, w:eastAsia for different character sets
  * Example: <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/> → captures "Calibri"
  */
+/** @type {RegExp} */
 export const FONT_REGEX = /<w:rFonts[^>]*w:ascii="([^"]+)"/
 
 /**
@@ -107,6 +116,7 @@ export const FONT_REGEX = /<w:rFonts[^>]*w:ascii="([^"]+)"/
  *
  * Example: <w:color w:val="0000FF"/> → captures "0000FF" (blue)
  */
+/** @type {RegExp} */
 export const COLOR_REGEX = /<w:color w:val="([^"]+)"/
 
 /**
@@ -119,4 +129,5 @@ export const COLOR_REGEX = /<w:color w:val="([^"]+)"/
  * Note: Value is in half-points, so 24 = 12pt font
  * Example: <w:sz w:val="48"/> → captures "48" (24pt font)
  */
+/** @type {RegExp} */
 export const FONT_SIZE_REGEX = /<w:sz w:val="([^"]+)"/

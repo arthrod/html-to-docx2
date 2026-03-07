@@ -117,3 +117,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/regression-baseline/generate-baseline.cjs
 - tests/regression-baseline/generate-baseline-browser.cjs
 - tests/entrypoints.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- tests/helpers/constants.js
+- tests/examples/react-example/src/reportWebVitals.js
+- tests/examples/react-example/src/index.js
+- tests/examples/react-example/src/App.test.js
+- tests/examples/react-example/src/setupTests.js
