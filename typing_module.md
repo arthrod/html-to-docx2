@@ -165,3 +165,13 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/types/justjshtml.d.ts
 - api-surface/browser.rollup.d.ts
 - api-surface/node.rollup.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/context.d.ts
+- src/types/justjshtml/node.d.ts
+- src/types/justjshtml/parser.d.ts
+- src/types/justjshtml/stream.d.ts
+- src/types/justjshtml/tokens.d.ts
+- src/types/justjshtml.d.ts
+- tests/image-browser-utils.test.js

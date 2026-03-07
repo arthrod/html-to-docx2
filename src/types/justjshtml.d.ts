@@ -1,29 +1,25 @@
 declare module 'justjshtml/src/index.js' {
-  type ParsedNode = {
-    name: string
-    data?: string
-    attrs?: Record<string, string>
-    children?: ParsedNode[]
-    [key: string]: string | Record<string, string> | ParsedNode[] | undefined
-  }
+  import type { FragmentContext } from 'justjshtml/src/context.js'
+  import type { Node } from 'justjshtml/src/node.js'
+  import type { ParseError } from 'justjshtml/src/tokens.js'
+  import type { stream } from 'justjshtml/src/stream.js'
 
-  type ParsedDocumentRoot = {
-    children?: ParsedNode[]
-  }
-
-  export interface FragmentContext {}
-  export const FragmentContext: {
-    new (tagName: string): FragmentContext
-  }
+  export { FragmentContext }
+  export { ParseError }
+  export { stream }
 
   export interface JustHTML {
-    root?: ParsedDocumentRoot
+    errors?: ParseError[]
+    root?: Node
   }
+
   export const JustHTML: {
     new (
       html: string,
       options?: {
+        collectErrors?: boolean
         fragmentContext?: FragmentContext
+        iframeSrcdoc?: boolean
       }
     ): JustHTML
   }
