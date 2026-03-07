@@ -101,7 +101,7 @@
     "test:unit:coverage": "vitest run --coverage",
     "test:browser": "bun run build && npx -y serve . -l 8080 --no-clipboard",
     "prerelease": "bun run build:prod",
-    "release": "standard-version",
+    "release": "release-it",
     "lint": "oxlint --fix --tsconfig tsconfig.build.json .",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
@@ -155,6 +155,7 @@
   "devDependencies": {
     "@microsoft/api-extractor": "^7.57.6",
     "@playwright/test": "^1.58.2",
+    "@release-it/conventional-changelog": "^10.0.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.3.3",
     "@vitest/coverage-v8": "4.0.18",
@@ -164,7 +165,7 @@
     "lint-staged": "16.3.2",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.23.0",
-    "standard-version": "^9.3.1",
+    "release-it": "^19.2.4",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsdown": "^0.21.0",
@@ -186,10 +187,12 @@
   },
   "overrides": {
     "bl": "^1.2.3",
+    "minimatch": ">=10.2.3",
     "semver": "^7.6.0"
   },
   "resolutions": {
     "bl": "^1.2.3",
+    "minimatch": ">=10.2.3",
     "semver": "^7.6.0"
   },
   "lint-staged": {
