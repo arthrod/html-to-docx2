@@ -5,7 +5,7 @@ const path = require('path')
 
 // Configuration
 const PACKAGE_JSON_PATH = path.join(process.cwd(), 'package.json')
-const EXCLUDED_USERS = ['dependabot[bot]', 'dependabot', 'github-actions[bot]']
+const EXCLUDED_USERS = new Set(['dependabot[bot]', 'dependabot', 'github-actions[bot]'])
 
 async function getGitHubUserEmail(username) {
   try {
@@ -50,7 +50,7 @@ async function updateContributors() {
   }
 
   // Check if user should be excluded
-  if (EXCLUDED_USERS.includes(prAuthor)) {
+  if (EXCLUDED_USERS.has(prAuthor)) {
     console.log(`Skipping excluded user: ${prAuthor}`)
     return
   }

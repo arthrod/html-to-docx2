@@ -21,6 +21,16 @@ export const rgbToHex = (
   return hexColorCode
 }
 
+const hue2rgb = (p: number, q: number, t: number): number => {
+  let tNorm = t
+  if (tNorm < 0) tNorm += 1
+  if (tNorm > 1) tNorm -= 1
+  if (tNorm < 1 / 6) return p + (q - p) * 6 * tNorm
+  if (tNorm < 1 / 2) return q
+  if (tNorm < 2 / 3) return p + (q - p) * (2 / 3 - tNorm) * 6
+  return p
+}
+
 export const hslToHex = (hue: number, saturation: number, luminosity: number): string => {
   const h = hue / 360
   const s = saturation / 100
@@ -33,15 +43,6 @@ export const hslToHex = (hue: number, saturation: number, luminosity: number): s
   if (s === 0) {
     red = green = blue = l // achromatic
   } else {
-    const hue2rgb = (p: number, q: number, t: number): number => {
-      let tNorm = t
-      if (tNorm < 0) tNorm += 1
-      if (tNorm > 1) tNorm -= 1
-      if (tNorm < 1 / 6) return p + (q - p) * 6 * tNorm
-      if (tNorm < 1 / 2) return q
-      if (tNorm < 2 / 3) return p + (q - p) * (2 / 3 - tNorm) * 6
-      return p
-    }
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s
     const p = 2 * l - q
     red = hue2rgb(p, q, h + 1 / 3)

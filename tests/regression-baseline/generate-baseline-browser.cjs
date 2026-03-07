@@ -224,7 +224,7 @@ async function generateViaHeadlessBrowser(html, headerHtml, options, footerHtml)
          * @param {Uint8Array} bytes
          * @returns {string}
          */
-        const toBase64 = (bytes) => {
+        const toBase64 = (bytes) => { // eslint-disable-line unicorn/consistent-function-scoping -- must be inside page.evaluate()
           let binary = ''
           const chunkSize = 0x8000
 

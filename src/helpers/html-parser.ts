@@ -383,10 +383,10 @@ type ConvertHTMLOptions = {
   getVNodeKey?: ConverterGetVNodeKey
 }
 
-function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
-  const isElementNode = (node: ParsedNode) =>
-    !node.name.startsWith('#') && node.name !== '!doctype'
+const isElementNode = (node: ParsedNode) =>
+  !node.name.startsWith('#') && node.name !== '!doctype'
 
+function createConverter(VNodeClass: typeof VNode, VTextClass: typeof VText) {
   const converter = {
     convert(node: ParsedNode, getVNodeKey?: ConverterGetVNodeKey): VNodeLike {
       if (isElementNode(node)) {

@@ -7,7 +7,7 @@ import nodeDefault, * as nodeEntry from '../src/node'
  * @returns {string[]}
  */
 function sortedKeys(value) {
-  return Object.keys(value).sort()
+  return Object.keys(value).toSorted()
 }
 
 describe('entrypoint parity', () => {
