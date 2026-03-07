@@ -404,3 +404,88 @@ describe('HTML Parser - Edge Cases', () => {
     ).toBe('test')
   })
 })
+
+describe('HTML Parser - Fragment and Document Normalization', () => {
+  test('uses tbody context for fragment rows and keeps tr as root', () => {
+    const result = convertHTML('<!--leading--><tr><td>A</td></tr>')
+
+    expect(Array.isArray(result)).toBe(true)
+    if (!Array.isArray(result)) {
+      throw new Error('Expected array result')
+    }
+    const row = result.find((node) => isTag(node, 'tr'))
+    expect(row).toBeDefined()
+    if (!row || !isVNode(row)) {
+      throw new Error('Expected tr node')
+    }
+    expect(row.children[0].tagName).toBe('td')
+  })
+
+  test('uses table context for table section fragments', () => {
+    const result = convertHTML('<thead><tr><th>H</th></tr></thead>')
+
+    expect(Array.isArray(result)).toBe(false)
+    expect(result.tagName).toBe('thead')
+    expect(result.children[0].tagName).toBe('tr')
+    expect(result.children[0].children[0].tagName).toBe('th')
+  })
+
+  test('uses colgroup context for col fragments', () => {
+    const result = convertHTML('<col span="2" />')
+
+    expect(Array.isArray(result)).toBe(false)
+    expect(result.tagName).toBe('col')
+    expect(result.properties.span).toBe(2)
+  })
+
+  test('normalizes explicit head roots and preserves body siblings', () => {
+    const result = convertHTML('<head><title>T</title></head><p>Body</p>')
+
+    expect(Array.isArray(result)).toBe(true)
+    expect(result[0].tagName).toBe('head')
+    expect(result.some((node) => isTag(node, 'p'))).toBe(true)
+  })
+
+  test('normalizes explicit body roots and preserves inferred head nodes', () => {
+    const result = convertHTML('<body><p>Body</p></body><meta charset="utf-8">')
+
+    expect(Array.isArray(result)).toBe(false)
+    expect(result.tagName).toBe('body')
+    expect(result.children.some((node) => isTag(node, 'p'))).toBe(true)
+  })
+
+  test('normalizes doctype-only documents to body children', () => {
+    const result = convertHTML('<!doctype html><p>Doc</p>')
+
+    expect(Array.isArray(result)).toBe(true)
+    if (!Array.isArray(result)) {
+      throw new Error('Expected array result')
+    }
+    const paragraph = result.find((node) => isTag(node, 'p'))
+    expect(paragraph).toBeDefined()
+    if (!paragraph || !isVNode(paragraph)) {
+      throw new Error('Expected paragraph node')
+    }
+    expect(paragraph.children[0].text).toBe('Doc')
+  })
+})
+
+describe('HTML Parser - Boolean and Numeric Property Handling', () => {
+  test('parses overloaded boolean properties as true when empty', () => {
+    const result = convertHTML('<a download>Download</a>')
+
+    expect(result.properties.download).toBe(true)
+  })
+
+  test('parses overloaded boolean properties as string when valued', () => {
+    const result = convertHTML('<a download="report.docx">Download</a>')
+
+    expect(result.properties.download).toBe('report.docx')
+  })
+
+  test('parses numeric properties as numbers', () => {
+    const result = convertHTML('<ol start="5"><li>Item</li></ol>')
+
+    expect(result.properties.start).toBe(5)
+  })
+})

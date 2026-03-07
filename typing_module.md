@@ -197,3 +197,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/types/justjshtml/selector.d.ts
 - src/types/justjshtml/serialize.d.ts
 - src/types/justjshtml/treebuilder.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/entities-data.d.ts
+- src/types/justjshtml/example.d.ts
+- src/types/justjshtml/html5lib-serializer.d.ts
+- src/types/justjshtml/index.d.ts
+- src/types/justjshtml/package-root.d.ts
