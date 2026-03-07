@@ -3,7 +3,7 @@
 /* biome-ignore-all lint/performance/useTopLevelRegex: legacy code */
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
-import { cloneDeep } from 'es-toolkit'
+import { cloneDeep } from 'es-toolkit/compat'
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
@@ -1096,8 +1096,7 @@ const buildRun = async (
 
           // if spanFragment is an array, we need to add each fragment to the runFragmentsArray. If the fragment is an array, perform a depth first search on the array to add each fragment to the runFragmentsArray
           if (Array.isArray(spanFragment)) {
-            spanFragment.flat(Number.POSITIVE_INFINITY)
-            runFragmentsArray.push(...spanFragment)
+            runFragmentsArray.push(...spanFragment.flat(Number.POSITIVE_INFINITY))
           } else {
             runFragmentsArray.push(spanFragment)
           }
@@ -2030,8 +2029,11 @@ const buildTableCellProperties = (
 
     // 2. gridSpan
     if (attributes.colSpan !== undefined) {
-      const gridSpanFragment = buildGridSpanFragment(attributes.colSpan)
-      tableCellPropertiesFragment.import(gridSpanFragment)
+      const colSpan = Number(attributes.colSpan)
+      if (Number.isFinite(colSpan) && colSpan > 1) {
+        const gridSpanFragment = buildGridSpanFragment(colSpan)
+        tableCellPropertiesFragment.import(gridSpanFragment)
+      }
       attributes.colSpan = undefined
     }
 

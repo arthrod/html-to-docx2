@@ -12,7 +12,7 @@ type DocumentRelationship = {
   type: DocumentRelNamespaceKey
 }
 
-const documentRelationships: DocumentRelationship[] = [
+const documentRelationships: ReadonlyArray<DocumentRelationship> = [
   { id: 1, target: 'numbering.xml', type: 'numbering' },
   { id: 2, target: 'styles.xml', type: 'styles' },
   { id: 3, target: 'settings.xml', type: 'settingsRelation' },

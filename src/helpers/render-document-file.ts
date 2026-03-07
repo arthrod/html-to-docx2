@@ -324,7 +324,8 @@ export const buildImage = async (
     if (base64Uri) {
       response = await docxDocumentInstance.createMediaFile(base64Uri)
     }
-  } catch {
+  } catch (error) {
+    void error
     // NOOP
   }
   if (response) {
@@ -566,7 +567,8 @@ async function findXMLEquivalent(
 
       xmlFragment.import(paragraphFragment)
       return
-    } catch {
+    } catch (error) {
+      void error
       console.warn('Failed to parse OMML for block equation')
     }
   }
