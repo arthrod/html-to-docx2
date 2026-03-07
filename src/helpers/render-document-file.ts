@@ -394,6 +394,7 @@ export const buildList = async (
         ),
     },
   ]
+  /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
   while (vNodeObjects.length) {
     const tempVNodeObject = vNodeObjects.shift()!
 
@@ -481,6 +482,7 @@ export const buildList = async (
       vNodeObjects = tempVNodeObjects.concat(vNodeObjects)
     }
   }
+  /* eslint-enable no-await-in-loop */
 
   return listElements
 }
@@ -618,6 +620,7 @@ async function findXMLEquivalent(
       }
 
       // Process groups
+      /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
       for (const group of groups) {
         if (group.type === 'inline' && group.children) {
           const paragraphVNode = new VNode('p', null, group.children)
@@ -631,6 +634,7 @@ async function findXMLEquivalent(
           await convertVTreeToXML(docxDocumentInstance, group.node, xmlFragment)
         }
       }
+      /* eslint-enable no-await-in-loop */
       return
     }
   }
@@ -741,6 +745,7 @@ async function findXMLEquivalent(
           // Get indent level from parent paragraph
           const indentLevel = getIndentLevel(vNode)
 
+          /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
           for (const listChild of listChildren) {
             const listNode = listChild as VNodeType
             // Get existing numbering ID for this type+level, if any
@@ -770,6 +775,7 @@ async function findXMLEquivalent(
               indentLevel
             )
           }
+          /* eslint-enable no-await-in-loop */
           return
         }
       }
@@ -807,12 +813,15 @@ async function findXMLEquivalent(
             return
           }
           if (vNodeHasChildren(vn)) {
+            /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
             for (const child of vn.children || []) {
               await processImageInNode(child)
             }
+            /* eslint-enable no-await-in-loop */
           }
         }
 
+        /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
         for (let index = 0; index < (vNode.children || []).length; index++) {
           const childVNode = (vNode.children || [])[index] as VNodeType
           if (childVNode.tagName === 'table') {
@@ -859,6 +868,7 @@ async function findXMLEquivalent(
             }
           }
         }
+        /* eslint-enable no-await-in-loop */
       }
       return
     case 'table': {
@@ -964,11 +974,13 @@ async function findXMLEquivalent(
       return
   }
   if (vNodeHasChildren(vNode)) {
+    /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     for (let index = 0; index < (vNode.children || []).length; index++) {
       const childVNode = (vNode.children || [])[index]
 
       await convertVTreeToXML(docxDocumentInstance, childVNode, xmlFragment)
     }
+    /* eslint-enable no-await-in-loop */
   }
 }
 
@@ -1012,10 +1024,12 @@ export async function convertVTreeToXML(
     return ''
   }
   if (Array.isArray(vTree) && vTree.length) {
+    /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     for (let index = 0; index < vTree.length; index++) {
       const vNode = vTree[index]
       await convertVTreeToXML(docxDocumentInstance, vNode, xmlFragment)
     }
+    /* eslint-enable no-await-in-loop */
   } else if (isVNode(vTree)) {
     await findXMLEquivalent(docxDocumentInstance, vTree as VNodeType, xmlFragment)
   } else if (isVText(vTree)) {

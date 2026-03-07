@@ -990,6 +990,7 @@ const buildRun = async (
     // create temp run fragments to split the paragraph into different runs
     let tempAttributes: RunAttributes = cloneDeep(attributes)
     let tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
+    /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     while (vNodes.length) {
       const tempVNode = vNodes.shift()!
       if (isVText(tempVNode)) {
@@ -1116,6 +1117,7 @@ const buildRun = async (
         vNodes = tempVn.children.slice().concat(vNodes)
       }
     }
+    /* eslint-enable no-await-in-loop */
     if (runFragmentsArray.length) {
       return runFragmentsArray
     }
@@ -1237,6 +1239,7 @@ const buildRunOrRuns = async (
     let runFragments: XMLBuilderType[] = []
     const vn = vNode as VNodeType
 
+    /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     for (let index = 0; index < (vn.children || []).length; index++) {
       const childVNode = (vn.children || [])[index]
       const modifiedAttributes = modifiedStyleAttributesBuilder(
@@ -1253,6 +1256,7 @@ const buildRunOrRuns = async (
         Array.isArray(tempRunFragments) ? tempRunFragments : [tempRunFragments]
       )
     }
+    /* eslint-enable no-await-in-loop */
 
     return runFragments
   }
@@ -1781,6 +1785,7 @@ const buildParagraph = async (
         paragraphFragment.import(runFragmentOrFragments)
       }
     } else {
+      /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
       for (let index = 0; index < (vn.children || []).length; index++) {
         const childVNode = (vn.children || [])[index] as VNodeType
         if (childVNode.tagName === 'img') {
@@ -1856,6 +1861,7 @@ const buildParagraph = async (
           paragraphFragment.import(runOrHyperlinkFragments)
         }
       }
+      /* eslint-enable no-await-in-loop */
     }
   } else {
     // In case paragraphs has to be rendered where vText is present. Eg. table-cell
@@ -2214,6 +2220,7 @@ const buildTableCell = async (
 
   if (vNodeHasChildren(vNode as VNodeType)) {
     const vn = vNode as VNodeType
+    /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     for (let index = 0; index < (vn.children || []).length; index++) {
       const childVNode = (vn.children || [])[index]
       if (isVNode(childVNode) && (childVNode as VNodeType).tagName === 'img') {
@@ -2298,6 +2305,7 @@ const buildTableCell = async (
         tableCellFragment.import(paragraphFragment)
       }
     }
+    /* eslint-enable no-await-in-loop */
   } else {
     // TODO: Figure out why building with buildParagraph() isn't working
     const paragraphFragment = fragment({ namespaceAlias: { w: namespaces.w } })
@@ -2441,6 +2449,7 @@ const buildTableRow = async (
     const maximumColumnWidth =
       docxDocumentInstance.availableDocumentSpace / tableColumns.length
 
+    /* eslint-disable no-await-in-loop -- DOCX table cells must be built in document order */
     for (const column of tableColumns) {
       const rowSpanCellFragments = buildRowSpanCell(
         rowSpanMap,
@@ -2469,6 +2478,7 @@ const buildTableRow = async (
 
       tableRowFragment.import(tableCellFragment)
     }
+    /* eslint-enable no-await-in-loop */
   }
 
   if (columnIndex.index < rowSpanMap.size) {
@@ -2886,6 +2896,7 @@ const buildTable = async (
     }
 
     // Second pass: emit all tr elements
+    /* eslint-disable no-await-in-loop -- DOCX table rows must be built in document order */
     for (const childVNode of (vNode.children || []) as VNodeType[]) {
       if (childVNode.tagName === 'colgroup') {
         // Already handled above
@@ -2911,6 +2922,7 @@ const buildTable = async (
         tableFragment.import(tableRowFragment)
       }
     }
+    /* eslint-enable no-await-in-loop */
   }
   tableFragment.up()
 

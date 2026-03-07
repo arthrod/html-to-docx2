@@ -229,6 +229,7 @@ export const downloadAndCacheImage = async (
 
   let lastError: Error | null = null
 
+  /* eslint-disable no-await-in-loop -- retry/backoff attempts must be sequential */
   for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
     docxDocumentInstance._retryStats.totalAttempts += 1
 
@@ -275,6 +276,7 @@ export const downloadAndCacheImage = async (
       }
     }
   }
+  /* eslint-enable no-await-in-loop */
 
   docxDocumentInstance._retryStats.finalFailures += 1
   docxDocumentInstance._imageCache.set(imageSource, 'FAILED')
