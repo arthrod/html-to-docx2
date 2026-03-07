@@ -101,7 +101,7 @@
     "test:browser": "bun run build && npx -y serve . -l 8080 --no-clipboard",
     "prerelease": "bun run build:prod",
     "release": "standard-version",
-    "lint": "oxlint --fix .",
+    "lint": "oxlint --fix --tsconfig tsconfig.build.json .",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "validate": "bun run lint && bun run format:check",

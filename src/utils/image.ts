@@ -254,6 +254,7 @@ const convertSVGtoPNGCanvas = (
           }
           resolve(globalThis.btoa(binary))
         }
+        return undefined
       })
       .catch(() => {
         resolve(null)

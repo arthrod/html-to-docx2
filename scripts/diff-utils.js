@@ -56,6 +56,7 @@ async function extractDocx(docxPath, extractDir) {
             fs.mkdirSync(dir, { recursive: true })
           }
           fs.writeFileSync(filePath, content)
+          return undefined
         })
       )
     }

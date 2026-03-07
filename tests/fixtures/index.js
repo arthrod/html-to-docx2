@@ -9,11 +9,11 @@ import path from 'path'
 const fixturesDir = path.join(process.cwd(), 'tests', 'fixtures')
 
 // Load raw fixture files as buffers (path.join handles separators correctly on Windows/Unix)
-/** @type {Buffer<ArrayBufferLike>} */
+/** @type {Buffer} */
 export const PNG_FIXTURE = fs.readFileSync(path.join(fixturesDir, 'test-1x1.png'))
-/** @type {Buffer<ArrayBufferLike>} */
+/** @type {Buffer} */
 export const JPEG_FIXTURE = fs.readFileSync(path.join(fixturesDir, 'test-1x1.jpg'))
-/** @type {Buffer<ArrayBufferLike>} */
+/** @type {Buffer} */
 export const GIF_FIXTURE = fs.readFileSync(path.join(fixturesDir, 'test-1x1.gif'))
 /** @type {string} */
 export const SVG_FIXTURE = fs.readFileSync(

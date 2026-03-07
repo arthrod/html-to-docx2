@@ -270,7 +270,12 @@ function propertyIsTrue(
   >,
   value: VNodePropertyValue
 ): boolean {
-  const propertyValue = typeof value === 'string' ? value : String(value)
+  const propertyValue =
+    typeof value === 'string'
+      ? value
+      : typeof value === 'object'
+        ? JSON.stringify(value)
+        : String(value)
 
   if (propInfo.hasBooleanValue) {
     return propertyValue === '' || propertyValue.toLowerCase() === propInfo.attributeName
@@ -312,7 +317,13 @@ function setVNodeProperty(
 
   if (Object.hasOwn(propertyValueConversions, propName)) {
     valueConverter = propertyValueConversions[propName]
-    value = valueConverter(typeof value === 'string' ? value : String(value))
+    value = valueConverter(
+      typeof value === 'string'
+        ? value
+        : typeof value === 'object'
+          ? JSON.stringify(value)
+          : String(value)
+    )
   }
 
   properties[propInfo.propertyName] = getPropertyValue(propInfo, value)

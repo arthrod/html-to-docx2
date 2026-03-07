@@ -9,4 +9,4 @@ pre-commit:
 commit-msg:
   commands:
     oxlint:
-      run: bunx oxlint --fix {1}
+      run: bunx oxlint --fix --tsconfig tsconfig.build.json {1}

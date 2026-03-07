@@ -893,10 +893,7 @@ async function findXMLEquivalent(
         numberingId = existingId
       } else {
         // Create a new numbering ID for a new list sequence
-        numberingId = docxDocumentInstance.createNumbering(
-          vNode.tagName as 'ol' | 'ul',
-          vNode.properties
-        )
+        numberingId = docxDocumentInstance.createNumbering(vNode.tagName, vNode.properties)
       }
 
       // Update tracking with indent level
@@ -1022,12 +1019,12 @@ export async function convertVTreeToXML(
   } else if (isVNode(vTree)) {
     await findXMLEquivalent(docxDocumentInstance, vTree as VNodeType, xmlFragment)
   } else if (isVText(vTree)) {
-    const text = (vTree as VTextType).text
+    const text = vTree.text
     if (!text || !text.trim()) {
       return xmlFragment
     }
     const paragraphFragment = await xmlBuilder.buildParagraph(
-      vTree as VTextType,
+      vTree,
       {},
       docxDocumentInstance
     )

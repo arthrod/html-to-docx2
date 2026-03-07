@@ -40,4 +40,4 @@ async function generateDoc() {
   console.log('✅ DOCX created: example-rtl.docx')
 }
 
-generateDoc()
+void generateDoc()

@@ -348,7 +348,7 @@ async function generateSectionXML(
   sectionXML.root().import(XMLFragment)
 
   const referenceName = type === 'header' ? 'Header' : 'Footer'
-  const lastIdKey = `last${referenceName}Id` as 'lastFooterId' | 'lastHeaderId'
+  const lastIdKey = `last${referenceName}Id`
   this[lastIdKey] += 1
 
   if (type === 'header') {
@@ -1058,7 +1058,7 @@ class DocxDocument {
 
     relationshipObject.rels.push({
       relationshipId: lastRelsId,
-      type: relationshipType!,
+      type: relationshipType,
       target,
       targetMode,
     })

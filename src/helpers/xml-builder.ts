@@ -256,8 +256,7 @@ type FormattingOptions = {
 
 const fixupColorCode = (colorCodeString: string): string => {
   if (Object.hasOwn(colorNames, colorCodeString.toLowerCase())) {
-    const [red, green, blue] =
-      colorNames[colorCodeString.toLowerCase() as keyof typeof colorNames]
+    const [red, green, blue] = colorNames[colorCodeString.toLowerCase()]
 
     return rgbToHex(red, green, blue)
   }

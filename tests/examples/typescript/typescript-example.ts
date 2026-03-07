@@ -230,4 +230,4 @@ async function generateDocuments() {
   }
 }
 
-generateDocuments()
+void generateDocuments()

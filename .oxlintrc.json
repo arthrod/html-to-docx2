@@ -1,9 +1,10 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["import", "vitest", "jsx-a11y", "jsdoc", "typescript"],
+  "plugins": ["import", "vitest", "jsdoc", "typescript", "node", "promise"],
   "categories": {
     "correctness": "error",
-    "suspicious": "error"
+    "suspicious": "error",
+    "perf": "warn"
   },
   "rules": {
     "import/no-named-as-default": "error",
@@ -16,7 +17,12 @@
     "no-shadow": "warn",
     "no-unused-vars": "warn",
     "no-useless-concat": "warn",
-    "preserve-caught-error": "warn"
+    "preserve-caught-error": "warn",
+    "typescript/no-unsafe-type-assertion": "warn",
+    "typescript/no-floating-promises": "error"
+  },
+  "options": {
+    "typeAware": true
   },
   "env": {
     "builtin": true
@@ -25,6 +31,8 @@
     "dist/**",
     "coverage/**",
     "templates/**",
+    "api-surface/**",
+    "src/helpers/xml-builder.ts",
     "mockServiceWorker.js",
     "tsconfig.build.json"
   ]
