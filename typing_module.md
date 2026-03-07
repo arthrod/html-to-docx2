@@ -240,6 +240,14 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 
 Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
 
+- src/types/justjshtml/index-alias.d.ts
+- src/types/justjshtml/markdown-alias.d.ts
+- src/types/justjshtml/run-encoding-tests-script-alias.d.ts
+- src/types/justjshtml/run-markdown-tests-script-alias.d.ts
+- src/types/justjshtml/run-selector-tests-script-alias.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
 - src/types/justjshtml/constants-alias.d.ts
 - src/types/justjshtml/encoding-alias.d.ts
 - src/types/justjshtml/entities-alias.d.ts
