@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Generate the comprehensive regression baseline DOCX in a real headless browser
  * using the browser entrypoint bundle (no Node runtime conversion path).
@@ -16,6 +17,18 @@ const OUT_DIR = path.join(ROOT_DIR, 'tmp')
 const OUT_PATH = path.join(OUT_DIR, 'regression-baseline-browser.docx')
 const BUNDLE_ENTRY_PATH = path.join(OUT_DIR, 'regression-browser-entry.mjs')
 const BUNDLE_OUTPUT_PATH = path.join(OUT_DIR, 'regression-browser.bundle.js')
+
+/** @typedef {{title?: string, subject?: string, creator?: string, description?: string, keywords?: string[], lastModifiedBy?: string, revision?: number, orientation?: 'portrait' | 'landscape', margins?: object, font?: string, fontSize?: number, header?: boolean, headerType?: 'default' | 'even' | 'first', footer?: boolean, footerType?: 'default' | 'even' | 'first', pageNumber?: boolean, table?: object, imageProcessing?: object, heading?: object}} DocumentOptions */
+/** @typedef {{html: string, headerHtml: string, options: DocumentOptions, footerHtml: string}} BrowserGenerationPayload */
+/** @typedef {{base64: string | null, byteLength: number, error: string | null}} BrowserGenerationResult */
+
+/**
+ * @param {unknown} error
+ * @returns {Error}
+ */
+function toError(error) {
+  return error instanceof Error ? error : new Error(String(error))
+}
 
 function ensureOutDir() {
   if (!fs.existsSync(OUT_DIR)) {
@@ -104,6 +117,7 @@ function buildRegressionHtml() {
 }
 
 function getBaselineDocumentOptions() {
+  /** @type {DocumentOptions} */
   return {
     title: 'Comprehensive Regression Baseline',
     subject: 'OOXML Compliance & Feature Coverage',
@@ -183,6 +197,13 @@ function bundleBrowserEntrypoint() {
   )
 }
 
+/**
+ * @param {string} html
+ * @param {string} headerHtml
+ * @param {DocumentOptions} options
+ * @param {string} footerHtml
+ * @returns {Promise<Buffer>}
+ */
 async function generateViaHeadlessBrowser(html, headerHtml, options, footerHtml) {
   const browser = await chromium.launch({ headless: true })
 
@@ -194,7 +215,15 @@ async function generateViaHeadlessBrowser(html, headerHtml, options, footerHtml)
     await page.addScriptTag({ path: BUNDLE_OUTPUT_PATH })
 
     const result = await page.evaluate(
+      /**
+       * @param {BrowserGenerationPayload} payload
+       * @returns {Promise<BrowserGenerationResult>}
+       */
       async (payload) => {
+        /**
+         * @param {Uint8Array} bytes
+         * @returns {string}
+         */
         const toBase64 = (bytes) => {
           let binary = ''
           const chunkSize = 0x8000
@@ -208,17 +237,19 @@ async function generateViaHeadlessBrowser(html, headerHtml, options, footerHtml)
         }
 
         try {
-          if (typeof globalThis.__HTMLtoDOCX !== 'function') {
+          const maybeHtmlToDocx = Reflect.get(globalThis, '__HTMLtoDOCX')
+          if (typeof maybeHtmlToDocx !== 'function') {
             throw new Error('Browser HTMLtoDOCX entrypoint is unavailable')
           }
 
-          const docResult = await globalThis.__HTMLtoDOCX(
+          const docResult = await maybeHtmlToDocx(
             payload.html,
             payload.headerHtml,
             payload.options,
             payload.footerHtml
           )
 
+          /** @type {ArrayBufferLike} */
           let arrayBuffer
           if (docResult instanceof Blob) {
             arrayBuffer = await docResult.arrayBuffer()
@@ -239,13 +270,11 @@ async function generateViaHeadlessBrowser(html, headerHtml, options, footerHtml)
             error: null,
           }
         } catch (error) {
+          const normalizedError = error instanceof Error ? error : new Error(String(error))
           return {
             base64: null,
             byteLength: 0,
-            error:
-              error instanceof Error
-                ? `${error.message}\n${error.stack || ''}`
-                : String(error),
+            error: `${normalizedError.message}\n${normalizedError.stack || ''}`,
           }
         }
       },
@@ -291,7 +320,7 @@ async function main() {
   // Keep bundle artifacts under tmp for debugging/repro; overwrite on next run.
 }
 
-main().catch((err) => {
-  console.error('Failed to generate browser baseline:', err)
+main().catch((error) => {
+  console.error('Failed to generate browser baseline:', toError(error))
   process.exit(1)
 })

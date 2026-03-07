@@ -1,6 +1,21 @@
+// @ts-check
 /* eslint-disable no-console */
 const fs = require('fs')
-const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+const { default: htmlToDocxUntyped } = require('../dist/index.cjs')
+
+/**
+ * @typedef {(htmlString: string, headerHTMLString?: string | null, documentOptions?: object, footerHTMLString?: string | null) => Promise<Uint8Array | Buffer>} HtmlToDocxNode
+ */
+/** @type {HtmlToDocxNode} */
+const HTMLtoDOCX = htmlToDocxUntyped
+
+/**
+ * @param {unknown} error
+ * @returns {Error}
+ */
+function toError(error) {
+  return error instanceof Error ? error : new Error(String(error))
+}
 
 async function testVariousSVGs() {
   console.log('🔬 Testing various SVG scenarios with verbose logging...\n')
@@ -75,8 +90,9 @@ async function testVariousSVGs() {
 
     console.log('✨ Success! Open the file to verify all SVGs render correctly.')
   } catch (error) {
-    console.error('❌ Error:', error.message)
-    console.error(error.stack)
+    const normalizedError = toError(error)
+    console.error('❌ Error:', normalizedError.message)
+    console.error(normalizedError.stack)
     process.exit(1)
   }
 }

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Generate the comprehensive regression baseline DOCX.
  *
@@ -13,12 +14,26 @@ const path = require('path')
 
 const OUT_DIR = path.resolve(__dirname, '../../tmp')
 
+/**
+ * @typedef {(htmlString: string, headerHTMLString?: string | null, documentOptions?: object, footerHTMLString?: string | null) => Promise<Uint8Array | Buffer>} HtmlToDocxNode
+ */
+
+/**
+ * @param {unknown} error
+ * @returns {Error}
+ */
+function toError(error) {
+  return error instanceof Error ? error : new Error(String(error))
+}
+
 async function main() {
   if (!fs.existsSync(OUT_DIR)) {
     fs.mkdirSync(OUT_DIR, { recursive: true })
   }
 
-  const { default: HTMLtoDOCX } = require('../../dist/node.cjs')
+  const { default: htmlToDocxUntyped } = require('../../dist/node.cjs')
+  /** @type {HtmlToDocxNode} */
+  const HTMLtoDOCX = htmlToDocxUntyped
 
   // Read the static HTML source
   let html = fs.readFileSync(path.join(__dirname, 'regression-source.html'), 'utf-8')
@@ -172,7 +187,7 @@ async function main() {
   console.log(`File size: ${(fs.statSync(outPath).size / 1024).toFixed(1)} KB`)
 }
 
-main().catch((err) => {
-  console.error('Failed to generate baseline:', err)
+main().catch((error) => {
+  console.error('Failed to generate baseline:', toError(error))
   process.exit(1)
 })

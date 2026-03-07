@@ -109,3 +109,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/example-heading-styles.cjs
 - tests/generate-validation-docx.cjs
 - scripts/check-api-parity.cjs
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- scripts/check-api-surface-drift.cjs
+- tests/comprehensive-svg-test.js
+- tests/regression-baseline/generate-baseline.cjs
+- tests/regression-baseline/generate-baseline-browser.cjs
+- tests/entrypoints.test.js
