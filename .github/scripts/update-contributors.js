@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 
 const fs = require('fs')
 const path = require('path')
@@ -7,6 +8,14 @@ const path = require('path')
 const PACKAGE_JSON_PATH = path.join(process.cwd(), 'package.json')
 const EXCLUDED_USERS = new Set(['dependabot[bot]', 'dependabot', 'github-actions[bot]'])
 
+/**
+ * @typedef {{ contributors?: string[] }} PackageJsonWithContributors
+ */
+
+/**
+ * @param {string} username
+ * @returns {Promise<string | null>}
+ */
 async function getGitHubUserEmail(username) {
   try {
     const response = await fetch(`https://api.github.com/users/${username}`, {
@@ -17,15 +26,22 @@ async function getGitHubUserEmail(username) {
     })
 
     if (response.ok) {
+      /** @type {{ email?: string | null }} */
       const user = await response.json()
       return user.email
     }
   } catch (error) {
-    console.log(`Could not fetch email for ${username}:`, error.message)
+    const message = error instanceof Error ? error.message : String(error)
+    console.log(`Could not fetch email for ${username}:`, message)
   }
   return null
 }
 
+/**
+ * @param {string} username
+ * @param {string | null} email
+ * @returns {string}
+ */
 function formatContributor(username, email) {
   if (email && email !== 'null' && email !== '') {
     return `${username} <${email}>`
@@ -33,6 +49,11 @@ function formatContributor(username, email) {
   return username
 }
 
+/**
+ * @param {string[]} contributors
+ * @param {string} username
+ * @returns {boolean}
+ */
 function isContributorAlreadyListed(contributors, username) {
   const normalizedUsername = username.toLowerCase()
   return contributors.some((contributor) => {
@@ -61,9 +82,10 @@ async function updateContributors() {
   let packageJson
   try {
     const packageContent = fs.readFileSync(PACKAGE_JSON_PATH, 'utf8')
-    packageJson = JSON.parse(packageContent)
+    packageJson = /** @type {PackageJsonWithContributors} */ (JSON.parse(packageContent))
   } catch (error) {
-    console.error('Error reading package.json:', error.message)
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('Error reading package.json:', message)
     process.exit(1)
   }
 
@@ -97,13 +119,15 @@ async function updateContributors() {
     fs.writeFileSync(PACKAGE_JSON_PATH, JSON.stringify(packageJson, null, 2) + '\n')
     console.log(`Added ${formattedContributor} to contributors list`)
   } catch (error) {
-    console.error('Error writing package.json:', error.message)
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('Error writing package.json:', message)
     process.exit(1)
   }
 }
 
 // Run the script
 updateContributors().catch((/** @type {unknown} */ error) => {
-  console.error('Script failed:', /** @type {Error} */ (error).message)
+  const message = error instanceof Error ? error.message : String(error)
+  console.error('Script failed:', message)
   process.exit(1)
 })

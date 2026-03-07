@@ -18,17 +18,40 @@ import {
 } from './fixtures/index.js'
 import { parseDOCX } from './helpers/docx-assertions.js'
 
+/**
+ * @typedef {{
+ *   imageProcessing?: Record<string, number | boolean | string>
+ *   _imageCache?: Map<string, string | null>
+ *   _retryStats?: {
+ *     totalAttempts: number
+ *     successAfterRetry: number
+ *     finalFailures: number
+ *   }
+ * }} MockDocxInstance
+ */
+
+/**
+ * @typedef {Buffer} NodeBuffer
+ */
+
 // Helper to create a mock fetch response from a Buffer
+/**
+ * @param {NodeBuffer} data
+ * @param {number} [status]
+ * @returns {Promise<Response>}
+ */
 function mockFetchResponse(data, status = 200) {
   const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
-  return Promise.resolve({
+  const response = {
     ok: status >= 200 && status < 300,
     status,
     statusText: status === 200 ? 'OK' : status === 404 ? 'Not Found' : 'Error',
     headers: new Headers({ 'content-type': 'image/png' }),
     arrayBuffer: () => Promise.resolve(arrayBuffer),
     blob: () => Promise.resolve(new Blob([arrayBuffer])),
-  })
+  }
+
+  return Promise.resolve(/** @type {Response} */ (response))
 }
 
 describe('Image Processing', () => {
@@ -561,6 +584,7 @@ describe('Image Processing', () => {
   })
 
   describe('processImageSource helper', () => {
+    /** @type {MockDocxInstance} */
     let mockDocxInstance
 
     beforeEach(() => {
@@ -805,6 +829,7 @@ describe('Image Processing', () => {
     })
 
     test('clearImageCache should work with docxDocumentInstance', () => {
+      /** @type {MockDocxInstance} */
       const mockInstance = {
         _imageCache: new Map([
           ['url1', 'data1'],
@@ -829,6 +854,7 @@ describe('Image Processing', () => {
     })
 
     test('getImageCacheStats should return correct stats', () => {
+      /** @type {MockDocxInstance} */
       const mockInstance = {
         _imageCache: new Map([
           ['url1', 'data:image/png;base64,abc'],
@@ -856,6 +882,7 @@ describe('Image Processing', () => {
     })
 
     test('getImageCacheStats should handle missing cache gracefully', () => {
+      /** @type {MockDocxInstance} */
       const mockInstance = {}
 
       const stats = getImageCacheStats(mockInstance)
@@ -870,6 +897,7 @@ describe('Image Processing', () => {
     })
 
     test('clearImageCache should handle missing cache gracefully', () => {
+      /** @type {MockDocxInstance} */
       const mockInstance = {}
 
       const clearedCount = clearImageCache(mockInstance)

@@ -157,3 +157,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/html-parser.test.js
 - tests/tracked-changes.test.js
 - tests/svg-sanitization.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- .github/scripts/update-contributors.js
+- tests/image-processing.test.js
+- src/types/justjshtml.d.ts
+- api-surface/browser.rollup.d.ts
+- api-surface/node.rollup.d.ts
