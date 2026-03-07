@@ -12,6 +12,7 @@
 import {
   cmRegex,
   cmToTWIP,
+  HIPToPixel,
   HIPToTWIP,
   inchRegex,
   inchToTWIP,
@@ -23,6 +24,7 @@ import {
   pixelToTWIP,
   pointRegex,
   pointToEIP,
+  pointToPixel,
   pointToHIP,
   pointToTWIP,
   TWIPToEMU,
@@ -140,6 +142,18 @@ describe('unit conversion', () => {
       // 1 half point = 10 TWIP
       expect(HIPToTWIP(1)).toBe(10)
       expect(HIPToTWIP(22)).toBe(220) // 11pt = 22 half points = 220 TWIP
+    })
+
+    it('HIPToPixel should convert half points back to pixels', () => {
+      expect(HIPToPixel(15)).toBe(10)
+      expect(HIPToPixel(2)).toBe(1)
+    })
+  })
+
+  describe('point and pixel round trips', () => {
+    it('pointToPixel should convert points to pixels via HIP', () => {
+      expect(pointToPixel(12)).toBe(16)
+      expect(pointToPixel(24)).toBe(32)
     })
   })
 })

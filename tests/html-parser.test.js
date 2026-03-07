@@ -488,4 +488,15 @@ describe('HTML Parser - Boolean and Numeric Property Handling', () => {
 
     expect(result.properties.start).toBe(5)
   })
+
+  test('supports getVNodeKey option callback', () => {
+    const result = convertHTML(
+      {
+        getVNodeKey: (props) => props.attributes?.class || null,
+      },
+      '<div class="k-1">keyed</div>'
+    )
+
+    expect(result.key).toBe('k-1')
+  })
 })

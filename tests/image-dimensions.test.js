@@ -85,6 +85,40 @@ describe('getImageDimensions', () => {
     })
   })
 
+  test('skips non-marker bytes while scanning jpeg segments', () => {
+    const jpeg = bytes(
+      0xff,
+      0xd8,
+      0xff,
+      0xe0,
+      0x00,
+      0x04,
+      0x00,
+      0x00,
+      0x01,
+      0x02,
+      0xff,
+      0xc0,
+      0x00,
+      0x11,
+      0x08,
+      0x01,
+      0x90,
+      0x02,
+      0x58,
+      0x03,
+      0x01,
+      0x11,
+      0x00
+    )
+
+    expect(getDimensions(jpeg)).toEqual({
+      height: 400,
+      type: 'jpg',
+      width: 600,
+    })
+  })
+
   test('parses gif dimensions', () => {
     const gif = bytes(0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x20, 0x03, 0x58, 0x02)
 
@@ -153,6 +187,19 @@ describe('getImageDimensions', () => {
     expect(getDimensions(bytes(0x00, 0x11, 0x22, 0x33))).toEqual({
       height: 100,
       type: 'unknown',
+      width: 100,
+    })
+  })
+
+  test('falls back for unsupported webp chunk variants', () => {
+    const webp = new Uint8Array(20)
+    webp.set([0x52, 0x49, 0x46, 0x46], 0)
+    webp.set([0x57, 0x45, 0x42, 0x50], 8)
+    webp.set([0x56, 0x50, 0x38, 0x58], 12) // VP8X/unsupported in parser
+
+    expect(getDimensions(webp)).toEqual({
+      height: 100,
+      type: 'webp',
       width: 100,
     })
   })

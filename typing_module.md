@@ -205,3 +205,9 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/types/justjshtml/html5lib-serializer.d.ts
 - src/types/justjshtml/index.d.ts
 - src/types/justjshtml/package-root.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- tests/font-family-conversion.test.js
+- tests/unit-conversion-extra.test.js
+- tests/xmlbuilder2-guards.test.js
