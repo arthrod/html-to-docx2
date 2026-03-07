@@ -50,14 +50,14 @@ async function extractDocx(docxPath, extractDir) {
     } else {
       // Extract file
       promises.push(
-        file.async('nodebuffer').then((content) => {
+        (async () => {
+          const content = await file.async('nodebuffer')
           const dir = path.dirname(filePath)
           if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true })
           }
           fs.writeFileSync(filePath, content)
-          return undefined
-        })
+        })()
       )
     }
   })

@@ -214,7 +214,7 @@ export const parseSVGDimensions = (
  * Converts SVG base64 content to PNG base64 using the browser Canvas API.
  * Returns null if Canvas is not available (e.g. pure Node without OffscreenCanvas).
  */
-const convertSVGtoPNGCanvas = (
+const convertSVGtoPNGCanvas = async (
   svgBase64: string,
   width: number,
   height: number
@@ -222,44 +222,40 @@ const convertSVGtoPNGCanvas = (
   const CanvasClass = typeof OffscreenCanvas !== 'undefined' ? OffscreenCanvas : null
 
   if (!CanvasClass) {
-    return Promise.resolve(null)
+    return null
   }
 
-  return new Promise((resolve) => {
-    const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`
-    const canvas = new CanvasClass(width, height)
-    const ctx = canvas.getContext('2d')
+  const svgDataUrl = `data:image/svg+xml;base64,${svgBase64}`
+  const canvas = new CanvasClass(width, height)
+  const ctx = canvas.getContext('2d')
 
-    if (!ctx) {
-      resolve(null)
-      return
+  if (!ctx) {
+    return null
+  }
+
+  try {
+    const res = await fetch(svgDataUrl)
+    const blob = await res.blob()
+    const bitmap = await createImageBitmap(blob, {
+      resizeWidth: width,
+      resizeHeight: height,
+    })
+    ctx.drawImage(bitmap, 0, 0, width, height)
+    const pngBlob = await canvas.convertToBlob({ type: 'image/png' })
+    const arrayBuffer = await pngBlob.arrayBuffer()
+
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(arrayBuffer).toString('base64')
     }
-
-    fetch(svgDataUrl)
-      .then((res) => res.blob())
-      .then((blob) => createImageBitmap(blob, { resizeWidth: width, resizeHeight: height }))
-      .then((bitmap) => {
-        ctx.drawImage(bitmap, 0, 0, width, height)
-        return canvas.convertToBlob({ type: 'image/png' })
-      })
-      .then((blob) => blob.arrayBuffer())
-      .then((arrayBuffer) => {
-        if (typeof Buffer !== 'undefined') {
-          resolve(Buffer.from(arrayBuffer).toString('base64'))
-        } else {
-          const bytes = new Uint8Array(arrayBuffer)
-          let binary = ''
-          for (let i = 0; i < bytes.length; i += 1) {
-            binary += String.fromCharCode(bytes[i])
-          }
-          resolve(globalThis.btoa(binary))
-        }
-        return undefined
-      })
-      .catch(() => {
-        resolve(null)
-      })
-  })
+    const bytes = new Uint8Array(arrayBuffer)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i += 1) {
+      binary += String.fromCharCode(bytes[i])
+    }
+    return globalThis.btoa(binary)
+  } catch {
+    return null
+  }
 }
 
 /**
