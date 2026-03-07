@@ -1,4 +1,6 @@
-import { escapeXml } from '../html-to-docx_ts/utils/xml-escape'
+// @ts-check
+
+import { escapeXml } from '../src/utils/xml-escape'
 
 describe('xml-escape utility', () => {
   // https://github.com/TurboDocx/html-to-docx/pull/129

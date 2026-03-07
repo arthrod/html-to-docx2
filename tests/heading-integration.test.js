@@ -1,5 +1,5 @@
-import { defaultHeadingOptions } from '../html-to-docx_ts/constants'
 import HTMLtoDOCX from '../index.ts'
+import { defaultHeadingOptions } from '../src/constants'
 import {
   parseDOCX,
   assertParagraphCount,
@@ -21,6 +21,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, {})
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       // Verify document structure
       assertParagraphCount(parsed, 6)
@@ -56,6 +58,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Custom Styled Heading')
       assertParagraphText(parsed, 1, 'This heading should use custom styles')
@@ -74,6 +78,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, {})
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 6)
       assertParagraphText(parsed, 0, 'Heading 1')
@@ -104,6 +110,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 3)
       assertParagraphText(parsed, 0, 'Title with Custom Font')
       assertParagraphText(parsed, 1, 'Subtitle with Default Styles')
@@ -127,6 +135,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
       assertParagraphText(parsed, 1, 'Content')
@@ -142,6 +152,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
@@ -165,6 +177,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
@@ -190,6 +204,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
       assertParagraphText(parsed, 1, 'Content')
@@ -213,6 +229,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
@@ -239,6 +257,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
     })
@@ -258,6 +278,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
@@ -279,6 +301,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
     })
@@ -298,6 +322,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
@@ -319,6 +345,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
       // Zero spacing is valid and document should generate
@@ -339,6 +367,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Test Heading')
@@ -373,6 +403,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, {})
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 14)
       assertParagraphText(parsed, 0, 'Document Title')
@@ -414,6 +446,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 4)
       assertParagraphText(parsed, 0, 'Custom H1')
       assertParagraphText(parsed, 1, 'Custom H2')
@@ -444,6 +478,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Heading with Custom Styles')
       assertParagraphText(parsed, 1, 'Paragraph with document font')
@@ -468,6 +504,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 3)
       assertParagraphText(parsed, 0, 'Test Document')
@@ -496,6 +534,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'عنوان')
       assertParagraphText(parsed, 1, 'محتوى')
@@ -519,6 +559,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Non-Bold Heading')
     })
@@ -539,6 +581,8 @@ describe('Heading Styles Integration Tests', () => {
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
 
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
+
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Heading Without Keep Lines')
     })
@@ -558,6 +602,8 @@ describe('Heading Styles Integration Tests', () => {
 
       const result = await HTMLtoDOCX(htmlString, options)
       const parsed = await parseDOCX(result)
+
+      expect(parsed.paragraphs.length).toBeGreaterThan(0)
 
       assertParagraphCount(parsed, 2)
       assertParagraphText(parsed, 0, 'Heading Without Keep Next')

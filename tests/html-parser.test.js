@@ -3,8 +3,8 @@
  * Tests the htmlparser2-based HTML to VNode conversion
  */
 
-import createHTMLtoVDOM from '../html-to-docx_ts/helpers/html-parser'
-import { isVNode, isVText } from '../html-to-docx_ts/vdom/index'
+import createHTMLtoVDOM from '../src/helpers/html-parser'
+import { isVNode, isVText } from '../src/vdom/index'
 
 const convertHTML = createHTMLtoVDOM()
 
@@ -363,12 +363,11 @@ describe('HTML Parser - Edge Cases', () => {
     const result = convertHTML('<!-- comment --><div>Content</div>')
 
     // Comments should be ignored, result should be the div
-    if (Array.isArray(result)) {
-      const divs = result.filter((node) => node.tagName === 'div')
-      expect(divs).toHaveLength(1)
-    } else {
-      expect(result.tagName).toBe('div')
-    }
+    const divs = Array.isArray(result)
+      ? result.filter((node) => node.tagName === 'div')
+      : [result]
+    expect(divs).toHaveLength(1)
+    expect(divs[0].tagName).toBe('div')
   })
 
   test('should handle script tags', () => {

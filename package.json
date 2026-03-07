@@ -1,5 +1,5 @@
 {
-  "name": "@turbodocx/html-to-docx",
+  "name": "html-to-docx-with-justjshtml",
   "version": "1.20.1",
   "description": "HTML to DOCX converter",
   "keywords": [
@@ -42,63 +42,76 @@
     "rtl",
     "right to left"
   ],
-  "main": "dist/html-to-docx.umd.js",
-  "module": "dist/html-to-docx.esm.js",
-  "browser": "dist/html-to-docx.browser.esm.js",
-  "unpkg": "dist/html-to-docx.browser.js",
-  "jsdelivr": "dist/html-to-docx.browser.js",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/browser.js",
+  "types": "./dist/browser.d.ts",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "import": "./dist/html-to-docx.esm.js",
-      "require": "./dist/html-to-docx.umd.js",
-      "default": "./dist/html-to-docx.esm.js"
+      "browser": {
+        "types": "./dist/browser.d.ts",
+        "import": "./dist/browser.js"
+      },
+      "node": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/node.js",
+        "require": "./dist/node.cjs"
+      },
+      "default": {
+        "types": "./dist/browser.d.ts",
+        "import": "./dist/browser.js"
+      }
     },
     "./browser": {
-      "import": "./dist/html-to-docx.browser.esm.js",
-      "default": "./dist/html-to-docx.browser.js"
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js",
+      "default": "./dist/browser.js"
+    },
+    "./node": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/node.js",
+      "require": "./dist/node.cjs"
     }
   },
-  "types": "index.d.ts",
   "files": [
     "dist",
-    "scripts/postinstall.js",
-    "scripts/messages.json",
     "index.d.ts",
     "README.md",
     "LICENSE"
   ],
+  "sideEffects": false,
   "scripts": {
-    "test": "npm run build && node example/example-node.js",
-    "test:comprehensive-svg": "npm run build && node example/comprehensive-svg-test.js",
-    "test:example-inline-svg": "npm run build && node example/example-inline-svg.js",
-    "test:rtl": "npm run build && node example/example-rtl.js",
-    "test:headings": "npm run build && node example/example-heading-styles.js",
-    "test:ts": "npm run build && cross-env TS_NODE_PROJECT=example/typescript/tsconfig.json ts-node -r tsconfig-paths/register example/typescript/typescript-example.ts",
-    "test:ts-rtl": "npm run build && cross-env TS_NODE_PROJECT=example/typescript/tsconfig.json ts-node -r tsconfig-paths/register example/typescript/rtl-example.ts",
-    "test:all": "npm run test:unit && npm run test && npm run test:headings && npm run test:ts && npm run test:ts-rtl",
+    "test": "bun run build && node tests/example-node.cjs",
+    "test:comprehensive-svg": "bun run build && node tests/comprehensive-svg-test.js",
+    "test:example-inline-svg": "bun run build && node tests/example-inline-svg.js",
+    "test:rtl": "bun run build && node tests/example-rtl.js",
+    "test:headings": "bun run build && node tests/example-heading-styles.cjs",
+    "test:baseline:node": "bun run build && node tests/regression-baseline/generate-baseline.cjs",
+    "test:baseline:browser": "bun run build && node tests/regression-baseline/generate-baseline-browser.cjs",
+    "test:ts": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/typescript-example.ts",
+    "test:ts-rtl": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/rtl-example.ts",
+    "test:prepare-artifacts": "node -e \"const fs=require('fs'); const path=require('path'); const tmp=path.resolve('tmp'); fs.mkdirSync(tmp,{recursive:true}); const stale=path.join(tmp,'example-node-browser.docx'); if (fs.existsSync(stale)) fs.rmSync(stale,{force:true});\"",
+    "test:browser-images": "bun run build && node tests/example-browser-images.cjs",
+    "test:all": "bun run test:prepare-artifacts && bun run test:unit:coverage && bun run test && bun run test:browser-images && bun run test:headings && bun run test:ts && bun run test:ts-rtl && bun run test:baseline:node && bun run test:baseline:browser && bun run api:check",
+    "api:extract:browser": "api-extractor run --local --config config/api-extractor.browser.json",
+    "api:extract:node": "api-extractor run --local --config config/api-extractor.node.json",
+    "api:check": "bun run build && bun run api:extract:browser && bun run api:extract:node && node scripts/check-api-parity.cjs",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:unit:coverage": "vitest run --coverage",
-    "test:vite:build": "npm run build && vite build --config vite.config.mjs",
-    "test:vite:analyze:baseline": "npm run build && cross-env BUNDLE_ANALYZE=1 BUNDLE_ANALYZE_NAME=stats-baseline vite build --config vite.config.mjs",
-    "test:vite:dev": "vite --config vite.config.mjs",
-    "test:browser": "npm run build && npx -y serve . -l 8080 --no-clipboard",
-    "prerelease": "npm run build:prod",
+    "test:browser": "bun run build && npx -y serve . -l 8080 --no-clipboard",
+    "prerelease": "bun run build:prod",
     "release": "standard-version",
-    "lint": "oxlint --fix .",
+    "lint": "oxlint --fix --tsconfig tsconfig.build.json .",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
-    "validate": "npm run lint && npm run format:check",
-    "build": "rollup -c",
-    "build:dev": "NODE_ENV=development rollup -c",
-    "build:prod": "NODE_ENV=production rollup -c",
-    "build:browser": "cross-env BUILD_TARGET=browser rollup -c",
-    "build:browser:prod": "cross-env NODE_ENV=production BUILD_TARGET=browser rollup -c",
+    "validate": "bun run lint && bun run format:check",
+    "build": "tsdown",
+    "build:dev": "NODE_ENV=development tsdown",
+    "build:prod": "NODE_ENV=production tsdown",
     "diff:docx": "node scripts/diff-docx.js",
-    "prepare": "husky install",
-    "postinstall": "node scripts/postinstall.js",
-    "test:ts-example": "npm run build && cross-env TS_NODE_PROJECT=example/typescript/tsconfig.json ts-node -r tsconfig-paths/register example/typescript/typescript-example.ts"
+    "prepare": "lefthook install",
+    "test:ts-example": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/typescript-example.ts"
   },
   "repository": {
     "type": "git",
@@ -140,19 +153,18 @@
   },
   "homepage": "https://github.com/TurboDocx/html-to-docx#readme",
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^13.1.0",
-    "@rollup/plugin-commonjs": "^28.0.3",
-    "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.1.1",
-    "@rollup/plugin-typescript": "^12.3.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "cross-env": "^7.0.3",
-    "diff": "^5.2.0",
-    "husky": "^7.0.0",
-    "lint-staged": "^11.1.2",
+    "@microsoft/api-extractor": "^7.57.6",
+    "@playwright/test": "^1.58.2",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.3.3",
+    "@vitest/coverage-v8": "4.0.18",
+    "cross-env": "10.1.0",
+    "diff": "8.0.3",
+    "lefthook": "^1.11.13",
+    "lint-staged": "16.3.2",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.23.0",
+    "oxlint-tsgolint": "^0.16.0",
     "rollup": "^4.59.0",
     "rollup-plugin-cleaner": "^1.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
@@ -162,34 +174,26 @@
     "standard-version": "^9.3.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsdown": "^0.21.0",
     "tslib": "^2.8.1",
-    "typescript": "^5.8.3",
-    "vite": "^7.3.1",
-    "vite-bundle-analyzer": "^1.3.6",
-    "vite-plugin-console-pipe": "^2.1.0",
-    "vite-plugin-node-polyfills": "^0.25.0",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.34.5"
   },
   "dependencies": {
-    "axios": "^1.12.2",
-    "color-name": "^1.1.4",
+    "color-name": "2.1.0",
+    "es-toolkit": "^1.45.1",
     "html-entities": "^2.3.3",
-    "html-minifier-terser": "^7.2.0",
-    "htmlparser2": "^10.0.0",
-    "image-size": "^2.0.2",
     "jszip": "^3.7.1",
-    "lodash-es": "^4.17.21",
-    "lru-cache": "^10.4.3",
-    "mime-types": "^2.1.35",
-    "nanoid": "^3.1.25",
-    "xmlbuilder2": "2.4.1"
+    "justjshtml": "github:simonw/justjshtml#a415d0af40c34bf9a856e956d841513f482867e3",
+    "nanoid": "5.1.6",
+    "xmlbuilder2": "4.0.3"
   },
   "overrides": {
     "bl": "^1.2.3",
-    "semver": "^7.6.0",
-    "sharp": {
-      "semver": "^7.6.0"
-    }
+    "semver": "^7.6.0"
   },
   "resolutions": {
     "bl": "^1.2.3",

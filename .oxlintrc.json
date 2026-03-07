@@ -1,23 +1,62 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["import", "vitest"],
+  "plugins": [
+    "eslint",
+    "oxc",
+    "unicorn",
+    "typescript",
+    "import",
+    "vitest",
+    "jsdoc",
+    "node",
+    "promise"
+  ],
   "categories": {
     "correctness": "error",
-    "suspicious": "error"
+    "suspicious": "error",
+    "perf": "error",
+    "restriction": "warn"
   },
   "rules": {
-    "import/no-named-as-default": "off",
-    "import/no-unassigned-import": "off",
-    "jest/expect-expect": "off",
-    "jest/no-conditional-expect": "off",
-    "jest/require-to-throw-message": "off",
-    "no-shadow": "off",
-    "no-unused-vars": "off",
-    "no-useless-concat": "off",
-    "preserve-caught-error": "off"
+    "import/no-named-as-default": "error",
+    "no-explicit-any": "error",
+    "import/no-unassigned-import": "error",
+    "jest/expect-expect": "error",
+    "typescript/use-unknown-in-catch-callback-variable": "error",
+    "jest/no-conditional-expect": "error",
+    "jest/require-to-throw-message": "error",
+    "no-shadow": "error",
+    "no-unused-vars": "error",
+    "no-useless-concat": "error",
+    "preserve-caught-error": "error",
+    "typescript/no-unsafe-type-assertion": "warn",
+    "typescript/no-floating-promises": "error",
+    "unicorn/no-process-exit": "error",
+    "oxc/no-barrel-file": "error",
+    "no-empty-function": "error",
+    "class-methods-use-this": "error",
+    "unicorn/no-array-reduce": "error",
+    "no-param-reassign": "error",
+    "default-case": "error",
+    "node/no-process-env": "error",
+    "no-eq-null": "error",
+    "typescript/no-invalid-void-type": "error",
+    "typescript/explicit-module-boundary-types": "error",
+    "import/no-cycle": "error",
+    "no-empty": "error"
+  },
+  "options": {
+    "typeAware": true
   },
   "env": {
     "builtin": true
   },
-  "ignorePatterns": ["dist/**", "coverage/**", "templates/**", "mockServiceWorker.js"]
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    "templates/**",
+    "api-surface/**",
+    "mockServiceWorker.js",
+    "tsconfig.build.json"
+  ]
 }

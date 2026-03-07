@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * Test Helper Constants
  *
@@ -21,7 +23,8 @@
  *   <w:r><w:t>Hello World</w:t></w:r>
  * </w:p>
  */
-export const PARAGRAPH_REGEX = /<w:p\b[^>]*>[\s\S]*?<\/w:p>/g;
+/** @type {RegExp} */
+export const PARAGRAPH_REGEX = /<w:p\b[^>]*>[\s\S]*?<\/w:p>/g
 
 /**
  * Matches paragraph alignment/justification property.
@@ -32,7 +35,8 @@ export const PARAGRAPH_REGEX = /<w:p\b[^>]*>[\s\S]*?<\/w:p>/g;
  *
  * Example: <w:jc w:val="center"/> → captures "center"
  */
-export const ALIGNMENT_REGEX = /<w:jc w:val="([^"]+)"/;
+/** @type {RegExp} */
+export const ALIGNMENT_REGEX = /<w:jc w:val="([^"]+)"/
 
 /**
  * Matches paragraph spacing before property.
@@ -43,7 +47,8 @@ export const ALIGNMENT_REGEX = /<w:jc w:val="([^"]+)"/;
  *
  * Example: <w:spacing w:before="240"/> → captures "240"
  */
-export const SPACING_BEFORE_REGEX = /<w:spacing[^>]*w:before="([^"]+)"/;
+/** @type {RegExp} */
+export const SPACING_BEFORE_REGEX = /<w:spacing[^>]*w:before="([^"]+)"/
 
 /**
  * Matches paragraph spacing after property.
@@ -54,7 +59,8 @@ export const SPACING_BEFORE_REGEX = /<w:spacing[^>]*w:before="([^"]+)"/;
  *
  * Example: <w:spacing w:after="120"/> → captures "120"
  */
-export const SPACING_AFTER_REGEX = /<w:spacing[^>]*w:after="([^"]+)"/;
+/** @type {RegExp} */
+export const SPACING_AFTER_REGEX = /<w:spacing[^>]*w:after="([^"]+)"/
 
 // =============================================================================
 // RUN-LEVEL PATTERNS (Text formatting)
@@ -73,7 +79,8 @@ export const SPACING_AFTER_REGEX = /<w:spacing[^>]*w:after="([^"]+)"/;
  *   <w:t>Bold red text</w:t>
  * </w:r>
  */
-export const RUN_REGEX = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g;
+/** @type {RegExp} */
+export const RUN_REGEX = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g
 
 /**
  * Matches text content elements.
@@ -84,7 +91,8 @@ export const RUN_REGEX = /<w:r\b[^>]*>([\s\S]*?)<\/w:r>/g;
  *
  * Example: <w:t>Hello</w:t> → captures "Hello"
  */
-export const TEXT_REGEX = /<w:t[^>]*>(.*?)<\/w:t>/g;
+/** @type {RegExp} */
+export const TEXT_REGEX = /<w:t[^>]*>(.*?)<\/w:t>/g
 
 /**
  * Matches font family in run properties.
@@ -96,7 +104,8 @@ export const TEXT_REGEX = /<w:t[^>]*>(.*?)<\/w:t>/g;
  * Note: Can also include w:hAnsi, w:cs, w:eastAsia for different character sets
  * Example: <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/> → captures "Calibri"
  */
-export const FONT_REGEX = /<w:rFonts[^>]*w:ascii="([^"]+)"/;
+/** @type {RegExp} */
+export const FONT_REGEX = /<w:rFonts[^>]*w:ascii="([^"]+)"/
 
 /**
  * Matches text color in run properties.
@@ -107,7 +116,8 @@ export const FONT_REGEX = /<w:rFonts[^>]*w:ascii="([^"]+)"/;
  *
  * Example: <w:color w:val="0000FF"/> → captures "0000FF" (blue)
  */
-export const COLOR_REGEX = /<w:color w:val="([^"]+)"/;
+/** @type {RegExp} */
+export const COLOR_REGEX = /<w:color w:val="([^"]+)"/
 
 /**
  * Matches font size in run properties.
@@ -119,4 +129,5 @@ export const COLOR_REGEX = /<w:color w:val="([^"]+)"/;
  * Note: Value is in half-points, so 24 = 12pt font
  * Example: <w:sz w:val="48"/> → captures "48" (24pt font)
  */
-export const FONT_SIZE_REGEX = /<w:sz w:val="([^"]+)"/;
+/** @type {RegExp} */
+export const FONT_SIZE_REGEX = /<w:sz w:val="([^"]+)"/

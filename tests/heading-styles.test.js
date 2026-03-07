@@ -1,5 +1,5 @@
-import { defaultHeadingOptions } from '../html-to-docx_ts/constants'
-import generateStylesXML from '../html-to-docx_ts/schemas/styles'
+import { defaultHeadingOptions } from '../src/constants'
+import generateStylesXML from '../src/schemas/styles'
 
 describe('Heading Styles Generation', () => {
   describe('Default heading styles', () => {

@@ -1,0 +1,12 @@
+pre-commit:
+  commands:
+    lint-staged:
+      glob: '*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}'
+      run: bunx lint-staged
+    api-surface-drift:
+      run: node scripts/check-api-surface-drift.cjs
+
+commit-msg:
+  commands:
+    oxlint:
+      run: bunx oxlint --fix --tsconfig tsconfig.build.json {1}

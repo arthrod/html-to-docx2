@@ -1,9 +1,11 @@
+// @ts-check
+
 /**
  * Unit tests for VNode and VText classes
  * Tests the virtual DOM implementation that replaces virtual-dom package
  */
 
-import { VNode, VText, isVNode, isVText } from '../html-to-docx_ts/vdom/index'
+import { isVNode, isVText, VNode, VText } from '../src/vdom/index'
 
 describe('VNode class', () => {
   describe('Basic construction', () => {
@@ -101,21 +103,28 @@ describe('VNode class', () => {
 
   describe('Hooks handling', () => {
     test('should detect hooks in properties when they have unhook', () => {
-      const hook = {
-        hook: () => {},
-        unhook: () => {},
+      class VHook {
+        // eslint-disable-next-line class-methods-use-this
+        hook() {
+          // intentional no-op for test stub
+        }
+        // eslint-disable-next-line class-methods-use-this
+        unhook() {
+          // intentional no-op for test stub
+        }
       }
+      const hook = new VHook()
       const vnode = new VNode('div', { myHook: hook })
 
       // Hooks are only detected if they have unhook method
-      if (vnode.hooks) {
-        expect(vnode.hooks.myHook).toBe(hook)
-      }
+      expect(vnode.hooks?.myHook).toBe(hook)
     })
 
     test('should not detect hooks without unhook method', () => {
       const notAHook = {
-        hook: () => {},
+        hook: () => {
+          /* no-op */
+        },
       }
       const vnode = new VNode('div', { myHook: notAHook })
 
@@ -123,17 +132,22 @@ describe('VNode class', () => {
     })
 
     test('should track descendantHooks from children', () => {
-      const hook = {
-        hook: () => {},
-        unhook: () => {},
+      class VHook {
+        // eslint-disable-next-line class-methods-use-this
+        hook() {
+          // intentional no-op for test stub
+        }
+        // eslint-disable-next-line class-methods-use-this
+        unhook() {
+          // intentional no-op for test stub
+        }
       }
+      const hook = new VHook()
       const child = new VNode('span', { myHook: hook })
       const parent = new VNode('div', {}, [child])
 
       // descendantHooks should be true if child has hooks
-      if (child.hooks) {
-        expect(parent.descendantHooks).toBe(true)
-      }
+      expect(parent.descendantHooks).toBe(true)
     })
   })
 })
