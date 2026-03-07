@@ -229,3 +229,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/render-document-file-build-image.test.js
 - tests/render-document-file-build-list.test.js
 - tests/render-document-file-convert-vtree.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/context-alias.d.ts
+- src/types/justjshtml/node-alias.d.ts
+- src/types/justjshtml/parser-alias.d.ts
+- src/types/justjshtml/stream-alias.d.ts
+- src/types/justjshtml/tokenizer-alias.d.ts
