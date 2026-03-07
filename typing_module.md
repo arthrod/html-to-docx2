@@ -175,3 +175,17 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/types/justjshtml/tokens.d.ts
 - src/types/justjshtml.d.ts
 - tests/image-browser-utils.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/constants.d.ts
+- src/types/justjshtml/encoding.d.ts
+- src/types/justjshtml/entities.d.ts
+- src/types/justjshtml/tokenizer.d.ts
+- src/types/justjshtml/treebuilder_utils.d.ts
+- src/types/justjshtml.d.ts
+- src/types/justjshtml/parser.d.ts
+- src/types/justjshtml/stream.d.ts
+- tests/image-dimensions.test.js
+- tests/image-node-utils.test.js
+- tests/color-conversion.test.js

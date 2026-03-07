@@ -1,4 +1,7 @@
 declare module 'justjshtml/src/stream.js' {
+  import type { SupportedEncoding } from 'justjshtml/src/encoding.js'
+  import type { TokenizerOptionsInput, TokenizerOpts } from 'justjshtml/src/tokenizer.js'
+
   export type StreamStartEvent = ['start', [string, Record<string, string>]]
   export type StreamEndEvent = ['end', string]
   export type StreamCommentEvent = ['comment', string]
@@ -16,8 +19,8 @@ declare module 'justjshtml/src/stream.js' {
     | StreamTextEvent
 
   export interface StreamOptions {
-    encoding?: string | null
-    tokenizerOpts?: object | null
+    encoding?: SupportedEncoding | null
+    tokenizerOpts?: TokenizerOptionsInput | TokenizerOpts | null
   }
 
   export function stream(

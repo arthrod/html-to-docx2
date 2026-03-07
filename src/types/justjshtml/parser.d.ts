@@ -1,20 +1,47 @@
 declare module 'justjshtml/src/parser.js' {
-  import type { FragmentContext } from 'justjshtml/src/context.js'
   import type { Node } from 'justjshtml/src/node.js'
-  import type { ParseError } from 'justjshtml/src/tokens.js'
+  import type {
+    Tokenizer,
+    TokenizerOptionsInput,
+    TokenizerOpts,
+  } from 'justjshtml/src/tokenizer.js'
+
+  export interface TreeBuilderLike {
+    errors: Array<{
+      code: string
+      column: number | null
+      line: number | null
+      message: string
+    }>
+    finish(): Node
+    openElements?: Node[]
+    open_elements?: Node[]
+    tokenizer?: Tokenizer | null
+  }
+
+  export interface FragmentContextLike {
+    namespace: string | null
+    tag_name: string
+    tagName: string
+  }
 
   export interface ParseDocumentOptions {
     collectErrors?: boolean
-    fragmentContext?: FragmentContext | null
+    fragmentContext?: FragmentContextLike | null
     iframeSrcdoc?: boolean
-    tokenizerOpts?: object | null
+    tokenizerOpts?: TokenizerOptionsInput | TokenizerOpts | null
   }
 
   export interface ParsedDocument {
-    errors: ParseError[]
+    errors: Array<{
+      code: string
+      column: number | null
+      line: number | null
+      message: string
+    }>
     root: Node
-    tokenizer: object
-    treeBuilder: object
+    tokenizer: Tokenizer
+    treeBuilder: TreeBuilderLike
   }
 
   export function parseDocument(
