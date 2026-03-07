@@ -245,3 +245,12 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/types/justjshtml/entities-alias.d.ts
 - src/types/justjshtml/selector-alias.d.ts
 - src/types/justjshtml/serialize-alias.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/types/justjshtml/html5lib-serializer-alias.d.ts
+- src/types/justjshtml/justhtml-alias.d.ts
+- src/types/justjshtml/tokens-alias.d.ts
+- src/types/justjshtml/treebuilder-alias.d.ts
+- src/types/justjshtml/treebuilder-utils-alias.d.ts
+- tests/barrel-exports.test.js

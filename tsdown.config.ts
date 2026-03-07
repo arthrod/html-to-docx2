@@ -52,7 +52,7 @@ export default defineConfig([
   {
     ...baseConfig,
     name: 'node',
-    clean: false,
+    clean: true,
     entry: {
       index: 'src/node.ts',
       node: 'src/node.ts',
