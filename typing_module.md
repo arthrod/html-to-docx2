@@ -149,3 +149,11 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - tests/heading-integration.test.js
 - tests/heading-styles.test.js
 - tests/ooxml-validation.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- tests/example.js
+- tests/examples/react-example/src/App.js
+- tests/html-parser.test.js
+- tests/tracked-changes.test.js
+- tests/svg-sanitization.test.js

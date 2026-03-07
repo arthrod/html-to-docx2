@@ -1,3 +1,5 @@
+// @ts-check
+
 // Threaded DOCX test with track changes and comments
 // Generates HTML with tracking tokens, produces DOCX, validates via docx-validator
 
@@ -22,6 +24,8 @@ import {
   wrapRunWithSuggestion,
 } from '../src/tracking'
 import { parseDOCX } from './helpers/docx-assertions'
+/** @typedef {import('../src/tracking').ParsedToken} ParsedToken */
+/** @typedef {import('../src/tracking').TrackingDocumentInstance} TrackingDocumentInstance */
 
 // ============================================================================
 // Token building and parsing unit tests
@@ -100,8 +104,10 @@ describe('Tracking token utilities', () => {
     const text = `${cmtStart}commented text${cmtEnd}`
 
     const parts = splitDocxTrackingTokens(text)
-    expect(parts.some((p) => p.type === 'commentStart')).toBe(true)
-    expect(parts.some((p) => p.type === 'commentEnd')).toBe(true)
+    expect(parts.some((/** @type {ParsedToken} */ p) => p.type === 'commentStart')).toBe(
+      true
+    )
+    expect(parts.some((/** @type {ParsedToken} */ p) => p.type === 'commentEnd')).toBe(true)
   })
 
   test('splitDocxTrackingTokens returns text only for plain string', () => {
@@ -230,6 +236,7 @@ describe('XML fragment builders', () => {
 
 describe('Tracking state management', () => {
   test('ensureTrackingState initializes state', () => {
+    /** @type {TrackingDocumentInstance} */
     const doc = {
       comments: [],
       commentIdMap: new Map(),
@@ -247,6 +254,7 @@ describe('Tracking state management', () => {
   })
 
   test('ensureTrackingState returns same state on second call', () => {
+    /** @type {TrackingDocumentInstance} */
     const doc = {
       comments: [],
       commentIdMap: new Map(),

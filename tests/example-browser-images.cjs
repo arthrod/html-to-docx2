@@ -98,11 +98,12 @@ const generateInBrowser = async (html) => {
        * @param {{ inputHtml: string }} payload
        */
       async ({ inputHtml }) => {
+        /* eslint-disable unicorn/consistent-function-scoping -- helper must be inside page.evaluate() */
         /**
          * @param {Uint8Array} bytes
          * @returns {string}
          */
-        const toBase64 = (bytes) => { // eslint-disable-line unicorn/consistent-function-scoping -- must be inside page.evaluate()
+        const toBase64 = (bytes) => {
           let binary = ''
           const chunkSize = 0x8000
           for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -111,6 +112,7 @@ const generateInBrowser = async (html) => {
           }
           return btoa(binary)
         }
+        /* eslint-enable unicorn/consistent-function-scoping */
 
         try {
           /** @type {{ __HTMLtoDOCX?: BrowserHtmlToDocx }} */

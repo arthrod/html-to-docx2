@@ -1,3 +1,5 @@
+// @ts-check
+
 /* eslint-disable no-console */
 import fs from 'fs'
 // FIXME: Incase you have the npm package
@@ -1972,6 +1974,7 @@ const htmlString = `<!DOCTYPE html>
 </html>`
 
 void (async () => {
+  /** @type {Blob | ArrayBuffer | Uint8Array} */
   const fileBuffer = await htmlToDocx(htmlString, null, {
     table: {
       row: { cantSplit: true },
@@ -1984,7 +1987,12 @@ void (async () => {
     },
   })
 
-  fs.writeFile(filePath, fileBuffer, (error) => {
+  const nodeBinary =
+    fileBuffer instanceof Blob
+      ? Buffer.from(await fileBuffer.arrayBuffer())
+      : Buffer.from(fileBuffer)
+
+  fs.writeFile(filePath, nodeBinary, (error) => {
     if (error) {
       console.log('Docx file creation failed')
       return

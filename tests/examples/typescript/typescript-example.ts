@@ -101,6 +101,7 @@ async function generateDocuments() {
       { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
     ]
 
+    /* eslint-disable no-await-in-loop -- examples intentionally run sequentially per runtime */
     for (const { convert, runtime } of runtimes) {
       // Basic example
       const basicDocResult = await convert(htmlString)
@@ -225,6 +226,7 @@ async function generateDocuments() {
         runtime
       )
     }
+    /* eslint-enable no-await-in-loop */
   } catch (error) {
     console.error('Error generating documents:', error)
   }

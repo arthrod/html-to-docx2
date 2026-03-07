@@ -1,3 +1,5 @@
+// @ts-check
+
 import { saveAs } from 'file-saver'
 import { HTMLtoDOCX as htmlToDOCX } from 'html-to-docx'
 
@@ -1891,7 +1893,11 @@ const htmlString = `<!DOCTYPE html>
 </html>`
 
 function App() {
+  /**
+   * @returns {Promise<void>}
+   */
   async function downloadDocx() {
+    /** @type {Blob | ArrayBuffer | Uint8Array} */
     const fileBuffer = await htmlToDOCX(htmlString, null, {
       table: {
         row: { cantSplit: true },
@@ -1902,7 +1908,8 @@ function App() {
       preprocessing: { skipHTMLMinify: false },
     })
 
-    saveAs(fileBuffer, 'html-to-docx.docx')
+    const fileBlob = fileBuffer instanceof Blob ? fileBuffer : new Blob([fileBuffer])
+    saveAs(fileBlob, 'html-to-docx.docx')
   }
 
   return (

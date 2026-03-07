@@ -160,6 +160,7 @@ void (async () => {
       { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
     ]
 
+    /* eslint-disable no-await-in-loop -- examples intentionally run sequentially per runtime */
     for (const { convert, runtime } of runtimes) {
       const docResult = await convert(htmlString, null, {
         heading: customHeadingOptions,
@@ -176,6 +177,7 @@ void (async () => {
       fs.writeFileSync(outputPath, await toBuffer(docResult))
       console.log(`✅ Docx file created successfully: ${outputPath}`)
     }
+    /* eslint-enable no-await-in-loop */
 
     console.log('\n📖 Open the files to see:')
     console.log('   • Custom fonts for different heading levels')

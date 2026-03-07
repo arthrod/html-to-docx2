@@ -161,6 +161,7 @@ async function generateRTLDocuments() {
       { convert: HTMLtoDOCXBrowser, runtime: 'browser' },
     ]
 
+    /* eslint-disable no-await-in-loop -- examples intentionally run sequentially per runtime */
     for (const { convert, runtime } of runtimes) {
       // Arabic RTL document
       const arabicDoc = await convert(arabicHtmlString, null, {
@@ -206,6 +207,7 @@ async function generateRTLDocuments() {
       )
       await saveDocxFile(ltrDoc, 'ltr-comparison-test.docx', 'LTR Comparison', runtime)
     }
+    /* eslint-enable no-await-in-loop */
   } catch (error) {
     console.error('Error generating RTL documents:', error)
   }

@@ -1,17 +1,19 @@
+// @ts-check
+
 import { sanitizeSVGVNode, validateSVGString } from '../src/utils/svg-sanitizer'
-import { VNode } from '../src/vdom/index'
+import { VNode, VText } from '../src/vdom/index'
 
 describe('SVG Sanitization - Security Tests', () => {
   describe('sanitizeSVGVNode - Blocking Dangerous Elements', () => {
     it('should block <script> tags', () => {
-      const maliciousVNode = new VNode('script', {}, [{ text: "alert('XSS')" }])
+      const maliciousVNode = new VNode('script', {}, [new VText("alert('XSS')")])
       const result = sanitizeSVGVNode(maliciousVNode)
       expect(result).toBeNull()
     })
 
     it('should block <foreignObject> elements', () => {
       const maliciousVNode = new VNode('foreignObject', {}, [
-        new VNode('body', {}, [new VNode('script', {}, [{ text: "alert('XSS')" }])]),
+        new VNode('body', {}, [new VNode('script', {}, [new VText("alert('XSS')")])]),
       ])
       const result = sanitizeSVGVNode(maliciousVNode)
       expect(result).toBeNull()
@@ -203,7 +205,7 @@ describe('SVG Sanitization - Security Tests', () => {
             'font-size': '20',
           },
         },
-        [{ text: 'Hello SVG' }]
+        [new VText('Hello SVG')]
       )
 
       const result = sanitizeSVGVNode(safeVNode)
@@ -218,7 +220,7 @@ describe('SVG Sanitization - Security Tests', () => {
       const mixedVNode = new VNode('svg', { attributes: { width: '100' } }, [
         new VNode('g', {}, [
           new VNode('circle', { attributes: { cx: '50', cy: '50', r: '40' } }),
-          new VNode('script', {}, [{ text: "alert('XSS')" }]), // Should be removed
+          new VNode('script', {}, [new VText("alert('XSS')")]), // Should be removed
           new VNode('rect', {
             attributes: {
               x: '10',
@@ -244,7 +246,7 @@ describe('SVG Sanitization - Security Tests', () => {
           new VNode('g', {}, [
             new VNode('g', {}, [
               new VNode('foreignObject', {}, [
-                new VNode('script', {}, [{ text: "alert('XSS')" }]),
+                new VNode('script', {}, [new VText("alert('XSS')")]),
               ]),
             ]),
           ]),

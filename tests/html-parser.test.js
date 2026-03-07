@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * Unit tests for HTML parser (html-parser.js)
  * Tests the htmlparser2-based HTML to VNode conversion
@@ -7,6 +9,14 @@ import createHTMLtoVDOM from '../src/helpers/html-parser'
 import { isVNode, isVText } from '../src/vdom/index'
 
 const convertHTML = createHTMLtoVDOM()
+/** @typedef {import('../src/vdom/index').VNode} VNode */
+
+/**
+ * @param {import('../src/vdom/index').VNode | import('../src/vdom/index').VText} child
+ * @param {string} tagName
+ * @returns {child is VNode}
+ */
+const isTag = (child, tagName) => isVNode(child) && child.tagName === tagName
 
 describe('HTML Parser - Basic Conversion', () => {
   describe('Text nodes', () => {
@@ -281,10 +291,13 @@ describe('HTML Parser - Complex Structures', () => {
 
     expect(result.tagName).toBe('table')
     // Find the tr element (might have whitespace text nodes)
-    const tr = result.children.find((child) => child.tagName === 'tr')
+    const tr = result.children.find((child) => isTag(child, 'tr'))
     expect(tr).toBeDefined()
+    if (!tr) {
+      throw new Error('Expected table row to exist')
+    }
     // Find td elements
-    const tds = tr.children.filter((child) => child.tagName === 'td')
+    const tds = tr.children.filter((child) => isTag(child, 'td'))
     expect(tds).toHaveLength(2)
   })
 
@@ -294,7 +307,7 @@ describe('HTML Parser - Complex Structures', () => {
 
     expect(result.tagName).toBe('ul')
     // Filter for li elements (ignore whitespace text nodes)
-    const items = result.children.filter((child) => child.tagName === 'li')
+    const items = result.children.filter((child) => isTag(child, 'li'))
     expect(items).toHaveLength(2)
   })
 
