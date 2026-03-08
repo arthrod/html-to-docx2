@@ -308,6 +308,10 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
+    throw new Error('Invalid protocol: Only HTTP and HTTPS URLs are allowed.')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
