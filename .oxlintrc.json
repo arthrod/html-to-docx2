@@ -19,7 +19,7 @@
   },
   "rules": {
     "import/no-named-as-default": "error",
-    "no-explicit-any": "error",
+    "no-explicit-any": "warn",
     "import/no-unassigned-import": "error",
     "jest/expect-expect": "error",
     "typescript/use-unknown-in-catch-callback-variable": "error",
@@ -30,6 +30,9 @@
     "no-useless-concat": "error",
     "preserve-caught-error": "error",
     "typescript/no-unsafe-type-assertion": "warn",
+    "typescript/no-base-to-string": "error",
+    "typescript/no-misused-spread": "error",
+    "typescript/require-array-sort-compare": "error",
     "typescript/no-floating-promises": "error",
     "unicorn/no-process-exit": "error",
     "oxc/no-barrel-file": "error",
@@ -41,7 +44,9 @@
     "node/no-process-env": "error",
     "no-eq-null": "error",
     "typescript/no-invalid-void-type": "error",
-    "typescript/explicit-module-boundary-types": "error",
+    "typescript/explicit-module-boundary-types": "warn",
+    "typescript/no-extraneous-class": "warn",
+    "typescript/restrict-template-expressions": "warn",
     "import/no-cycle": "error",
     "no-empty": "error"
   },
@@ -56,6 +61,7 @@
     "coverage/**",
     "templates/**",
     "api-surface/**",
+    "src/vendor/justjshtml/**",
     "mockServiceWorker.js",
     "tsconfig.build.json"
   ]

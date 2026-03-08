@@ -1,13 +1,12 @@
 # Dependency Notes
 
-## justjshtml
+## HTML parser
 
-Pinned to a raw GitHub commit hash:
+The justjshtml parser implementation is now vendored in:
 
 ```
-"justjshtml": "github:simonw/justjshtml#a415d0af40c34bf9a856e956d841513f482867e3"
+src/vendor/justjshtml/
 ```
 
-**Why:** The package is not published to npm. The pinned commit is the latest
-stable version that passes our test suite. When the author publishes to npm,
-switch to a semver range instead.
+This removes the previous GitHub dependency pin and keeps parser behavior
+in-repo with TypeScript sources.

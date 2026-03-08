@@ -2,7 +2,7 @@
 /**
  * HTML to Virtual DOM Parser
  *
- * Converts HTML strings to virtual DOM trees using justjshtml for parsing.
+ * Converts HTML strings to virtual DOM trees using a vendored typed justjshtml parser.
  * This implementation replaces the unmaintained html-to-v package while
  * maintaining full API compatibility.
  *
@@ -10,7 +10,7 @@
  */
 
 import { decode } from 'html-entities'
-import { FragmentContext, JustHTML } from 'justjshtml/src/index.js'
+import { FragmentContext, JustHTML } from '../vendor/justjshtml/index.js'
 
 import { VNode, VText } from '../vdom/index'
 

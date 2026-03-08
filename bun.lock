@@ -9,7 +9,6 @@
         "es-toolkit": "^1.45.1",
         "html-entities": "^2.3.3",
         "jszip": "^3.7.1",
-        "justjshtml": "github:simonw/justjshtml#a415d0af40c34bf9a856e956d841513f482867e3",
         "nanoid": "5.1.6",
         "xmlbuilder2": "4.0.3",
       },
@@ -752,7 +751,6 @@
 
     "jszip": ["jszip@3.10.1", "", { "dependencies": { "lie": "~3.3.0", "pako": "~1.0.2", "readable-stream": "~2.3.6", "setimmediate": "^1.0.5" } }, "sha512-xXDvecyTpGLrqFrvkrUSoxxfJI5AH7U8zxxtVclpsUtMCq4JQ290LY8AW5c7Ggnr/Y/oK+bQMbqK2qmtk3pN4g=="],
 
-    "justjshtml": ["justjshtml@github:simonw/justjshtml#a415d0a", {}, "simonw-justjshtml-a415d0a"],
 
     "kind-of": ["kind-of@6.0.3", "", {}, "sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw=="],
 

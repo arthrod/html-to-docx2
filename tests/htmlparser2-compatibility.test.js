@@ -222,7 +222,7 @@ describe('Regression tests for CVE-2025-57352 fix', () => {
     const htmlParserSource = fs.readFileSync(htmlParserPath, 'utf8')
 
     expect(htmlParserSource).not.toContain('virtual-dom')
-    expect(htmlParserSource).toContain("from 'justjshtml")
+    expect(htmlParserSource).toContain("from '../vendor/justjshtml/index.js'")
   })
 
   test('should NOT use html-to-vdom package', () => {

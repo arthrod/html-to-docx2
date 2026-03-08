@@ -187,7 +187,6 @@
     "es-toolkit": "^1.45.1",
     "html-entities": "^2.3.3",
     "jszip": "^3.7.1",
-    "justjshtml": "github:simonw/justjshtml#a415d0af40c34bf9a856e956d841513f482867e3",
     "nanoid": "5.1.6",
     "xmlbuilder2": "4.0.3"
   },
