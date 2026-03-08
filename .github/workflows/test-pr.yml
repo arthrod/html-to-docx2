@@ -26,10 +26,7 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install --no-package-lock
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        run: npm ci # Clean install to ensure reproducible builds
 
       - name: Run all tests
         # Runs: unit tests (Jest), integration tests, heading styles examples, and TypeScript tests
