@@ -278,8 +278,17 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
-  if (!url.toLowerCase().startsWith('http://') && !url.toLowerCase().startsWith('https://')) {
-    throw new Error('Invalid protocol: Only HTTP and HTTPS URLs are allowed.')
+  try {
+    // We only enforce protocol on absolute URLs.
+    // If URL parsing fails, it's treated as a relative URL which is safe and handled natively.
+    const parsedUrl = new URL(url)
+    if (!['http:', 'https:', 'data:'].includes(parsedUrl.protocol)) {
+      throw new Error(`Invalid protocol: ${parsedUrl.protocol}. Only HTTP, HTTPS, and Data URLs are allowed.`)
+    }
+  } catch (error) {
+    if (!(error instanceof TypeError)) {
+      throw error
+    }
   }
 
   const controller = new AbortController()
