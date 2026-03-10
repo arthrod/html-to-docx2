@@ -236,6 +236,9 @@ export const DOCX_COMMENT_TOKEN_SUFFIX = ']]'
 /** Regex to match all DOCX tracking tokens */
 const DOCX_TOKEN_REGEX = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/g
 
+/** Regex to test for DOCX tracking tokens without state issues */
+const DOCX_TOKEN_TEST_REGEX = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/
+
 // ============================================================================
 // Token Parsing
 // ============================================================================
@@ -320,10 +323,7 @@ export function splitDocxTrackingTokens(text: string): ParsedToken[] {
  * Check if text contains any DOCX tracking tokens.
  */
 export function hasTrackingTokens(text: string): boolean {
-  // Create a new regex each time to avoid state issues with global flag
-  // biome-ignore lint/performance/useTopLevelRegex: avoid global flag state issues
-  const tokenRegex = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/
-  return tokenRegex.test(text)
+  return DOCX_TOKEN_TEST_REGEX.test(text)
 }
 
 /**
