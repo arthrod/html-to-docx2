@@ -236,6 +236,9 @@ export const DOCX_COMMENT_TOKEN_SUFFIX = ']]'
 /** Regex to match all DOCX tracking tokens */
 const DOCX_TOKEN_REGEX = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/g
 
+/** Stateless regex to quickly check for DOCX tracking tokens */
+const DOCX_TOKEN_REGEX_STATELESS = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/
+
 // ============================================================================
 // Token Parsing
 // ============================================================================
@@ -286,11 +289,11 @@ function parseDocxToken(
 export function splitDocxTrackingTokens(text: string): ParsedToken[] {
   const parts: ParsedToken[] = []
   let lastIndex = 0
-  const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
+  DOCX_TOKEN_REGEX.lastIndex = 0
   let match: RegExpExecArray | null
 
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
-  while ((match = tokenRegex.exec(text)) !== null) {
+  while ((match = DOCX_TOKEN_REGEX.exec(text)) !== null) {
     // Add text before this token
     if (match.index > lastIndex) {
       parts.push({ type: 'text', value: text.slice(lastIndex, match.index) })
@@ -320,10 +323,7 @@ export function splitDocxTrackingTokens(text: string): ParsedToken[] {
  * Check if text contains any DOCX tracking tokens.
  */
 export function hasTrackingTokens(text: string): boolean {
-  // Create a new regex each time to avoid state issues with global flag
-  // biome-ignore lint/performance/useTopLevelRegex: avoid global flag state issues
-  const tokenRegex = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/
-  return tokenRegex.test(text)
+  return DOCX_TOKEN_REGEX_STATELESS.test(text)
 }
 
 /**
@@ -331,11 +331,11 @@ export function hasTrackingTokens(text: string): boolean {
  */
 export function findDocxTrackingTokens(text: string): string[] {
   const tokens: string[] = []
-  const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
+  DOCX_TOKEN_REGEX.lastIndex = 0
   let match: RegExpExecArray | null
 
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
-  while ((match = tokenRegex.exec(text)) !== null) {
+  while ((match = DOCX_TOKEN_REGEX.exec(text)) !== null) {
     tokens.push(match[0])
   }
 
