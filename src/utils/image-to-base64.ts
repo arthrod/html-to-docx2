@@ -115,6 +115,24 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  try {
+    const parsedUrl = new URL(imageUrl)
+    if (
+      parsedUrl.protocol !== 'http:' &&
+      parsedUrl.protocol !== 'https:' &&
+      parsedUrl.protocol !== 'data:' &&
+      parsedUrl.protocol !== 'blob:'
+    ) {
+      throw new Error(`Unsupported URL protocol: ${parsedUrl.protocol}`)
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      // Relative URL, let fetch handle it
+    } else {
+      throw error
+    }
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 

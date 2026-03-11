@@ -278,6 +278,24 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  try {
+    const parsedUrl = new URL(url)
+    if (
+      parsedUrl.protocol !== 'http:' &&
+      parsedUrl.protocol !== 'https:' &&
+      parsedUrl.protocol !== 'data:' &&
+      parsedUrl.protocol !== 'blob:'
+    ) {
+      throw new Error(`Unsupported URL protocol: ${parsedUrl.protocol}`)
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      // Relative URL, let fetch handle it
+    } else {
+      throw error
+    }
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
