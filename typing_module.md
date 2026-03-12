@@ -267,6 +267,9 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 - src/justjshtml/serialize.d.ts
 - src/justjshtml/html5lib-serializer.d.ts
 - src/utils/base64.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
 - src/types/justjshtml/tokens-alias.d.ts
 - src/types/justjshtml/treebuilder-alias.d.ts
 - src/types/justjshtml/treebuilder-utils-alias.d.ts
