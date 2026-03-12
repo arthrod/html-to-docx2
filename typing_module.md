@@ -258,6 +258,15 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 
 - src/types/justjshtml/html5lib-serializer-alias.d.ts
 - src/types/justjshtml/justhtml-alias.d.ts
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
+- src/justjshtml/context.d.ts
+- src/justjshtml/stream.d.ts
+- src/justjshtml/selector.d.ts
+- src/justjshtml/serialize.d.ts
+- src/justjshtml/html5lib-serializer.d.ts
+- src/utils/base64.ts
 - src/types/justjshtml/tokens-alias.d.ts
 - src/types/justjshtml/treebuilder-alias.d.ts
 - src/types/justjshtml/treebuilder-utils-alias.d.ts

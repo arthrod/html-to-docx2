@@ -1,0 +1,28 @@
+/** Uint8Array → base64 string */
+export function bytesToBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return globalThis.btoa(binary)
+}
+
+/** base64 string → Uint8Array */
+export function base64ToBytes(base64: string): Uint8Array {
+  const binaryString = globalThis.atob(base64)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+  return bytes
+}
+
+/** UTF-8 string → base64 string */
+export function stringToBase64(str: string): string {
+  return bytesToBase64(new TextEncoder().encode(str))
+}
+
+/** base64 string → UTF-8 string */
+export function base64ToString(base64: string): string {
+  return new TextDecoder().decode(base64ToBytes(base64))
+}
