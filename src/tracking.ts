@@ -286,11 +286,11 @@ function parseDocxToken(
 export function splitDocxTrackingTokens(text: string): ParsedToken[] {
   const parts: ParsedToken[] = []
   let lastIndex = 0
-  const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
+  DOCX_TOKEN_REGEX.lastIndex = 0
   let match: RegExpExecArray | null
 
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
-  while ((match = tokenRegex.exec(text)) !== null) {
+  while ((match = DOCX_TOKEN_REGEX.exec(text)) !== null) {
     // Add text before this token
     if (match.index > lastIndex) {
       parts.push({ type: 'text', value: text.slice(lastIndex, match.index) })
@@ -331,11 +331,11 @@ export function hasTrackingTokens(text: string): boolean {
  */
 export function findDocxTrackingTokens(text: string): string[] {
   const tokens: string[] = []
-  const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
+  DOCX_TOKEN_REGEX.lastIndex = 0
   let match: RegExpExecArray | null
 
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
-  while ((match = tokenRegex.exec(text)) !== null) {
+  while ((match = DOCX_TOKEN_REGEX.exec(text)) !== null) {
     tokens.push(match[0])
   }
 
