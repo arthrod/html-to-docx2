@@ -261,6 +261,16 @@ Re-audited and tightened typing in this run (no explicit/implicit `any` remainin
 
 Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
 
+- src/justjshtml/node.d.ts
+- src/justjshtml/tokenizer.d.ts
+- src/justjshtml/treebuilder.d.ts
+- src/justjshtml/parser.d.ts
+- src/justjshtml/selector.d.ts
+- src/utils/base64.ts
+- tests/xml-builder-drawing.test.js
+
+Re-audited and tightened typing in this run (no explicit/implicit `any` remaining):
+
 - src/justjshtml/context.d.ts
 - src/justjshtml/stream.d.ts
 - src/justjshtml/selector.d.ts

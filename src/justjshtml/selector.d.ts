@@ -1,6 +1,5 @@
 declare module 'justjshtml/src/selector.js' {
-  export type Namespace = 'html' | 'math' | 'svg' | null
-  export type NodeAttributes = Readonly<Record<string, string>>
+  import type { Namespace, NodeAttributes } from 'justjshtml/src/node.js'
 
   export interface SelectorNode {
     attrs?: NodeAttributes | Readonly<Record<string, string | null>>
