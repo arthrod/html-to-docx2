@@ -1,6 +1,7 @@
 /* biome-ignore-all lint: legacy code */
 import type JSZip from 'jszip'
 import { nanoid } from 'nanoid'
+import { base64ToString } from './utils/base64'
 import { create, fragment, type XMLBuilder } from './utils/xmlbuilder2'
 
 import {
@@ -972,10 +973,7 @@ class DocxDocument {
 
       if (svgHandling === 'convert') {
         try {
-          const svgString =
-            typeof Buffer !== 'undefined'
-              ? Buffer.from(base64FileContent, 'base64').toString('utf-8')
-              : globalThis.atob(base64FileContent)
+          const svgString = base64ToString(base64FileContent)
           const { width, height } = parseSVGDimensions(svgString)
           const pngBase64 = await convertSVGtoPNG(base64FileContent, width, height)
 

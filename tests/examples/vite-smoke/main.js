@@ -1,6 +1,6 @@
 // @ts-check
 
-import HTMLToDOCX from '../../../dist/browser.js'
+import HTMLToDOCX from '../../../dist/browser/index.js'
 
 /**
  * @param {string} id

@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 const fs = require('fs')
 const path = require('path')
-const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
+const { default: HTMLtoDOCXNode } = require('../dist/node/index.cjs')
 /** @typedef {Blob | Buffer | Uint8Array | ArrayBuffer} HtmlToDocxResult */
 /**
  * @typedef {{
@@ -153,7 +153,7 @@ void (async () => {
   console.log('  H6: (using defaults)\n')
 
   try {
-    const { default: HTMLtoDOCXBrowser } = await import('../dist/browser.js')
+    const { default: HTMLtoDOCXBrowser } = await import('../dist/browser/index.js')
     /** @type {Array<{ convert: HtmlToDocxConvert; runtime: 'node' | 'browser' }>} */
     const runtimes = [
       { convert: HTMLtoDOCXNode, runtime: 'node' },

@@ -31,7 +31,7 @@ async function main() {
     fs.mkdirSync(OUT_DIR, { recursive: true })
   }
 
-  const { default: htmlToDocxUntyped } = require('../../dist/node.cjs')
+  const { default: htmlToDocxUntyped } = require('../../dist/node/index.cjs')
   /** @type {HtmlToDocxNode} */
   const HTMLtoDOCX = htmlToDocxUntyped
 

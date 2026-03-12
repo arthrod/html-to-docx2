@@ -43,34 +43,34 @@
     "right to left"
   ],
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/browser.js",
-  "types": "./dist/browser.d.ts",
+  "main": "./dist/node/index.cjs",
+  "module": "./dist/browser/index.js",
+  "types": "./dist/browser/index.d.ts",
   "exports": {
     ".": {
       "browser": {
-        "types": "./dist/browser.d.ts",
-        "import": "./dist/browser.js"
+        "types": "./dist/browser/index.d.ts",
+        "import": "./dist/browser/index.js"
       },
       "node": {
-        "types": "./dist/index.d.ts",
-        "import": "./dist/node.js",
-        "require": "./dist/node.cjs"
+        "types": "./dist/node/index.d.ts",
+        "import": "./dist/node/index.js",
+        "require": "./dist/node/index.cjs"
       },
       "default": {
-        "types": "./dist/browser.d.ts",
-        "import": "./dist/browser.js"
+        "types": "./dist/browser/index.d.ts",
+        "import": "./dist/browser/index.js"
       }
     },
     "./browser": {
-      "types": "./dist/browser.d.ts",
-      "import": "./dist/browser.js",
-      "default": "./dist/browser.js"
+      "types": "./dist/browser/index.d.ts",
+      "import": "./dist/browser/index.js",
+      "default": "./dist/browser/index.js"
     },
     "./node": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/node.js",
-      "require": "./dist/node.cjs"
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
     }
   },
   "files": [
@@ -106,9 +106,9 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "validate": "bun run lint && bun run format:check",
-    "build": "tsdown",
-    "build:dev": "NODE_ENV=development tsdown",
-    "build:prod": "NODE_ENV=production tsdown",
+    "build": "tsdown && node scripts/validate-bundles.cjs",
+    "build:dev": "NODE_ENV=development tsdown && node scripts/validate-bundles.cjs",
+    "build:prod": "NODE_ENV=production tsdown && node scripts/validate-bundles.cjs",
     "diff:docx": "node scripts/diff-docx.js",
     "prepare": "lefthook install",
     "test:ts-example": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/typescript-example.ts"
@@ -181,17 +181,15 @@
     "es-toolkit": "^1.45.1",
     "html-entities": "^2.6.0",
     "jszip": "^3.10.1",
-    "justjshtml": "github:simonw/justjshtml#a415d0af40c34bf9a856e956d841513f482867e3",
+    "justjshtml": "file:.vendor/justjshtml",
     "nanoid": "5.1.6",
     "xmlbuilder2": "4.0.3"
   },
   "overrides": {
-    "bl": "^1.2.3",
     "minimatch": ">=10.2.3",
     "semver": "^7.6.0"
   },
   "resolutions": {
-    "bl": "^1.2.3",
     "minimatch": ">=10.2.3",
     "semver": "^7.6.0"
   },

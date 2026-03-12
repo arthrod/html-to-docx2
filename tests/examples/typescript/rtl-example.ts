@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
-import { HTMLtoDOCX as HTMLtoDOCXNode } from '../../../dist/node.cjs'
+import { HTMLtoDOCX as HTMLtoDOCXNode } from '../../../dist/node/index.cjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -154,7 +154,7 @@ async function saveDocxFile(
 async function generateRTLDocuments() {
   try {
     const browserModule: { default: HTMLtoDOCXFn } =
-      await import('../../../dist/browser.js')
+      await import('../../../dist/browser/index.js')
     const { default: HTMLtoDOCXBrowser } = browserModule
     const runtimes: { convert: HTMLtoDOCXFn; runtime: RuntimeName }[] = [
       { convert: HTMLtoDOCXNode, runtime: 'node' },

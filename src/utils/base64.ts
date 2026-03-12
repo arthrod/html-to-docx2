@@ -1,15 +1,10 @@
 /** Uint8Array → base64 string */
 export function bytesToBase64(bytes: Uint8Array): string {
-  const bufferCtor = globalThis.Buffer
-  if (typeof bufferCtor?.from === 'function') {
-    return bufferCtor.from(bytes).toString('base64')
-  }
-
   let binary = ''
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i])
   }
-  return globalThis.btoa(binary)
+  return btoa(binary)
 }
 
 /** base64 string → Uint8Array */
@@ -18,12 +13,7 @@ export function base64ToBytes(base64: string): Uint8Array {
     .replaceAll(/[\r\n\t\s]/g, '')
     .replaceAll('-', '+')
     .replaceAll('_', '/')
-  const bufferCtor = globalThis.Buffer
-  if (typeof bufferCtor?.from === 'function') {
-    return Uint8Array.from(bufferCtor.from(normalizedBase64, 'base64'))
-  }
-
-  const binaryString = globalThis.atob(normalizedBase64)
+  const binaryString = atob(normalizedBase64)
   const bytes = new Uint8Array(binaryString.length)
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i)

@@ -1,7 +1,6 @@
 export * from './index-base'
-export { default as HTMLtoDOCX, default } from './html-to-docx'
+export { default as HTMLtoDOCX, default } from './html-to-docx-node'
 
-// Keep union types for backward compatibility in direct imports.
 export type BrowserDocxResult = Blob
-export type NodeDocxResult = Buffer | Uint8Array
-export type HtmlToDocxResult = BrowserDocxResult | NodeDocxResult
+export type NodeDocxResult = Buffer
+export type HtmlToDocxResult = Blob | Buffer

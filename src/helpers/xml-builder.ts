@@ -4,26 +4,14 @@
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { cloneDeep } from 'es-toolkit/compat'
+import { base64ToBytes } from '../utils/base64'
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
 
 type XMLBuilderType = XMLBuilder
 
-const base64ToUint8Array = (base64: string): Uint8Array => {
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(base64, 'base64')
-  }
-
-  const binaryString = globalThis.atob(base64)
-  const bytes = new Uint8Array(binaryString.length)
-
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
-  }
-
-  return bytes
-}
+const base64ToUint8Array = (base64: string): Uint8Array => base64ToBytes(base64)
 
 import colorNames from 'color-name'
 
@@ -124,6 +112,7 @@ type DocxDocumentInstance = Partial<TrackingDocumentInstance> & {
   createFont: (fontFamily: string) => string
   createMediaFile: (base64Uri: string) => Promise<MediaFileResponse>
   createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number
+  direction?: 'ltr' | 'rtl'
   htmlString: string
   imageProcessing?: {
     downloadTimeout?: number
@@ -185,6 +174,7 @@ interface TableBorder extends TableCellBorder {
 
 type RunAttributes = {
   backgroundColor?: string
+  bidi?: boolean
   code?: boolean
   color?: string
   display?: string
@@ -208,6 +198,7 @@ type RunAttributes = {
 interface ParagraphAttributes extends RunAttributes {
   afterSpacing?: number
   beforeSpacing?: number
+  bidi?: boolean
   blockquoteBorder?: boolean
   bookmarkId?: string | null
   colSpan?: number
@@ -853,6 +844,38 @@ const modifiedStyleAttributesBuilder = (
     if (style.width) {
       modifiedAttributes.width = style.width
     }
+
+    // CSS direction property
+    if (style.direction === 'rtl') {
+      modifiedAttributes.bidi = true
+      if (!modifiedAttributes.textAlign) {
+        modifiedAttributes.textAlign = 'right'
+      }
+    } else if (style.direction === 'ltr') {
+      modifiedAttributes.bidi = false
+    }
+  }
+
+  // HTML dir attribute
+  if (isVNode(vNode)) {
+    const vn = vNode as VNodeType
+    const dirAttr = vn.properties?.attributes?.dir ?? vn.properties?.dir
+    if (dirAttr === 'rtl') {
+      modifiedAttributes.bidi = true
+      if (!modifiedAttributes.textAlign) {
+        modifiedAttributes.textAlign = 'right'
+      }
+    } else if (dirAttr === 'ltr') {
+      modifiedAttributes.bidi = false
+    }
+  }
+
+  // Inherit document-level direction if not set at element level
+  if (modifiedAttributes.bidi === undefined && docxDocumentInstance?.direction === 'rtl') {
+    modifiedAttributes.bidi = true
+    if (!modifiedAttributes.textAlign) {
+      modifiedAttributes.textAlign = 'right'
+    }
   }
 
   // paragraph only
@@ -914,6 +937,10 @@ const buildFormatting = (
       return buildFontSize(options?.fontSize ? options.fontSize : 10)
     case 'hyperlink':
       return buildRunStyleFragment('Hyperlink')
+    case 'bidi':
+      return fragment({ namespaceAlias: { w: namespaces.w } })
+        .ele('@w', 'rtl')
+        .up()
   }
 
   return null
@@ -1482,7 +1509,18 @@ const buildParagraphProperties = (
       attributes.backgroundColor = undefined
     }
 
-    // 5. spacing
+    // 5. bidi (before spacing per XSD order)
+    // NOTE: do NOT clear attributes.bidi — it must also flow to rPr as <w:rtl/>
+    if (attributes.bidi) {
+      const bidiFragment = fragment({
+        namespaceAlias: { w: namespaces.w },
+      })
+        .ele('@w', 'bidi')
+        .up()
+      paragraphPropertiesFragment.import(bidiFragment)
+    }
+
+    // 6. spacing
     const spacingFragment = buildSpacing(
       attributes.lineHeight,
       attributes.beforeSpacing,
@@ -1493,14 +1531,14 @@ const buildParagraphProperties = (
     attributes.afterSpacing = undefined
     paragraphPropertiesFragment.import(spacingFragment)
 
-    // 6. ind
+    // 7. ind
     if (attributes.indentation !== undefined) {
       const indentationFragment = buildIndentation(attributes.indentation)
       paragraphPropertiesFragment.import(indentationFragment)
       attributes.indentation = undefined
     }
 
-    // 7. jc
+    // 8. jc
     if (attributes.textAlign !== undefined) {
       const horizontalAlignmentFragment = buildHorizontalAlignment(attributes.textAlign)
       paragraphPropertiesFragment.import(horizontalAlignmentFragment)

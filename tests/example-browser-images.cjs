@@ -63,7 +63,7 @@ const ensureOutputDir = () => {
 const bundleBrowserEntrypoint = () => {
   fs.writeFileSync(
     BUNDLE_ENTRY_PATH,
-    "import HTMLtoDOCX from '../dist/browser.js'; globalThis.__HTMLtoDOCX = HTMLtoDOCX;"
+    "import HTMLtoDOCX from '../dist/browser/index.js'; globalThis.__HTMLtoDOCX = HTMLtoDOCX;"
   )
 
   execFileSync(

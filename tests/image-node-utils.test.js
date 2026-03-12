@@ -161,14 +161,9 @@ describe('image node utilities', () => {
     )
   })
 
-  test('encodes with btoa path when Buffer is unavailable', async () => {
-    const originalBuffer = globalThis.Buffer
-    const expectedBase64 = originalBuffer
-      .from(Uint8Array.from([0x11, 0x22, 0x33]))
-      .toString('base64')
-    Reflect.deleteProperty(globalThis, 'Buffer')
-    globalThis.btoa = vi.fn((binary) =>
-      originalBuffer.from(binary, 'binary').toString('base64')
+  test('encodes binary data as base64 using btoa', async () => {
+    const expectedBase64 = Buffer.from(Uint8Array.from([0x11, 0x22, 0x33])).toString(
+      'base64'
     )
     globalThis.fetch = vi.fn().mockResolvedValue({
       blob: async () =>
@@ -180,14 +175,8 @@ describe('image node utilities', () => {
       statusText: 'OK',
     })
 
-    try {
-      await expect(downloadImageToBase64('https://example.com/no-buffer')).resolves.toBe(
-        expectedBase64
-      )
-      expect(globalThis.btoa).toHaveBeenCalledTimes(1)
-    } finally {
-      globalThis.Buffer = originalBuffer
-      Reflect.deleteProperty(globalThis, 'btoa')
-    }
+    await expect(downloadImageToBase64('https://example.com/base64-test')).resolves.toBe(
+      expectedBase64
+    )
   })
 })

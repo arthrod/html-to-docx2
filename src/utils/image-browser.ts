@@ -1,4 +1,5 @@
 import { SVG_UNIT_TO_PIXEL_CONVERSIONS } from '../constants'
+import { base64ToBytes, bytesToBase64 } from './base64'
 import {
   downloadAndCacheImage,
   guessMimeTypeFromBytes,
@@ -54,18 +55,8 @@ const MIME_BY_EXTENSION = {
   webp: 'image/webp',
 } as const satisfies Record<string, ImageMimeType>
 
-const toBase64ByteArray = (base64String: string): Uint8Array => {
-  if (typeof Buffer !== 'undefined') {
-    return Uint8Array.from(Buffer.from(base64String.substring(0, 50), 'base64'))
-  }
-
-  const binaryString = globalThis.atob(base64String.substring(0, 50))
-  const byteArray = new Uint8Array(binaryString.length)
-  for (let i = 0; i < binaryString.length; i += 1) {
-    byteArray[i] = binaryString.charCodeAt(i)
-  }
-  return byteArray
-}
+const toBase64ByteArray = (base64String: string): Uint8Array =>
+  base64ToBytes(base64String.substring(0, 50))
 
 /**
  * Tries to infer MIME type by checking magic bytes in a base64 image string.
@@ -243,16 +234,7 @@ const convertSVGtoPNGCanvas = async (
     ctx.drawImage(bitmap, 0, 0, width, height)
     const pngBlob = await canvas.convertToBlob({ type: 'image/png' })
     const arrayBuffer = await pngBlob.arrayBuffer()
-
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(arrayBuffer).toString('base64')
-    }
-    const bytes = new Uint8Array(arrayBuffer)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i += 1) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return globalThis.btoa(binary)
+    return bytesToBase64(new Uint8Array(arrayBuffer))
   } catch {
     return null
   }
@@ -294,17 +276,7 @@ export const downloadImageToBase64 = async (
     }
 
     const arrayBuffer = await blob.arrayBuffer()
-
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(arrayBuffer).toString('base64')
-    }
-
-    const bytes = new Uint8Array(arrayBuffer)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i += 1) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return globalThis.btoa(binary)
+    return bytesToBase64(new Uint8Array(arrayBuffer))
   } catch (error) {
     const normalizedError = toError(error)
     if (normalizedError.name === 'AbortError') {

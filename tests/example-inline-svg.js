@@ -3,7 +3,7 @@
 const fs = require('fs')
 // Use the built version, or install via: npm install @turbodocx/html-to-docx
 // const HTMLtoDOCX = require('@turbodocx/html-to-docx');
-const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+const { default: HTMLtoDOCX } = require('../dist/node/index.cjs')
 
 /**
  * @typedef {'convert' | 'native'} SvgHandlingMode

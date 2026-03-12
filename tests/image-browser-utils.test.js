@@ -149,17 +149,12 @@ describe('image-browser helpers', () => {
     expect(result).toBeNull()
   })
 
-  it('uses btoa fallback for svg->png conversion when Buffer is unavailable', async () => {
-    const originalBuffer = globalThis.Buffer
-    const expectedBase64 = originalBuffer
-      .from(Uint8Array.from([0xde, 0xad, 0xbe, 0xef]))
-      .toString('base64')
+  it('converts svg to png via canvas using btoa-based base64', async () => {
+    const expectedBase64 = Buffer.from(Uint8Array.from([0xde, 0xad, 0xbe, 0xef])).toString(
+      'base64'
+    )
     const svgBase64 = toBase64([0x3c, 0x73, 0x76, 0x67])
 
-    Reflect.deleteProperty(globalThis, 'Buffer')
-    globalThis.btoa = vi.fn((binary) =>
-      originalBuffer.from(binary, 'binary').toString('base64')
-    )
     globalThis.OffscreenCanvas = makeOffscreenCanvas({ pngBytes: [0xde, 0xad, 0xbe, 0xef] })
     globalThis.fetch = vi.fn().mockResolvedValue({
       blob: async () => new Blob([Uint8Array.from([0x3c, 0x73, 0x76, 0x67])]),
@@ -169,14 +164,8 @@ describe('image-browser helpers', () => {
     })
     globalThis.createImageBitmap = vi.fn().mockResolvedValue({})
 
-    try {
-      const result = await convertSVGtoPNG(svgBase64, 20, 10)
-      expect(result).toBe(expectedBase64)
-      expect(globalThis.btoa).toHaveBeenCalledTimes(1)
-    } finally {
-      globalThis.Buffer = originalBuffer
-      Reflect.deleteProperty(globalThis, 'btoa')
-    }
+    const result = await convertSVGtoPNG(svgBase64, 20, 10)
+    expect(result).toBe(expectedBase64)
   })
 
   it('downloads binary image data as base64', async () => {
@@ -228,25 +217,14 @@ describe('image-browser helpers', () => {
     )
   })
 
-  it('uses btoa fallback when Buffer is unavailable', async () => {
-    const originalBuffer = globalThis.Buffer
-    const expectedBase64 = originalBuffer
-      .from(Uint8Array.from([0x01, 0x02, 0x03]))
-      .toString('base64')
-    Reflect.deleteProperty(globalThis, 'Buffer')
-    globalThis.btoa = vi.fn((binary) =>
-      originalBuffer.from(binary, 'binary').toString('base64')
+  it('encodes binary download as base64 using btoa', async () => {
+    const expectedBase64 = Buffer.from(Uint8Array.from([0x01, 0x02, 0x03])).toString(
+      'base64'
     )
     globalThis.fetch = vi.fn().mockResolvedValue(makeBlobResponse([0x01, 0x02, 0x03]))
 
-    try {
-      const encoded = await downloadImageToBase64('https://example.com/no-buffer')
-      expect(encoded).toBe(expectedBase64)
-      expect(globalThis.btoa).toHaveBeenCalledTimes(1)
-    } finally {
-      globalThis.Buffer = originalBuffer
-      Reflect.deleteProperty(globalThis, 'btoa')
-    }
+    const encoded = await downloadImageToBase64('https://example.com/base64-test')
+    expect(encoded).toBe(expectedBase64)
   })
 
   it('normalizes non-Error thrown values in downloadImageToBase64', async () => {
@@ -266,20 +244,8 @@ describe('image-browser helpers', () => {
     })
   })
 
-  it('decodes base64 headers via atob when Buffer is unavailable', () => {
-    const originalBuffer = globalThis.Buffer
+  it('decodes base64 headers via atob for mime detection', () => {
     const jpgBase64 = toBase64([0xff, 0xd8, 0xff])
-    Reflect.deleteProperty(globalThis, 'Buffer')
-    globalThis.atob = vi.fn((encoded) =>
-      originalBuffer.from(encoded, 'base64').toString('binary')
-    )
-
-    try {
-      expect(guessMimeTypeFromBase64(jpgBase64)).toBe('image/jpeg')
-      expect(globalThis.atob).toHaveBeenCalledTimes(1)
-    } finally {
-      globalThis.Buffer = originalBuffer
-      Reflect.deleteProperty(globalThis, 'atob')
-    }
+    expect(guessMimeTypeFromBase64(jpgBase64)).toBe('image/jpeg')
   })
 })

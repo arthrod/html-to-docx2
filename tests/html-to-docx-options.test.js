@@ -2,7 +2,8 @@
 
 import JSZip from 'jszip'
 
-import HTMLtoDOCX, { addFilesToContainer } from '../src/html-to-docx'
+import HTMLtoDOCX from '../src/html-to-docx-node'
+import { addFilesToContainer } from '../src/html-to-docx'
 import { cmToTWIP, inchToTWIP, pixelToTWIP } from '../src/utils/unit-conversion'
 
 /**

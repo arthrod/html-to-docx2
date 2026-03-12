@@ -40,8 +40,9 @@ export default defineConfig([
     ...baseConfig,
     name: 'browser',
     clean: true,
+    outDir: 'dist/browser',
     entry: {
-      browser: 'src/browser.ts',
+      index: 'src/browser.ts',
     },
     format: BROWSER_FORMATS,
     platform: 'browser',
@@ -53,12 +54,15 @@ export default defineConfig([
     ...baseConfig,
     name: 'node',
     clean: true,
+    outDir: 'dist/node',
     entry: {
       index: 'src/node.ts',
-      node: 'src/node.ts',
     },
     format: NODE_FORMATS,
     fixedExtension: false,
     platform: 'node',
+    alias: {
+      [path.resolve('src/utils/base64.ts')]: path.resolve('src/utils/base64-node.ts'),
+    },
   },
 ])

@@ -1,7 +1,7 @@
 // @ts-check
 /* eslint-disable no-console */
 const fs = require('fs')
-const { default: htmlToDocxUntyped } = require('../dist/index.cjs')
+const { default: htmlToDocxUntyped } = require('../dist/node/index.cjs')
 
 /**
  * @typedef {(htmlString: string, headerHTMLString?: string | null, documentOptions?: object, footerHTMLString?: string | null) => Promise<Uint8Array | Buffer>} HtmlToDocxNode

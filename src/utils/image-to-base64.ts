@@ -1,4 +1,5 @@
 import { defaultDocumentOptions } from '../constants'
+import { bytesToBase64 } from './base64'
 
 type DownloadOptions = {
   maxSize?: number
@@ -48,17 +49,7 @@ const toError = (error: CaughtError): Error => {
   return new Error(String(error ?? 'Unknown error'))
 }
 
-const toBase64 = (bytes: Uint8Array): string => {
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(bytes).toString('base64')
-  }
-
-  let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return globalThis.btoa(binary)
-}
+const toBase64 = (bytes: Uint8Array): string => bytesToBase64(bytes)
 
 const logVerbose = (enabled: boolean, message: string, ...args: LogArgument[]): void => {
   if (enabled) {
@@ -100,10 +91,7 @@ export const guessMimeTypeFromBytes = (bytes: Uint8Array): string => {
     }
   }
 
-  const asText =
-    typeof Buffer !== 'undefined'
-      ? Buffer.from(bytes.subarray(0, 256)).toString('utf-8')
-      : new TextDecoder().decode(bytes.subarray(0, 256))
+  const asText = new TextDecoder().decode(bytes.subarray(0, 256))
   if (/^\s*<svg[\s>]/i.test(asText)) {
     return 'image/svg+xml'
   }

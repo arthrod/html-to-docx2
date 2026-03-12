@@ -1,6 +1,7 @@
 /* biome-ignore-all lint/complexity/useOptionalChain: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
 /* biome-ignore-all lint/nursery/useMaxParams: legacy code */
+import { base64ToBytes, stringToBase64 } from '../utils/base64'
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText, VNode } from '../vdom/index'
@@ -50,20 +51,7 @@ type VTextType = {
 
 type VTree = VNodeType | VTextType | (VNodeType | VTextType)[]
 
-const base64ToUint8Array = (base64: string): Uint8Array => {
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(base64, 'base64')
-  }
-
-  const binaryString = globalThis.atob(base64)
-  const bytes = new Uint8Array(binaryString.length)
-
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
-  }
-
-  return bytes
-}
+const base64ToUint8Array = (base64: string): Uint8Array => base64ToBytes(base64)
 
 // Types for DocxDocumentInstance
 type MediaFileResponse = {
@@ -182,6 +170,25 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
     return (vNode.children || []).some((child) => containsSpecialElements(child))
   }
   return false
+}
+
+/** Propagate a dir attribute from a parent container to its block-level children */
+const propagateDirToChildren = (parent: VNodeType, dir: string | undefined): void => {
+  if (!dir || !parent.children) return
+  for (const child of parent.children) {
+    const vn = asVNode(child)
+    if (!vn) continue
+    // Only propagate if the child doesn't already define its own dir
+    const childDir = vn.properties?.attributes?.dir ?? vn.properties?.dir
+    if (childDir) continue
+    if (!vn.properties) {
+      vn.properties = { attributes: { dir } }
+    } else if (!vn.properties.attributes) {
+      vn.properties.attributes = { dir }
+    } else {
+      vn.properties.attributes.dir = dir
+    }
+  }
 }
 
 const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
@@ -576,6 +583,10 @@ async function findXMLEquivalent(
   // Handle div elements - check if they contain only inline children
   // Skip divs that contain special elements that need their own processing
   if (vNode.tagName === 'div' && vNodeHasChildren(vNode)) {
+    // Propagate dir attribute from parent div to block children that lack their own
+    const parentDir = vNode.properties?.attributes?.dir ?? vNode.properties?.dir
+    const parentDirStyle = vNode.properties?.style?.direction
+
     // Check recursively if div contains any special elements that need dedicated handling
     const hasSpecialChildren = (vNode.children || []).some((child) =>
       containsSpecialElements(child)
@@ -583,6 +594,10 @@ async function findXMLEquivalent(
 
     // If div has special children, let default processing handle it
     if (hasSpecialChildren) {
+      // Propagate dir to block children before falling through
+      if (parentDir || parentDirStyle) {
+        propagateDirToChildren(vNode, parentDir ?? parentDirStyle)
+      }
       // Fall through to default processing at end of function
     } else {
       const allInline = (vNode.children || []).every((child) => isInlineElement(child))
@@ -597,6 +612,11 @@ async function findXMLEquivalent(
         )
         xmlFragment.import(paragraphFragment)
         return
+      }
+
+      // Propagate dir to block children
+      if (parentDir || parentDirStyle) {
+        propagateDirToChildren(vNode, parentDir ?? parentDirStyle)
       }
 
       // Handle mixed content: group consecutive inline elements into paragraphs
@@ -625,7 +645,8 @@ async function findXMLEquivalent(
       /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
       for (const group of groups) {
         if (group.type === 'inline' && group.children) {
-          const paragraphVNode = new VNode('p', null, group.children)
+          const dirProps = parentDir ? { attributes: { dir: parentDir } } : null
+          const paragraphVNode = new VNode('p', dirProps, group.children)
           const paragraphFragment = await xmlBuilder.buildParagraph(
             paragraphVNode,
             {},
@@ -950,10 +971,7 @@ async function findXMLEquivalent(
         }
       }
 
-      const base64SVG =
-        typeof Buffer !== 'undefined'
-          ? Buffer.from(svgString, 'utf-8').toString('base64')
-          : globalThis.btoa(svgString)
+      const base64SVG = stringToBase64(svgString)
       const imageVNode = {
         tagName: 'img',
         properties: {
@@ -976,6 +994,12 @@ async function findXMLEquivalent(
       return
   }
   if (vNodeHasChildren(vNode)) {
+    // Propagate dir from any container to its children
+    const containerDir = vNode.properties?.attributes?.dir ?? vNode.properties?.dir
+    const containerDirStyle = vNode.properties?.style?.direction
+    if (containerDir || containerDirStyle) {
+      propagateDirToChildren(vNode, containerDir ?? containerDirStyle)
+    }
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     for (let index = 0; index < (vNode.children || []).length; index++) {
       const childVNode = (vNode.children || [])[index]

@@ -3,7 +3,7 @@
 
 const fs = require('fs')
 // const HTMLtoDOCX = require('html-to-docx');
-const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+const { default: HTMLtoDOCX } = require('../dist/node/index.cjs')
 
 /**
  * @typedef {{

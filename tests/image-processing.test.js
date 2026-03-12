@@ -761,8 +761,11 @@ describe('Image Processing', () => {
     })
 
     test('should handle very large base64 string', async () => {
-      // Create a larger base64 image by repeating pattern (still valid PNG)
-      const largeBase64 = PNG_1x1_BASE64.repeat(10)
+      // Create a larger valid base64 by expanding the decoded bytes and re-encoding
+      const pngBytes = Buffer.from(PNG_1x1_BASE64, 'base64')
+      const expanded = Buffer.alloc(pngBytes.length * 10)
+      for (let i = 0; i < 10; i++) pngBytes.copy(expanded, i * pngBytes.length)
+      const largeBase64 = expanded.toString('base64')
       const dataUrl = `data:image/png;base64,${largeBase64}`
       const htmlString = `<img src="${dataUrl}" />`
 

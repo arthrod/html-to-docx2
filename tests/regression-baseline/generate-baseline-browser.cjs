@@ -177,7 +177,7 @@ function getBaselineDocumentOptions() {
 
 function bundleBrowserEntrypoint() {
   const entrySource =
-    "import HTMLtoDOCX from '../dist/browser.js'; globalThis.__HTMLtoDOCX = HTMLtoDOCX;"
+    "import HTMLtoDOCX from '../dist/browser/index.js'; globalThis.__HTMLtoDOCX = HTMLtoDOCX;"
   fs.writeFileSync(BUNDLE_ENTRY_PATH, entrySource)
 
   execFileSync(

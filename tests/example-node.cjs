@@ -4,7 +4,7 @@ const fs = require('fs')
 const path = require('path')
 // FIXME: Incase you have the npm package
 // const HTMLtoDOCX = require('html-to-docx');
-const { default: HTMLtoDOCXNode } = require('../dist/node.cjs')
+const { default: HTMLtoDOCXNode } = require('../dist/node/index.cjs')
 /** @typedef {Blob | Buffer | Uint8Array | ArrayBuffer} HtmlToDocxResult */
 
 const outputDirectory = path.resolve(__dirname, '../tmp')

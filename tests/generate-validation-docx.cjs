@@ -36,7 +36,7 @@ const toBuffer = async (docResult) => {
 async function main() {
   if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true })
   /** @type {{ default: HtmlToDocxConvert }} */
-  const { default: HTMLtoDOCX } = require('../dist/index.cjs')
+  const { default: HTMLtoDOCX } = require('../dist/node/index.cjs')
 
   // 1. Tracked changes: insertion + deletion
   {
