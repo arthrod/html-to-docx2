@@ -747,7 +747,8 @@ class DocxDocument {
         this.fontSize,
         this.complexScriptFontSize,
         this.lang,
-        this.heading
+        this.heading,
+        this.direction
       ),
       this.direction
     )

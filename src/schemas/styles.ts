@@ -3,6 +3,7 @@ import {
   defaultFontSize,
   defaultHeadingOptions,
   defaultLang,
+  type Direction,
   type HeadingOptions,
   type HeadingStyleOptions,
 } from '../constants'
@@ -59,7 +60,7 @@ const generateHeadingStyleXML = (
       ? `<w:sz w:val="${heading.fontSize}" /><w:szCs w:val="${heading.fontSize}" />`
       : ''
 
-  const boldXml = heading.bold ? '<w:b />' : ''
+  const boldXml = heading.bold ? '<w:b /><w:bCs />' : ''
 
   const keepLinesXml = heading.keepLines ? '<w:keepLines />' : ''
   const keepNextXml = heading.keepNext ? '<w:keepNext />' : ''
@@ -112,9 +113,17 @@ const generateStylesXML = (
   fontSize: number = defaultFontSize,
   complexScriptFontSize: number = defaultFontSize,
   lang: string = defaultLang,
-  headingConfig: HeadingOptions = defaultHeadingOptions
+  headingConfig: HeadingOptions = defaultHeadingOptions,
+  direction?: Direction
 ): string => {
   const config = mergeHeadingConfig(headingConfig)
+  const isRtl = direction === 'rtl'
+
+  // For RTL, set the bidi language based on the document language
+  const bidiLang = lang.startsWith('he') ? 'he-IL' : 'ar-SA'
+
+  // Complex script font: use the document font for cs instead of theme
+  const csFontAttr = `w:cs="${escapeXml(font)}"`
 
   return `
   <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -123,15 +132,18 @@ const generateStylesXML = (
 		<w:docDefaults>
 		  <w:rPrDefault>
 			<w:rPr>
-			  <w:rFonts w:ascii="${font}" w:eastAsiaTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorBidi" />
+			  <w:rFonts w:ascii="${escapeXml(font)}" w:hAnsi="${escapeXml(font)}" ${csFontAttr} w:eastAsiaTheme="minorHAnsi" />
 			  <w:sz w:val="${fontSize}" />
 			  <w:szCs w:val="${complexScriptFontSize}" />
-			  <w:lang w:val="${lang}" w:eastAsia="${lang}" w:bidi="ar-SA" />
+			  ${isRtl ? '<w:rtl />' : ''}
+			  <w:lang w:val="${escapeXml(lang)}" w:eastAsia="${escapeXml(lang)}" w:bidi="${escapeXml(bidiLang)}" />
 			</w:rPr>
 		  </w:rPrDefault>
 		  <w:pPrDefault>
 			<w:pPr>
+			  ${isRtl ? '<w:bidi />' : ''}
 			  <w:spacing w:after="120" w:line="240" w:lineRule="atLeast" />
+			  ${isRtl ? '<w:jc w:val="right" />' : ''}
 			</w:pPr>
 		  </w:pPrDefault>
 		</w:docDefaults>

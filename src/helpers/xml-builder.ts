@@ -303,6 +303,7 @@ const buildRunFontFragment = (fontName: string = defaultFont): XMLBuilderType =>
     .ele('@w', 'rFonts')
     .att('@w', 'ascii', fontName)
     .att('@w', 'hAnsi', fontName)
+    .att('@w', 'cs', fontName)
     .up()
 
 const buildRunStyleFragment = (type = 'Hyperlink'): XMLBuilderType =>
@@ -376,10 +377,14 @@ const buildBold = (): XMLBuilderType =>
   fragment({ namespaceAlias: { w: namespaces.w } })
     .ele('@w', 'b')
     .up()
+    .ele('@w', 'bCs')
+    .up()
 
 const buildItalics = (): XMLBuilderType =>
   fragment({ namespaceAlias: { w: namespaces.w } })
     .ele('@w', 'i')
+    .up()
+    .ele('@w', 'iCs')
     .up()
 
 const buildUnderline = (type = 'single'): XMLBuilderType =>
