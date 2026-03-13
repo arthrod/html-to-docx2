@@ -528,6 +528,12 @@ describe('Image Processing', () => {
       )
     })
 
+    test('should prevent fetching file:// URLs (SSRF/LFI protection)', async () => {
+      await expect(downloadImageToBase64('file:///etc/passwd')).rejects.toThrow(
+        'Unsupported protocol: file:'
+      )
+    })
+
     test('should throw error on HTTP error status', async () => {
       vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
         Promise.resolve({
