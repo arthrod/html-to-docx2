@@ -260,49 +260,44 @@ const fixupColorCode = (colorCodeString: string): string => {
 
     return rgbToHex(red, green, blue)
   }
-  if (rgbRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(rgbRegex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  const rgbMatch = colorCodeString.match(rgbRegex)
+  if (rgbMatch) {
+    const red = rgbMatch[1]
+    const green = rgbMatch[2]
+    const blue = rgbMatch[3]
 
-      return rgbToHex(
-        Number.parseInt(red, 10),
-        Number.parseInt(green, 10),
-        Number.parseInt(blue, 10)
-      )
-    }
+    return rgbToHex(
+      Number.parseInt(red, 10),
+      Number.parseInt(green, 10),
+      Number.parseInt(blue, 10)
+    )
   }
-  if (hslRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hslRegex)
-    if (matchedParts) {
-      const hue = matchedParts[1]
-      const saturation = matchedParts[2]
-      const luminosity = matchedParts[3]
 
-      return hslToHex(
-        Number.parseInt(hue, 10),
-        Number.parseInt(saturation, 10),
-        Number.parseInt(luminosity, 10)
-      )
-    }
-  }
-  if (hexRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hexRegex)
-    if (matchedParts) {
-      return matchedParts[1]
-    }
-  }
-  if (hex3Regex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hex3Regex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  const hslMatch = colorCodeString.match(hslRegex)
+  if (hslMatch) {
+    const hue = hslMatch[1]
+    const saturation = hslMatch[2]
+    const luminosity = hslMatch[3]
 
-      return hex3ToHex(red, green, blue)
-    }
+    return hslToHex(
+      Number.parseInt(hue, 10),
+      Number.parseInt(saturation, 10),
+      Number.parseInt(luminosity, 10)
+    )
+  }
+
+  const hexMatch = colorCodeString.match(hexRegex)
+  if (hexMatch) {
+    return hexMatch[1]
+  }
+
+  const hex3Match = colorCodeString.match(hex3Regex)
+  if (hex3Match) {
+    const red = hex3Match[1]
+    const green = hex3Match[2]
+    const blue = hex3Match[3]
+
+    return hex3ToHex(red, green, blue)
   }
   return '000000'
 }
