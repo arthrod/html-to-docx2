@@ -5,6 +5,7 @@ import {
   imageToBase64,
   parseDataUrl,
 } from './image-to-base64'
+import { isValidImageUrl } from './url'
 
 type ImageMimeType =
   | 'image/bmp'
@@ -233,6 +234,10 @@ const convertSVGtoPNGCanvas = async (
     return null
   }
 
+  if (!isValidImageUrl(svgDataUrl)) {
+    return null
+  }
+
   try {
     const res = await fetch(svgDataUrl)
     const blob = await res.blob()
@@ -278,6 +283,10 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  if (!isValidImageUrl(url)) {
+    throw new Error(`Invalid or unsupported image URL: ${url}`)
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 

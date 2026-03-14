@@ -1,0 +1,4 @@
+## 2025-03-14 - Prevent SSRF and LFI in Image Fetching
+**Vulnerability:** Bun's native `fetch()` supports `file://` URLs, leading to Local File Inclusion (LFI) vulnerabilities if unvalidated absolute URLs are passed to it. In addition, fetching images without filtering private IP ranges can lead to Server-Side Request Forgery (SSRF) where attackers can access internal network services.
+**Learning:** `fetch()` can implicitly access local files in some environments like Bun. Relying solely on the presence of a valid URL structure is insufficient to protect against LFI/SSRF in environments that overload standard APIs.
+**Prevention:** Implement an `isValidImageUrl` validator that explicitly whitelists safe protocols (`http:`, `https:`, `data:`, `blob:`) and explicitly blocks requests to private IP ranges (`10.0.0.0/8`, `127.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`) and `localhost`. Always validate the URL before passing it to `fetch()`.
