@@ -650,49 +650,37 @@ const fixupLineHeight = (lineHeight: number, fontSize: number | null): number =>
 }
 
 const fixupFontSize = (fontSizeString: string): number | undefined => {
-  if (pointRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  let matchedParts = fontSizeString.match(pointRegex)
+  if (matchedParts) {
+    // convert point to half point
+    return pointToHIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  matchedParts = fontSizeString.match(pixelRegex)
+  if (matchedParts) {
+    // convert pixels to half point
+    return pixelToHIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
 
 const fixupRowHeight = (rowHeightString: string): number | undefined => {
-  if (pointRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  let matchedParts = rowHeightString.match(pointRegex)
+  if (matchedParts) {
+    // convert point to half point
+    return pointToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  matchedParts = rowHeightString.match(pixelRegex)
+  if (matchedParts) {
+    // convert pixels to half point
+    return pixelToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (cmRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(cmRegex)
-    if (matchedParts) {
-      return cmToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  matchedParts = rowHeightString.match(cmRegex)
+  if (matchedParts) {
+    return cmToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (inchRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(inchRegex)
-    if (matchedParts) {
-      return inchToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  matchedParts = rowHeightString.match(inchRegex)
+  if (matchedParts) {
+    return inchToTWIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
@@ -702,67 +690,53 @@ const fixupColumnWidth = (
 ): ColumnWidthInfo | null => {
   if (!columnWidthString) return null
 
-  if (pointRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(pointRegex)
-    if (matchedParts) {
-      return {
-        value: pointToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  let matchedParts = columnWidthString.match(pointRegex)
+  if (matchedParts) {
+    return {
+      value: pointToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (pixelRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(pixelRegex)
-    if (matchedParts) {
-      return {
-        value: pixelToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  matchedParts = columnWidthString.match(pixelRegex)
+  if (matchedParts) {
+    return {
+      value: pixelToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (cmRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(cmRegex)
-    if (matchedParts) {
-      return {
-        value: cmToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  matchedParts = columnWidthString.match(cmRegex)
+  if (matchedParts) {
+    return {
+      value: cmToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (inchRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(inchRegex)
-    if (matchedParts) {
-      return {
-        value: inchToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  matchedParts = columnWidthString.match(inchRegex)
+  if (matchedParts) {
+    return {
+      value: inchToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (percentageRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(percentageRegex)
-    if (matchedParts) {
-      // Convert percentage to fiftieths of a percent (pct in OOXML)
-      // 50% = 50 * 50 = 2500 (fiftieths of a percent)
-      return { value: Number.parseFloat(matchedParts[1]) * 50, type: 'pct' }
-    }
+  matchedParts = columnWidthString.match(percentageRegex)
+  if (matchedParts) {
+    // Convert percentage to fiftieths of a percent (pct in OOXML)
+    // 50% = 50 * 50 = 2500 (fiftieths of a percent)
+    return { value: Number.parseFloat(matchedParts[1]) * 50, type: 'pct' }
   }
   return null
 }
 
 const fixupMargin = (marginString: string): number | undefined => {
-  if (pointRegex.test(marginString)) {
-    const matchedParts = marginString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  let matchedParts = marginString.match(pointRegex)
+  if (matchedParts) {
+    // convert point to half point
+    return pointToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(marginString)) {
-    const matchedParts = marginString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  matchedParts = marginString.match(pixelRegex)
+  if (matchedParts) {
+    // convert pixels to half point
+    return pixelToTWIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
