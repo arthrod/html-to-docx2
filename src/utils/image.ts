@@ -1,4 +1,5 @@
 import { SVG_UNIT_TO_PIXEL_CONVERSIONS } from '../constants'
+import { isValidImageUrl } from './url'
 import {
   downloadAndCacheImage,
   guessMimeTypeFromBytes,
@@ -303,11 +304,16 @@ export const convertSVGtoPNG = async (
 
 /**
  * Downloads an image URL and returns base64 content using fetch.
+ * Validates URL to prevent SSRF and LFI vulnerabilities.
  */
 export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  if (!isValidImageUrl(url)) {
+    throw new Error('Invalid or restricted image URL provided')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 

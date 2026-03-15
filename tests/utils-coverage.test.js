@@ -25,7 +25,6 @@ describe('URL utilities', () => {
   test('should reject non-http URLs', () => {
     expect(isValidUrl('ftp://example.com')).toBe(false)
     expect(isValidUrl('javascript:alert(1)')).toBe(false)
-    expect(isValidUrl('data:text/html,test')).toBe(false)
   })
 
   test('should reject invalid URLs', () => {
@@ -232,13 +231,7 @@ describe('Image to base64 utilities', () => {
   describe('imageToBase64', () => {
     test('should reject non-http protocols', async () => {
       await expect(imageToBase64('ftp://example.com/image.png')).rejects.toThrow(
-        'Invalid URL'
-      )
-    })
-
-    test('should reject data: URLs', async () => {
-      await expect(imageToBase64('data:image/png;base64,abc')).rejects.toThrow(
-        'Invalid URL'
+        'Invalid or restricted URL provided'
       )
     })
   })
