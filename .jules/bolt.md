@@ -1,0 +1,3 @@
+## 2024-05-18 - Avoid reusing global stateful RegExp
+**Learning:** Reusing a single instance of a RegExp with the `g` flag across different calls by resetting `lastIndex` can lead to subtle bugs if the regex is used re-entrantly or concurrently. While it prevents allocating a new RegExp, the global state risk is high, especially for parsing tokens.
+**Action:** Use a non-global regex (no `g` flag) if you want to avoid state issues entirely but match repeatedly using a `while` loop (which requires modifying the string or regex differently) or use a stateless module-scoped pattern, OR use `string.matchAll()`. Alternatively, just keep the `new RegExp` allocation if it is safer.
