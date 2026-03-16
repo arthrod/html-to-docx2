@@ -176,8 +176,7 @@ function serializeEndTag(name: any) {
   return `</${name}>`
 }
 
-// @ts-expect-error TS(7023) FIXME: 'nodeToHTML' implicitly has return type 'any' beca... Remove this comment to see the full error message
-function nodeToHTML(node: any, indent = 0, indentSize = 2, pretty = true) {
+function nodeToHTML(node: any, indent = 0, indentSize = 2, pretty = true): string {
   const prefix = pretty ? ' '.repeat(indent * indentSize) : ''
   const newline = pretty ? '\n' : ''
   const name = node.name
@@ -199,7 +198,6 @@ function nodeToHTML(node: any, indent = 0, indentSize = 2, pretty = true) {
   if (name === '#document-fragment') {
     const parts = []
     for (const child of node.children || []) {
-      // @ts-expect-error TS(7022) FIXME: 'childHTML' implicitly has type 'any' because it d... Remove this comment to see the full error message
       const childHTML = nodeToHTML(child, indent, indentSize, pretty)
       if (childHTML) parts.push(childHTML)
     }
