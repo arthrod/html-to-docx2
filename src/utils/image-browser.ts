@@ -5,6 +5,7 @@ import {
   imageToBase64,
   parseDataUrl,
 } from './image-to-base64'
+import { isValidImageUrl } from './url'
 
 type ImageMimeType =
   | 'image/bmp'
@@ -234,6 +235,9 @@ const convertSVGtoPNGCanvas = async (
   }
 
   try {
+    if (!isValidImageUrl(svgDataUrl)) {
+      throw new Error('Invalid or restricted SVG data URL')
+    }
     const res = await fetch(svgDataUrl)
     const blob = await res.blob()
     const bitmap = await createImageBitmap(blob, {
@@ -278,6 +282,10 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  if (!isValidImageUrl(url)) {
+    throw new Error('Invalid or restricted image URL')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 

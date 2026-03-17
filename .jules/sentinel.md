@@ -1,0 +1,4 @@
+## 2024-03-17 - Local File Inclusion (LFI) via Bun's `fetch` API
+**Vulnerability:** Found Local File Inclusion (LFI) vulnerabilities in the image downloading utilities. The application was passing unvalidated user-provided image URLs directly to `fetch`.
+**Learning:** Bun's native `fetch` API inherently supports `file://` protocols. If unvalidated absolute URLs are passed to `fetch` in Bun environments, this immediately creates a critical LFI vector. While SSRF to internal hosts is a legitimate use case for a library like `html-to-docx`, allowing `file://` reads arbitrary local files without restriction.
+**Prevention:** Always parse and validate absolute URLs using `new URL()` before passing them to `fetch` or other request APIs. Explicitly whitelist safe protocols (like `http:`, `https:`, `data:`, and `blob:`). Ensure the validation fails closed to prevent bypasses via unparsable strings, while allowing safe relative URLs.
