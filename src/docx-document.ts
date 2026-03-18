@@ -238,10 +238,11 @@ function generateContentTypesFragments(
 ): void {
   if (objects && Array.isArray(objects)) {
     objects.forEach((object) => {
+      // Use 'in' operator to discriminate the type without unsafe assertions
       const id =
-        type === 'header'
-          ? (object as HeaderObject).headerId
-          : (object as FooterObject).footerId
+        'headerId' in object
+          ? object.headerId
+          : object.footerId
       const contentTypesFragment = fragment({
         defaultNamespace: { ele: namespaces.contentTypes },
       })
@@ -520,10 +521,11 @@ class DocxDocument {
     this.ListStyleBuilder = new ListStyleBuilder(properties.numbering)
   }
 
-  generateSectionXML: (
-    vTree: VTree,
-    type?: 'footer' | 'header'
-  ) => Promise<FooterResult | HeaderResult>
+  generateSectionXML: {
+    (vTree: VTree, type: 'header'): Promise<HeaderResult>
+    (vTree: VTree, type: 'footer'): Promise<FooterResult>
+    (vTree: VTree, type?: 'footer' | 'header'): Promise<FooterResult | HeaderResult>
+  }
 
   generateContentTypesXML(): string {
     const contentTypesXML = create(
@@ -1067,11 +1069,11 @@ class DocxDocument {
   }
 
    async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
-    return this.generateSectionXML(vTree, 'header') as Promise<HeaderResult>
+    return this.generateSectionXML(vTree, 'header')
   }
 
    async generateFooterXML(vTree: VTree): Promise<FooterResult> {
-    return this.generateSectionXML(vTree, 'footer') as Promise<FooterResult>
+    return this.generateSectionXML(vTree, 'footer')
   }
 
   // ============================================================================
