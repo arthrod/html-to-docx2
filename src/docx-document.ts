@@ -626,50 +626,21 @@ class DocxDocument {
     // so we need to post-process the XML string to fix them
 
     // wp: (wordprocessingDrawing) elements
-    const wpElements = [
-      'inline',
-      'anchor',
-      'simplePos',
-      'positionH',
-      'positionV',
-      'posOffset',
-      'extent',
-      'effectExtent',
-      'wrapNone',
-      'wrapSquare',
-      'wrapTight',
-      'wrapThrough',
-      'docPr',
-    ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
+    const WP_ELEMENTS =
+      '(inline|anchor|simplePos|positionH|positionV|posOffset|extent|effectExtent|wrapNone|wrapSquare|wrapTight|wrapThrough|docPr)'
+    xmlString = xmlString.replace(new RegExp(`<w:${WP_ELEMENTS}([ />])`, 'g'), '<wp:$1$2')
+    xmlString = xmlString.replace(new RegExp(`</w:${WP_ELEMENTS}>`, 'g'), '</wp:$1>')
 
     // a: (drawingML main) elements
-    const aElements = [
-      'graphic',
-      'graphicData',
-      'blip',
-      'srcRect',
-      'stretch',
-      'fillRect',
-      'xfrm',
-      'off',
-      'ext',
-      'prstGeom',
-    ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
+    const A_ELEMENTS =
+      '(graphic|graphicData|blip|srcRect|stretch|fillRect|xfrm|off|ext|prstGeom)'
+    xmlString = xmlString.replace(new RegExp(`<w:${A_ELEMENTS}([ />])`, 'g'), '<a:$1$2')
+    xmlString = xmlString.replace(new RegExp(`</w:${A_ELEMENTS}>`, 'g'), '</a:$1>')
 
     // pic: (picture) elements
-    const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
+    const PIC_ELEMENTS = '(pic|nvPicPr|cNvPr|cNvPicPr|blipFill|spPr)'
+    xmlString = xmlString.replace(new RegExp(`<w:${PIC_ELEMENTS}([ />])`, 'g'), '<pic:$1$2')
+    xmlString = xmlString.replace(new RegExp(`</w:${PIC_ELEMENTS}>`, 'g'), '</pic:$1>')
 
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
@@ -1066,11 +1037,11 @@ class DocxDocument {
     return lastRelsId
   }
 
-   async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
+  async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
     return this.generateSectionXML(vTree, 'header') as Promise<HeaderResult>
   }
 
-   async generateFooterXML(vTree: VTree): Promise<FooterResult> {
+  async generateFooterXML(vTree: VTree): Promise<FooterResult> {
     return this.generateSectionXML(vTree, 'footer') as Promise<FooterResult>
   }
 
