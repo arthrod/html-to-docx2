@@ -260,49 +260,41 @@ const fixupColorCode = (colorCodeString: string): string => {
 
     return rgbToHex(red, green, blue)
   }
-  if (rgbRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(rgbRegex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  const rgbMatch = colorCodeString.match(rgbRegex)
+  if (rgbMatch) {
+    const red = rgbMatch[1]
+    const green = rgbMatch[2]
+    const blue = rgbMatch[3]
 
-      return rgbToHex(
-        Number.parseInt(red, 10),
-        Number.parseInt(green, 10),
-        Number.parseInt(blue, 10)
-      )
-    }
+    return rgbToHex(
+      Number.parseInt(red, 10),
+      Number.parseInt(green, 10),
+      Number.parseInt(blue, 10)
+    )
   }
-  if (hslRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hslRegex)
-    if (matchedParts) {
-      const hue = matchedParts[1]
-      const saturation = matchedParts[2]
-      const luminosity = matchedParts[3]
+  const hslMatch = colorCodeString.match(hslRegex)
+  if (hslMatch) {
+    const hue = hslMatch[1]
+    const saturation = hslMatch[2]
+    const luminosity = hslMatch[3]
 
-      return hslToHex(
-        Number.parseInt(hue, 10),
-        Number.parseInt(saturation, 10),
-        Number.parseInt(luminosity, 10)
-      )
-    }
+    return hslToHex(
+      Number.parseInt(hue, 10),
+      Number.parseInt(saturation, 10),
+      Number.parseInt(luminosity, 10)
+    )
   }
-  if (hexRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hexRegex)
-    if (matchedParts) {
-      return matchedParts[1]
-    }
+  const hexMatch = colorCodeString.match(hexRegex)
+  if (hexMatch) {
+    return hexMatch[1]
   }
-  if (hex3Regex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hex3Regex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  const hex3Match = colorCodeString.match(hex3Regex)
+  if (hex3Match) {
+    const red = hex3Match[1]
+    const green = hex3Match[2]
+    const blue = hex3Match[3]
 
-      return hex3ToHex(red, green, blue)
-    }
+    return hex3ToHex(red, green, blue)
   }
   return '000000'
 }
@@ -650,49 +642,37 @@ const fixupLineHeight = (lineHeight: number, fontSize: number | null): number =>
 }
 
 const fixupFontSize = (fontSizeString: string): number | undefined => {
-  if (pointRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  const ptMatch = fontSizeString.match(pointRegex)
+  if (ptMatch) {
+    // convert point to half point
+    return pointToHIP(Number.parseFloat(ptMatch[1]))
   }
-  if (pixelRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  const pxMatch = fontSizeString.match(pixelRegex)
+  if (pxMatch) {
+    // convert pixels to half point
+    return pixelToHIP(Number.parseFloat(pxMatch[1]))
   }
   return
 }
 
 const fixupRowHeight = (rowHeightString: string): number | undefined => {
-  if (pointRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  const ptMatch = rowHeightString.match(pointRegex)
+  if (ptMatch) {
+    // convert point to half point
+    return pointToTWIP(Number.parseFloat(ptMatch[1]))
   }
-  if (pixelRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  const pxMatch = rowHeightString.match(pixelRegex)
+  if (pxMatch) {
+    // convert pixels to half point
+    return pixelToTWIP(Number.parseFloat(pxMatch[1]))
   }
-  if (cmRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(cmRegex)
-    if (matchedParts) {
-      return cmToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  const cmMatch = rowHeightString.match(cmRegex)
+  if (cmMatch) {
+    return cmToTWIP(Number.parseFloat(cmMatch[1]))
   }
-  if (inchRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(inchRegex)
-    if (matchedParts) {
-      return inchToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  const inMatch = rowHeightString.match(inchRegex)
+  if (inMatch) {
+    return inchToTWIP(Number.parseFloat(inMatch[1]))
   }
   return
 }
