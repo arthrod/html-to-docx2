@@ -1,4 +1,5 @@
 import { defaultDocumentOptions } from '../constants'
+import { isValidImageUrl } from './url'
 
 type DownloadOptions = {
   maxSize?: number
@@ -115,6 +116,10 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  if (!isValidImageUrl(imageUrl)) {
+    throw new Error('Invalid image URL: SSRF/LFI protection blocked request')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -161,11 +166,7 @@ const downloadImage = async (
  * Kept for backward compatibility with existing callers.
  */
 export async function imageToBase64(imageUrl: string): Promise<string> {
-  // Validate URL
-  const url = new URL(imageUrl)
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new Error('Invalid URL provided')
-  }
+  // Validate URL via downloadImage (which uses isValidImageUrl)
 
   const { base64 } = await downloadImage(imageUrl, {
     timeout: defaultDocumentOptions.imageProcessing.downloadTimeout,

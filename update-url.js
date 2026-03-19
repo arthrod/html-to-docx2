@@ -1,4 +1,8 @@
-type SupportedProtocol = 'http:' | 'https:'
+const fs = require('node:fs')
+
+const content = fs.readFileSync('src/utils/url.ts', 'utf8')
+
+const newContent = `type SupportedProtocol = 'http:' | 'https:'
 const SUPPORTED_PROTOCOLS: ReadonlySet<SupportedProtocol> = new Set(['http:', 'https:'])
 
 const isValidUrl = (urlString: string | null | undefined): boolean => {
@@ -49,12 +53,12 @@ const isValidImageUrl = (urlString: string | null | undefined): boolean => {
 
     // Block IPv4 loopback, private, and link-local addresses
     // URL parser normalizes octal/decimal IPs to standard dotted decimal
-    const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/
+    const ipv4Pattern = /^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/
     const match = hostname.match(ipv4Pattern)
 
     if (match) {
-      const octet1 = Number.parseInt(match[1], 10)
-      const octet2 = Number.parseInt(match[2], 10)
+      const octet1 = parseInt(match[1], 10)
+      const octet2 = parseInt(match[2], 10)
 
       // 127.0.0.0/8 (Loopback)
       if (octet1 === 127) return false
@@ -74,13 +78,8 @@ const isValidImageUrl = (urlString: string | null | undefined): boolean => {
     // Using simple substring matching for normalized IPv6
     if (hostname === '[::1]') return false
     if (hostname.startsWith('[fc') || hostname.startsWith('[fd')) return false // fc00::/7 Unique Local Address
-    if (
-      hostname.startsWith('[fe8') ||
-      hostname.startsWith('[fe9') ||
-      hostname.startsWith('[fea') ||
-      hostname.startsWith('[feb')
-    )
-      return false // fe80::/10 Link-local Address
+    if (hostname.startsWith('[fe8') || hostname.startsWith('[fe9') ||
+        hostname.startsWith('[fea') || hostname.startsWith('[feb')) return false // fe80::/10 Link-local Address
 
     return true
   } catch {
@@ -101,3 +100,6 @@ const isValidImageUrl = (urlString: string | null | undefined): boolean => {
 }
 
 export { isValidUrl, isValidImageUrl }
+`
+
+fs.writeFileSync('src/utils/url.ts', newContent)
