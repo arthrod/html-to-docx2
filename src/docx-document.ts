@@ -60,6 +60,44 @@ import { fontFamilyToTableObject } from './utils/font-family-conversion'
 import { convertSVGtoPNG, isSVG, parseDataUrl, parseSVGDimensions } from './utils/image'
 import ListStyleBuilder, { type ListStyleDefaults, type ListStyleType } from './utils/list'
 
+// Precompiled regexes for fixing namespace prefixes in generateDocumentXML
+const wpElements = [
+  'inline',
+  'anchor',
+  'simplePos',
+  'positionH',
+  'positionV',
+  'posOffset',
+  'extent',
+  'effectExtent',
+  'wrapNone',
+  'wrapSquare',
+  'wrapTight',
+  'wrapThrough',
+  'docPr',
+]
+const WP_OPEN_REGEX = new RegExp(`<w:(${wpElements.join('|')})([ />])`, 'g')
+const WP_CLOSE_REGEX = new RegExp(`</w:(${wpElements.join('|')})>`, 'g')
+
+const aElements = [
+  'graphic',
+  'graphicData',
+  'blip',
+  'srcRect',
+  'stretch',
+  'fillRect',
+  'xfrm',
+  'off',
+  'ext',
+  'prstGeom',
+]
+const A_OPEN_REGEX = new RegExp(`<w:(${aElements.join('|')})([ />])`, 'g')
+const A_CLOSE_REGEX = new RegExp(`</w:(${aElements.join('|')})>`, 'g')
+
+const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
+const PIC_OPEN_REGEX = new RegExp(`<w:(${picElements.join('|')})([ />])`, 'g')
+const PIC_CLOSE_REGEX = new RegExp(`</w:(${picElements.join('|')})>`, 'g')
+
 /** Virtual DOM tree node */
 type VTreePropertyValue =
   | string
@@ -626,50 +664,16 @@ class DocxDocument {
     // so we need to post-process the XML string to fix them
 
     // wp: (wordprocessingDrawing) elements
-    const wpElements = [
-      'inline',
-      'anchor',
-      'simplePos',
-      'positionH',
-      'positionV',
-      'posOffset',
-      'extent',
-      'effectExtent',
-      'wrapNone',
-      'wrapSquare',
-      'wrapTight',
-      'wrapThrough',
-      'docPr',
-    ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
+    xmlString = xmlString.replace(WP_OPEN_REGEX, '<wp:$1$2')
+    xmlString = xmlString.replace(WP_CLOSE_REGEX, '</wp:$1>')
 
     // a: (drawingML main) elements
-    const aElements = [
-      'graphic',
-      'graphicData',
-      'blip',
-      'srcRect',
-      'stretch',
-      'fillRect',
-      'xfrm',
-      'off',
-      'ext',
-      'prstGeom',
-    ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
+    xmlString = xmlString.replace(A_OPEN_REGEX, '<a:$1$2')
+    xmlString = xmlString.replace(A_CLOSE_REGEX, '</a:$1>')
 
     // pic: (picture) elements
-    const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
+    xmlString = xmlString.replace(PIC_OPEN_REGEX, '<pic:$1$2')
+    xmlString = xmlString.replace(PIC_CLOSE_REGEX, '</pic:$1>')
 
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')

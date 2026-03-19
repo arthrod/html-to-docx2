@@ -1,0 +1,3 @@
+## 2025-02-19 - Fast namespace prefix replacement in large XML strings
+**Learning:** In hot paths modifying massive XML strings (like fixing namespace prefixes for drawing elements in docx `document.xml`), iterating over an array of element tag names and repeatedly constructing/executing `new RegExp` for each tag using `.forEach` causes significant overhead (up to ~2x slower in benchmarks).
+**Action:** Always combine related element replacements into a single precompiled, module-scoped global RegExp using alternation `(el1|el2|...)`. This executes in one pass instead of multiple loops and prevents repeated compilation overhead.
