@@ -84,7 +84,7 @@ import { vNodeHasChildren } from '../utils/vnode'
 import { buildImage, buildList } from './render-document-file'
 
 // Types for Virtual DOM
-type VNodeProperties = {
+export type VNodeProperties = {
   alt?: string
   attributes?: Record<string, string>
   colSpan?: number
@@ -105,58 +105,7 @@ type VTextType = {
   text: string
 }
 
-// Types for DocxDocumentInstance
-type MediaFileResponse = {
-  fileContent: string
-  fileNameWithExtension: string
-  id: number
-  isSVG?: boolean
-}
-
-type DocxDocumentInstance = Partial<TrackingDocumentInstance> & {
-  availableDocumentSpace: number
-  createDocumentRelationships: (
-    filename: string,
-    type: string,
-    target: string,
-    targetMode?: string
-  ) => number
-  createFont: (fontFamily: string) => string
-  createMediaFile: (base64Uri: string) => Promise<MediaFileResponse>
-  createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number
-  htmlString: string
-  imageProcessing?: {
-    downloadTimeout?: number
-    maxImageSize?: number
-    maxRetries?: number
-    retryDelayBase?: number
-    verboseLogging?: boolean
-  }
-  _imageCache?: Map<string, string | null>
-  _retryStats?: {
-    finalFailures: number
-    successAfterRetry: number
-    totalAttempts: number
-  }
-  relationshipFilename: string
-  tableRowCantSplit: boolean
-  zip: {
-    folder: (name: string) => {
-      file: (
-        name: string,
-        content: Uint8Array,
-        options?: { createFolders: boolean }
-      ) => void
-      folder: (name: string) => {
-        file: (
-          name: string,
-          content: Uint8Array,
-          options?: { createFolders: boolean }
-        ) => void
-      }
-    }
-  }
-}
+import type { DocxDocumentInstance, MediaFileResponse } from '../types'
 
 // Types for attributes and options
 type Indentation = {

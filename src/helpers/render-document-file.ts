@@ -66,52 +66,7 @@ const base64ToUint8Array = (base64: string): Uint8Array => {
   return bytes
 }
 
-// Types for DocxDocumentInstance
-type MediaFileResponse = {
-  fileContent: string
-  fileNameWithExtension: string
-  id: number
-  isSVG?: boolean
-}
-
-type DocxDocumentInstance = {
-  availableDocumentSpace: number
-  createDocumentRelationships: (
-    filename: string,
-    type: string,
-    target: string,
-    targetMode?: string
-  ) => number
-  createFont: (fontFamily: string) => string
-  createMediaFile: (base64Uri: string) => Promise<MediaFileResponse>
-  createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number
-  htmlString: string
-  imageProcessing?: typeof defaultDocumentOptions.imageProcessing
-  relationshipFilename: string
-  _imageCache?: Map<string, string | null>
-  _retryStats?: {
-    finalFailures: number
-    successAfterRetry: number
-    totalAttempts: number
-  }
-  tableRowCantSplit: boolean
-  zip: {
-    folder: (name: string) => {
-      file: (
-        name: string,
-        content: Uint8Array,
-        options?: { createFolders: boolean }
-      ) => void
-      folder: (name: string) => {
-        file: (
-          name: string,
-          content: Uint8Array,
-          options?: { createFolders: boolean }
-        ) => void
-      }
-    }
-  }
-}
+import type { DocxDocumentInstance } from '../types'
 
 // Regex for parsing numeric values from margin-left
 const MARGIN_NUMBER_REGEX = /(\d+)/
