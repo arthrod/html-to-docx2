@@ -128,13 +128,14 @@ const convertHTML = createHTMLToVDOM()
 const fixupFontSize = (fontSize: number | string | undefined): number | null => {
   let normalizedFontSize: number | null
 
-  if (typeof fontSize === 'string' && pointRegex.test(fontSize)) {
+  if (typeof fontSize === 'string') {
     const matchedParts = fontSize.match(pointRegex)
-
     if (matchedParts) {
       normalizedFontSize = pointToHIP(Number.parseFloat(matchedParts[1]))
     } else {
-      normalizedFontSize = null
+      // Return null or attempt parsing if it's string but not matching pointRegex
+      const parsed = Number.parseInt(fontSize, 10)
+      normalizedFontSize = Number.isNaN(parsed) ? null : parsed
     }
   } else if (fontSize !== undefined) {
     // assuming it is already in HIP
@@ -165,27 +166,25 @@ const normalizeUnits = (
       const value = dimensioningObject[key]
       const defaultValue = defaultDimensionsProperty[key]
 
-      if (typeof value === 'string' && pixelRegex.test(value)) {
-        const matchedParts = value.match(pixelRegex)
-
-        if (matchedParts) {
-          normalizedUnitResult[key] = pixelToTWIP(Number.parseFloat(matchedParts[1]))
+      if (typeof value === 'string') {
+        let match: RegExpMatchArray | null
+        // eslint-disable-next-line no-cond-assign
+        if ((match = value.match(pixelRegex))) {
+          normalizedUnitResult[key] = pixelToTWIP(Number.parseFloat(match[1]))
+          // eslint-disable-next-line no-cond-assign
+        } else if ((match = value.match(cmRegex))) {
+          normalizedUnitResult[key] = cmToTWIP(Number.parseFloat(match[1]))
+          // eslint-disable-next-line no-cond-assign
+        } else if ((match = value.match(inchRegex))) {
+          normalizedUnitResult[key] = inchToTWIP(Number.parseFloat(match[1]))
+        } else if (value !== '0') {
+          normalizedUnitResult[key] = Number.parseInt(value, 10)
+        } else {
+          normalizedUnitResult[key] = defaultValue
         }
-      } else if (typeof value === 'string' && cmRegex.test(value)) {
-        const matchedParts = value.match(cmRegex)
-
-        if (matchedParts) {
-          normalizedUnitResult[key] = cmToTWIP(Number.parseFloat(matchedParts[1]))
-        }
-      } else if (typeof value === 'string' && inchRegex.test(value)) {
-        const matchedParts = value.match(inchRegex)
-
-        if (matchedParts) {
-          normalizedUnitResult[key] = inchToTWIP(Number.parseFloat(matchedParts[1]))
-        }
-      } else if (value !== undefined && value !== null && value !== 0 && value !== '0') {
+      } else if (value !== undefined && value !== null && value !== 0) {
         normalizedUnitResult[key] =
-          typeof value === 'number' ? value : Number.parseInt(value, 10)
+          typeof value === 'number' ? value : Number.parseInt(String(value), 10)
       } else {
         // incase value is something like 0
         normalizedUnitResult[key] = defaultValue

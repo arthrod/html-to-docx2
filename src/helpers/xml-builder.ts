@@ -260,49 +260,41 @@ const fixupColorCode = (colorCodeString: string): string => {
 
     return rgbToHex(red, green, blue)
   }
-  if (rgbRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(rgbRegex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  const rgbMatch = colorCodeString.match(rgbRegex)
+  if (rgbMatch) {
+    const red = rgbMatch[1]
+    const green = rgbMatch[2]
+    const blue = rgbMatch[3]
 
-      return rgbToHex(
-        Number.parseInt(red, 10),
-        Number.parseInt(green, 10),
-        Number.parseInt(blue, 10)
-      )
-    }
+    return rgbToHex(
+      Number.parseInt(red, 10),
+      Number.parseInt(green, 10),
+      Number.parseInt(blue, 10)
+    )
   }
-  if (hslRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hslRegex)
-    if (matchedParts) {
-      const hue = matchedParts[1]
-      const saturation = matchedParts[2]
-      const luminosity = matchedParts[3]
+  const hslMatch = colorCodeString.match(hslRegex)
+  if (hslMatch) {
+    const hue = hslMatch[1]
+    const saturation = hslMatch[2]
+    const luminosity = hslMatch[3]
 
-      return hslToHex(
-        Number.parseInt(hue, 10),
-        Number.parseInt(saturation, 10),
-        Number.parseInt(luminosity, 10)
-      )
-    }
+    return hslToHex(
+      Number.parseInt(hue, 10),
+      Number.parseInt(saturation, 10),
+      Number.parseInt(luminosity, 10)
+    )
   }
-  if (hexRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hexRegex)
-    if (matchedParts) {
-      return matchedParts[1]
-    }
+  const hexMatch = colorCodeString.match(hexRegex)
+  if (hexMatch) {
+    return hexMatch[1]
   }
-  if (hex3Regex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hex3Regex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  const hex3Match = colorCodeString.match(hex3Regex)
+  if (hex3Match) {
+    const red = hex3Match[1]
+    const green = hex3Match[2]
+    const blue = hex3Match[3]
 
-      return hex3ToHex(red, green, blue)
-    }
+    return hex3ToHex(red, green, blue)
   }
   return '000000'
 }
@@ -1565,17 +1557,14 @@ const computeImageDimensions = (
     const style = vNode.properties.style
     if (style.width) {
       if (style.width !== 'auto') {
-        if (pixelRegex.test(style.width)) {
-          const match = style.width.match(pixelRegex)
-          if (match) {
-            modifiedWidth = pixelToEMU(Number.parseFloat(match[1]))
-          }
-        } else if (percentageRegex.test(style.width)) {
-          const match = style.width.match(percentageRegex)
-          if (match) {
-            const percentageValue = Number.parseFloat(match[1])
-            modifiedWidth = Math.round((percentageValue / 100) * originalWidthInEMU)
-          }
+        let match: RegExpMatchArray | null
+        // eslint-disable-next-line no-cond-assign
+        if ((match = style.width.match(pixelRegex))) {
+          modifiedWidth = pixelToEMU(Number.parseFloat(match[1]))
+          // eslint-disable-next-line no-cond-assign
+        } else if ((match = style.width.match(percentageRegex))) {
+          const percentageValue = Number.parseFloat(match[1])
+          modifiedWidth = Math.round((percentageValue / 100) * originalWidthInEMU)
         }
       } else if (style.height && style.height === 'auto') {
         modifiedWidth = originalWidthInEMU
@@ -1584,12 +1573,12 @@ const computeImageDimensions = (
     }
     if (style.height) {
       if (style.height !== 'auto') {
-        if (pixelRegex.test(style.height)) {
-          const match = style.height.match(pixelRegex)
-          if (match) {
-            modifiedHeight = pixelToEMU(Number.parseFloat(match[1]))
-          }
-        } else if (percentageRegex.test(style.height)) {
+        let matchHeight: RegExpMatchArray | null
+        // eslint-disable-next-line no-cond-assign
+        if ((matchHeight = style.height.match(pixelRegex))) {
+          modifiedHeight = pixelToEMU(Number.parseFloat(matchHeight[1]))
+          // eslint-disable-next-line no-cond-assign
+        } else if ((matchHeight = style.height.match(percentageRegex))) {
           const match = style.width?.match(percentageRegex)
           if (match) {
             const percentageValue = Number.parseFloat(match[1])
@@ -2795,46 +2784,39 @@ const buildTable = async (
     let maximumWidth: number | undefined
     let width: number | undefined
     // Calculate minimum width of table
-    if (tableStyles['min-width'] && pixelRegex.test(tableStyles['min-width'])) {
-      const match = tableStyles['min-width'].match(pixelRegex)
-      if (match) {
+    if (tableStyles['min-width']) {
+      let match: RegExpMatchArray | null
+      // eslint-disable-next-line no-cond-assign
+      if ((match = tableStyles['min-width'].match(pixelRegex))) {
         minimumWidth = pixelToTWIP(Number.parseFloat(match[1]))
-      }
-    } else if (tableStyles['min-width'] && percentageRegex.test(tableStyles['min-width'])) {
-      const match = tableStyles['min-width'].match(percentageRegex)
-      if (match) {
+        // eslint-disable-next-line no-cond-assign
+      } else if ((match = tableStyles['min-width'].match(percentageRegex))) {
         const percentageValue = Number.parseFloat(match[1])
         minimumWidth = Math.round((percentageValue / 100) * (attributes.maximumWidth || 0))
       }
     }
 
     // Calculate maximum width of table
-    if (tableStyles['max-width'] && pixelRegex.test(tableStyles['max-width'])) {
-      pixelRegex.lastIndex = 0
-      const match = tableStyles['max-width'].match(pixelRegex)
-      if (match) {
+    if (tableStyles['max-width']) {
+      let match: RegExpMatchArray | null
+      // eslint-disable-next-line no-cond-assign
+      if ((match = tableStyles['max-width'].match(pixelRegex))) {
         maximumWidth = pixelToTWIP(Number.parseFloat(match[1]))
-      }
-    } else if (tableStyles['max-width'] && percentageRegex.test(tableStyles['max-width'])) {
-      percentageRegex.lastIndex = 0
-      const match = tableStyles['max-width'].match(percentageRegex)
-      if (match) {
+        // eslint-disable-next-line no-cond-assign
+      } else if ((match = tableStyles['max-width'].match(percentageRegex))) {
         const percentageValue = Number.parseFloat(match[1])
         maximumWidth = Math.round((percentageValue / 100) * (attributes.maximumWidth || 0))
       }
     }
 
     // Calculate specified width of table
-    if (tableStyles.width && pixelRegex.test(tableStyles.width)) {
-      pixelRegex.lastIndex = 0
-      const match = tableStyles.width.match(pixelRegex)
-      if (match) {
+    if (tableStyles.width) {
+      let match: RegExpMatchArray | null
+      // eslint-disable-next-line no-cond-assign
+      if ((match = tableStyles.width.match(pixelRegex))) {
         width = pixelToTWIP(Number.parseFloat(match[1]))
-      }
-    } else if (tableStyles.width && percentageRegex.test(tableStyles.width)) {
-      percentageRegex.lastIndex = 0
-      const match = tableStyles.width.match(percentageRegex)
-      if (match) {
+        // eslint-disable-next-line no-cond-assign
+      } else if ((match = tableStyles.width.match(percentageRegex))) {
         const percentageValue = Number.parseFloat(match[1])
         width = Math.round((percentageValue / 100) * (attributes.maximumWidth || 0))
       }
