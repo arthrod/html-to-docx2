@@ -2,12 +2,12 @@ export class Tag {
   static START = 0
   static END = 1
 
-  attrs: any
-  kind: any
-  name: any
-  selfClosing: any
+  attrs: Record<string, string>
+  kind: number
+  name: string
+  selfClosing: boolean
 
-  constructor(kind: any, name: any, attrs: any, selfClosing = false) {
+  constructor(kind: number, name: string, attrs: Record<string, string> | null, selfClosing = false) {
     this.kind = kind
     this.name = name
     this.attrs = attrs ?? {}
@@ -16,25 +16,35 @@ export class Tag {
 }
 
 export class CharacterToken {
-  data: any
-  constructor(data: any) {
+  data: string
+  constructor(data: string) {
     this.data = data
   }
 }
 
 export class CommentToken {
-  data: any
-  constructor(data: any) {
+  data: string
+  constructor(data: string) {
     this.data = data
   }
 }
 
 export class Doctype {
-  forceQuirks: any
-  name: any
-  publicId: any
-  systemId: any
-  constructor({ name = null, publicId = null, systemId = null, forceQuirks = false } = {}) {
+  forceQuirks: boolean
+  name: string | null
+  publicId: string | null
+  systemId: string | null
+  constructor({
+    name = null,
+    publicId = null,
+    systemId = null,
+    forceQuirks = false,
+  }: {
+    forceQuirks?: boolean
+    name?: string | null
+    publicId?: string | null
+    systemId?: string | null
+  } = {}) {
     this.name = name
     this.publicId = publicId
     this.systemId = systemId
@@ -43,8 +53,8 @@ export class Doctype {
 }
 
 export class DoctypeToken {
-  doctype: any
-  constructor(doctype: any) {
+  doctype: Doctype
+  constructor(doctype: Doctype) {
     this.doctype = doctype
   }
 }
@@ -57,11 +67,22 @@ export class TokenSinkResult {
 }
 
 export class ParseError {
-  code: any
-  column: any
-  line: any
-  message: any
-  constructor(code: any, { line = null, column = null, message = null } = {}) {
+  code: string
+  column: number | null
+  line: number | null
+  message: string
+  constructor(
+    code: string,
+    {
+      line = null,
+      column = null,
+      message = null,
+    }: {
+      column?: number | null
+      line?: number | null
+      message?: string | null
+    } = {}
+  ) {
     this.code = code
     this.line = line
     this.column = column

@@ -67,7 +67,8 @@ function handleDoctype(self: any, token: DoctypeToken) {
     iframeSrcdoc: self.iframe_srcdoc,
   })
 
-  const node = new Node('!doctype', { data: doctype, namespace: null })
+  // doctype token returns Doctype instance, but we pass it as data
+  const node = new Node('!doctype', { data: doctype as unknown as string, namespace: null })
   self.document.append_child(node)
 
   if (parseError) self._parse_error('unknown-doctype')
