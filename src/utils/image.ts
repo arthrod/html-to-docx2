@@ -1,4 +1,5 @@
 import { SVG_UNIT_TO_PIXEL_CONVERSIONS } from '../constants'
+import { isValidImageUrl } from './url'
 import {
   downloadAndCacheImage,
   guessMimeTypeFromBytes,
@@ -308,6 +309,10 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  if (!isValidImageUrl(url)) {
+    throw new Error('Invalid or unsupported image URL')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
