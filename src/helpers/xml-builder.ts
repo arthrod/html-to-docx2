@@ -925,11 +925,12 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'rPr')
   if (attributes && attributes.constructor === Object) {
-    ;(Object.keys(attributes) as Array<keyof RunAttributes>).forEach((key) => {
+    for (const k in attributes) {
+      const key = k as keyof RunAttributes
       const value = attributes[key]
 
       // Skip undefined values to prevent default 'black' being applied
-      if (value === undefined) return
+      if (value === undefined) continue
 
       const options: FormattingOptions = {}
       if (key === 'color' || key === 'backgroundColor' || key === 'highlightColor') {
@@ -944,7 +945,7 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
       if (formattingFragment) {
         runPropertiesFragment.import(formattingFragment)
       }
-    })
+    }
   }
   runPropertiesFragment.up()
 
@@ -1412,7 +1413,7 @@ const buildParagraphBorder = (): XMLBuilderType => {
   }).ele('@w', 'pBdr')
   const bordersObject = cloneDeep(paragraphBordersObject)
 
-  Object.keys(bordersObject).forEach((borderName) => {
+  for (const borderName in bordersObject) {
     const border = bordersObject[borderName as keyof typeof bordersObject]
     if (border) {
       const { size, spacing, color } = border
@@ -1420,7 +1421,7 @@ const buildParagraphBorder = (): XMLBuilderType => {
       const borderFragment = buildBorder(borderName, size, spacing, color)
       paragraphBorderFragment.import(borderFragment)
     }
-  })
+  }
 
   paragraphBorderFragment.up()
 
@@ -2052,9 +2053,16 @@ const buildTableCellProperties = (
     // 4. tcBorders
     if (attributes.tableCellBorder !== undefined) {
       const border = attributes.tableCellBorder
-      const hasVisibleBorder = Object.entries(border).some(
-        ([k, v]) => k !== 'color' && k !== 'stroke' && typeof v === 'number' && v > 0
-      )
+      let hasVisibleBorder = false
+      for (const k in border as Record<string, unknown>) {
+        if (k !== 'color' && k !== 'stroke') {
+          const v = (border as Record<string, unknown>)[k]
+          if (typeof v === 'number' && v > 0) {
+            hasVisibleBorder = true
+            break
+          }
+        }
+      }
       if (hasVisibleBorder) {
         const tableCellBorderFragment = buildTableCellBorders(border)
         tableCellPropertiesFragment.import(tableCellBorderFragment)
@@ -2378,7 +2386,8 @@ const buildTableRowProperties = (
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'trPr')
   if (attributes && attributes.constructor === Object) {
-    Object.keys(attributes).forEach((key) => {
+    for (const k in attributes) {
+      const key = k as keyof TableRowAttributes
       switch (key) {
         case 'tableRowHeight': {
           if (attributes[key] !== null && attributes[key] !== undefined) {
@@ -2403,7 +2412,7 @@ const buildTableRowProperties = (
         default:
           break
       }
-    })
+    }
   }
   tableRowPropertiesFragment.up()
   return tableRowPropertiesFragment
@@ -2671,9 +2680,16 @@ const buildTableProperties = (attributes: TableAttributes | undefined): XMLBuild
     // 4. tblBorders
     if (attributes.tableBorder) {
       const border = attributes.tableBorder
-      const hasVisibleBorder = Object.entries(border).some(
-        ([k, v]) => k !== 'color' && k !== 'stroke' && v && v > 0
-      )
+      let hasVisibleBorder = false
+      for (const k in border as Record<string, unknown>) {
+        if (k !== 'color' && k !== 'stroke') {
+          const v = (border as Record<string, unknown>)[k]
+          if (typeof v === 'number' && v > 0) {
+            hasVisibleBorder = true
+            break
+          }
+        }
+      }
       if (hasVisibleBorder) {
         const tableBordersFragment = buildTableBorders(border)
         tablePropertiesFragment.import(tableBordersFragment)
@@ -2787,7 +2803,12 @@ const buildTable = async (
     modifiedAttributes.tableBorder = tableBorders
     modifiedAttributes.tableCellSpacing = 0
 
-    if (Object.keys(tableCellBorders).length) {
+    let hasTableCellBorders = false
+    for (const _ in tableCellBorders) {
+      hasTableCellBorders = true
+      break
+    }
+    if (hasTableCellBorders) {
       modifiedAttributes.tableCellBorder = tableCellBorders
     }
 
