@@ -1,3 +1,4 @@
+import { isValidImageUrl } from './url'
 import { defaultDocumentOptions } from '../constants'
 
 type DownloadOptions = {
@@ -162,7 +163,11 @@ const downloadImage = async (
  */
 export async function imageToBase64(imageUrl: string): Promise<string> {
   // Validate URL
-  const url = new URL(imageUrl)
+  if (!isValidImageUrl(imageUrl)) {
+    throw new Error('Invalid URL provided')
+  }
+
+  const url = new URL(imageUrl, 'http://dummy.local')
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Invalid URL provided')
   }
