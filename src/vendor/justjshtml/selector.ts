@@ -568,11 +568,16 @@ class SelectorMatcher {
 
     let found = false
     let attrValue = null
-    for (const [name, value] of Object.entries(attrs)) {
-      if (name.toLowerCase() === attrName) {
-        found = true
-        attrValue = value
-        break
+    if (attrs[attrName] !== undefined) {
+      found = true
+      attrValue = attrs[attrName]
+    } else {
+      for (const name in attrs) {
+        if (name.toLowerCase() === attrName) {
+          found = true
+          attrValue = attrs[name]
+          break
+        }
       }
     }
     if (!found) return false
