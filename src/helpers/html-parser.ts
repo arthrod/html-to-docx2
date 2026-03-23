@@ -364,12 +364,15 @@ function convertTagAttributes(tag: ParsedNode): VNodeProperties {
     attributes: {},
   }
 
-  Object.keys(attributes).forEach((attributeName) => {
-    const value = attributes[attributeName]
-    const propInfo = getPropertyInfo(attributeName)
-    const propertySetter = getPropertySetter(propInfo)
-    propertySetter.set(vNodeProperties, propInfo, value)
-  })
+  // ⚡ Bolt: Using for...in avoids Object.keys array allocation and callback overhead in hot parsing path
+  for (const attributeName in attributes) {
+    if (Object.hasOwn(attributes, attributeName)) {
+      const value = attributes[attributeName]
+      const propInfo = getPropertyInfo(attributeName)
+      const propertySetter = getPropertySetter(propInfo)
+      propertySetter.set(vNodeProperties, propInfo, value)
+    }
+  }
 
   return vNodeProperties
 }
