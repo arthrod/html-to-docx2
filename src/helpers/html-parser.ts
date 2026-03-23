@@ -208,9 +208,10 @@ function checkMask(value: number, bitmask: number): boolean {
 
 // Build property info lookup table
 const propInfoByAttributeName: Record<string, PropertyInfo> = {}
-Object.keys(Properties).forEach((propName) => {
+for (const propName in Properties) {
   const propConfig = Properties[propName] || 0
-  const attributeName = PropertyToAttributeMapping[propName] || propName.toLowerCase()
+  const attributeName =
+    PropertyToAttributeMapping[propName] || propName.toLowerCase()
 
   const propertyInfo: PropertyInfo = {
     attributeName,
@@ -224,7 +225,7 @@ Object.keys(Properties).forEach((propName) => {
   }
 
   propInfoByAttributeName[attributeName] = propertyInfo
-})
+}
 
 function getPropertyInfo(attributeName: string): PropertyInfo {
   const lowerCased = attributeName.toLowerCase()
@@ -364,12 +365,12 @@ function convertTagAttributes(tag: ParsedNode): VNodeProperties {
     attributes: {},
   }
 
-  Object.keys(attributes).forEach((attributeName) => {
+  for (const attributeName in attributes) {
     const value = attributes[attributeName]
     const propInfo = getPropertyInfo(attributeName)
     const propertySetter = getPropertySetter(propInfo)
     propertySetter.set(vNodeProperties, propInfo, value)
-  })
+  }
 
   return vNodeProperties
 }
