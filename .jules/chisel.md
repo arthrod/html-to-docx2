@@ -1,0 +1,3 @@
+## 2024-05-15 - [JustHTML Options Migration]
+**Learning:** `options = {}` defaults in legacy JS constructors (like `JustHTML`) cause a cluster of `TS(2339)` errors when destructured. These errors were often masked with `@ts-expect-error`.
+**Action:** Define an explicit `Options` interface (e.g., `JustHTMLOptions`) to define the allowed properties and resolve all associated `@ts-expect-error` annotations without modifying runtime logic. For unknown option property types, explicitly typing them as `unknown` successfully eliminates errors without propagating `any`.
