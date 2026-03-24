@@ -46,6 +46,8 @@ type ModeHandler = (self: any, token: Tag) => ModeHandlerResult
 type AttributeMap = Record<string, string | null>
 type AttributeMapInput = AttributeMap | null | undefined
 
+const WHITESPACE_PREFIX_RE = /^[\t\n\f\r ]+/
+
 function lowerAscii(value: any) {
   return value ? String(value).toLowerCase() : ''
 }
@@ -203,10 +205,10 @@ function modeInHead(self: any, token: any): ModeHandlerResult {
     }
 
     const data = token.data || ''
-    let i = 0
-    while (i < data.length && '\t\n\f\r '.includes(data[i])) i += 1
-    const leadingWs = data.slice(0, i)
-    const remaining = data.slice(i)
+    // ⚡ Bolt: Use precompiled regex to extract leading whitespace instead of manual character loop
+    const match = data.match(WHITESPACE_PREFIX_RE)
+    const leadingWs = match ? match[0] : ''
+    const remaining = data.slice(leadingWs.length)
     if (leadingWs) {
       const current = self.open_elements.length
         ? self.open_elements[self.open_elements.length - 1]
@@ -1477,11 +1479,12 @@ function modeInColumnGroup(self: any, token: any): ModeHandlerResult {
 
   if (token instanceof CharacterToken) {
     const data = token.data || ''
-    let i = 0
-    while (i < data.length && '\t\n\f\r '.includes(data[i])) i += 1
+    // ⚡ Bolt: Use precompiled regex to extract leading whitespace instead of manual character loop
+    const match = data.match(WHITESPACE_PREFIX_RE)
+    const leadingWs = match ? match[0] : ''
 
-    if (i) self._append_text(data.slice(0, i))
-    const rest = data.slice(i)
+    if (leadingWs) self._append_text(leadingWs)
+    const rest = data.slice(leadingWs.length)
     if (!rest) return null
 
     if (current && current.name === 'html') {
