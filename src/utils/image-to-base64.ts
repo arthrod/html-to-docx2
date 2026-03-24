@@ -1,4 +1,5 @@
 import { defaultDocumentOptions } from '../constants'
+import { isValidUrl } from './url'
 
 type DownloadOptions = {
   maxSize?: number
@@ -115,6 +116,10 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  if (!isValidUrl(imageUrl)) {
+    throw new Error('Invalid URL provided')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -161,12 +166,6 @@ const downloadImage = async (
  * Kept for backward compatibility with existing callers.
  */
 export async function imageToBase64(imageUrl: string): Promise<string> {
-  // Validate URL
-  const url = new URL(imageUrl)
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new Error('Invalid URL provided')
-  }
-
   const { base64 } = await downloadImage(imageUrl, {
     timeout: defaultDocumentOptions.imageProcessing.downloadTimeout,
     maxSize: defaultDocumentOptions.imageProcessing.maxImageSize,
