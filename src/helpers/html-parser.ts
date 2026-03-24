@@ -364,12 +364,18 @@ function convertTagAttributes(tag: ParsedNode): VNodeProperties {
     attributes: {},
   }
 
-  Object.keys(attributes).forEach((attributeName) => {
-    const value = attributes[attributeName]
-    const propInfo = getPropertyInfo(attributeName)
-    const propertySetter = getPropertySetter(propInfo)
-    propertySetter.set(vNodeProperties, propInfo, value)
-  })
+  // ⚡ Bolt: Performance optimization
+  // Use a simple for...in loop instead of Object.keys(attributes).forEach(...)
+  // to avoid allocating an intermediate array of keys and creating a callback closure
+  // for every parsed HTML element, reducing garbage collection pressure in this hot path.
+  for (const attributeName in attributes) {
+    if (Object.hasOwn(attributes, attributeName)) {
+      const value = attributes[attributeName]
+      const propInfo = getPropertyInfo(attributeName)
+      const propertySetter = getPropertySetter(propInfo)
+      propertySetter.set(vNodeProperties, propInfo, value)
+    }
+  }
 
   return vNodeProperties
 }
