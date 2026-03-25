@@ -5,6 +5,7 @@ import {
   imageToBase64,
   parseDataUrl,
 } from './image-to-base64'
+import { isValidUrl } from './url'
 
 type ImageMimeType =
   | 'image/bmp'
@@ -308,6 +309,11 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  // 🛡️ Sentinel: Prevent SSRF/LFI by strictly verifying the URL protocol
+  if (!isValidUrl(url)) {
+    throw new Error('Invalid URL provided')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
