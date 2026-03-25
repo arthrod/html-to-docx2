@@ -409,13 +409,18 @@ function shouldOmitEndTag(name: any, nextTok: any) {
   return false
 }
 
-export function serializeSerializerTokenStream(tokens: any, options = {}) {
+export interface SerializeSerializerTokenStreamOptions {
+  inject_meta_charset?: boolean
+  encoding?: string | null
+  strip_whitespace?: boolean
+  escape_rcdata?: boolean
+}
+
+export function serializeSerializerTokenStream(tokens: any, options: SerializeSerializerTokenStreamOptions = {}) {
   if (!Array.isArray(tokens)) return null
 
   let tokenStream = tokens
-  // @ts-expect-error TS(2339) FIXME: Property 'inject_meta_charset' does not exist on t... Remove this comment to see the full error message
   if (options.inject_meta_charset) {
-    // @ts-expect-error TS(2339) FIXME: Property 'encoding' does not exist on type '{}'.
     const encoding = options.encoding
     if (!encoding) return ''
     tokenStream = applyInjectMetaCharset(tokenStream, encoding)
@@ -425,9 +430,7 @@ export function serializeSerializerTokenStream(tokens: any, options = {}) {
   let rawtext = null
 
   const openElements = []
-  // @ts-expect-error TS(2339) FIXME: Property 'strip_whitespace' does not exist on type... Remove this comment to see the full error message
   const stripWs = Boolean(options.strip_whitespace)
-  // @ts-expect-error TS(2339) FIXME: Property 'escape_rcdata' does not exist on type '{... Remove this comment to see the full error message
   const escapeRcdata = Boolean(options.escape_rcdata)
   const wsPreserve = new Set(['pre', 'textarea', 'script', 'style'])
 
