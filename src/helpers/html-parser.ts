@@ -364,12 +364,14 @@ function convertTagAttributes(tag: ParsedNode): VNodeProperties {
     attributes: {},
   }
 
-  Object.keys(attributes).forEach((attributeName) => {
-    const value = attributes[attributeName]
-    const propInfo = getPropertyInfo(attributeName)
-    const propertySetter = getPropertySetter(propInfo)
-    propertySetter.set(vNodeProperties, propInfo, value)
-  })
+  for (const attributeName in attributes) {
+    if (Object.hasOwn(attributes, attributeName)) {
+      const value = attributes[attributeName]
+      const propInfo = getPropertyInfo(attributeName)
+      const propertySetter = getPropertySetter(propInfo)
+      propertySetter.set(vNodeProperties, propInfo, value)
+    }
+  }
 
   return vNodeProperties
 }
