@@ -20,15 +20,24 @@ export class StrictModeError extends SyntaxError {
   }
 }
 
+export interface JustHTMLOptions {
+  collectErrors?: boolean
+  encoding?: string | null
+  strict?: boolean
+  fragmentContext?: unknown
+  iframeSrcdoc?: boolean
+  tokenizerOpts?: unknown
+}
+
 export class JustHTML {
-  collectErrors: any
-  encoding: any
-  errors: any
-  fragmentContext: any
-  iframeSrcdoc: any
+  collectErrors: boolean
+  encoding: string | null
+  errors: any[]
+  fragmentContext: unknown
+  iframeSrcdoc: boolean
   root: any
-  strict: any
-  constructor(input: any, options: JustHTMLOptions = {}) {
+  strict: boolean
+  constructor(input: string | ArrayBuffer | Uint8Array, options: JustHTMLOptions = {}) {
     const {
       collectErrors = false,
       encoding = null,
