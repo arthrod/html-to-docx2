@@ -1,12 +1,23 @@
 import { decodeHTML } from './encoding.js'
 import { parseDocument } from './parser.js'
 
+import { TokenizerOpts } from './tokenizer.js'
+
 export class StrictModeError extends SyntaxError {
   error: any
   constructor(error: any) {
     super(error?.message || String(error?.code || 'parse-error'))
     this.error = error
   }
+}
+
+export interface JustHTMLOptions {
+  collectErrors?: boolean
+  encoding?: string | null
+  strict?: boolean
+  fragmentContext?: any | null
+  iframeSrcdoc?: boolean
+  tokenizerOpts?: TokenizerOpts | Record<string, any> | null
 }
 
 export class JustHTML {
@@ -17,19 +28,13 @@ export class JustHTML {
   iframeSrcdoc: any
   root: any
   strict: any
-  constructor(input: any, options = {}) {
+  constructor(input: any, options: JustHTMLOptions = {}) {
     const {
-      // @ts-expect-error TS(2339) FIXME: Property 'collectErrors' does not exist on type '{... Remove this comment to see the full error message
       collectErrors = false,
-      // @ts-expect-error TS(2339) FIXME: Property 'encoding' does not exist on type '{}'.
       encoding = null,
-      // @ts-expect-error TS(2339) FIXME: Property 'strict' does not exist on type '{}'.
       strict = false,
-      // @ts-expect-error TS(2339) FIXME: Property 'fragmentContext' does not exist on type ... Remove this comment to see the full error message
       fragmentContext = null,
-      // @ts-expect-error TS(2339) FIXME: Property 'iframeSrcdoc' does not exist on type '{}... Remove this comment to see the full error message
       iframeSrcdoc = false,
-      // @ts-expect-error TS(2339) FIXME: Property 'tokenizerOpts' does not exist on type '{... Remove this comment to see the full error message
       tokenizerOpts = null,
     } = options
 
