@@ -92,7 +92,7 @@ jobs:
 
       - name: Post TurboDocx DOCX diff report as PR comment
         if: steps.report.outputs.report != ''
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
