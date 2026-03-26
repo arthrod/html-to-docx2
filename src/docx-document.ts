@@ -60,6 +60,46 @@ import { fontFamilyToTableObject } from './utils/font-family-conversion'
 import { convertSVGtoPNG, isSVG, parseDataUrl, parseSVGDimensions } from './utils/image'
 import ListStyleBuilder, { type ListStyleDefaults, type ListStyleType } from './utils/list'
 
+const wpElements = [
+  'inline',
+  'anchor',
+  'simplePos',
+  'positionH',
+  'positionV',
+  'posOffset',
+  'extent',
+  'effectExtent',
+  'wrapNone',
+  'wrapSquare',
+  'wrapTight',
+  'wrapThrough',
+  'docPr',
+]
+const wpPattern = wpElements.join('|')
+const wpRegex = new RegExp(`<w:(${wpPattern})([ />])`, 'g')
+const wpCloseRegex = new RegExp(`</w:(${wpPattern})>`, 'g')
+
+const aElements = [
+  'graphic',
+  'graphicData',
+  'blip',
+  'srcRect',
+  'stretch',
+  'fillRect',
+  'xfrm',
+  'off',
+  'ext',
+  'prstGeom',
+]
+const aPattern = aElements.join('|')
+const aRegex = new RegExp(`<w:(${aPattern})([ />])`, 'g')
+const aCloseRegex = new RegExp(`</w:(${aPattern})>`, 'g')
+
+const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
+const picPattern = picElements.join('|')
+const picRegex = new RegExp(`<w:(${picPattern})([ />])`, 'g')
+const picCloseRegex = new RegExp(`</w:(${picPattern})>`, 'g')
+
 /** Virtual DOM tree node */
 type VTreePropertyValue =
   | string
@@ -625,51 +665,17 @@ class DocxDocument {
     // xmlbuilder2 doesn't correctly preserve namespace prefixes when importing fragments
     // so we need to post-process the XML string to fix them
 
-    // wp: (wordprocessingDrawing) elements
-    const wpElements = [
-      'inline',
-      'anchor',
-      'simplePos',
-      'positionH',
-      'positionV',
-      'posOffset',
-      'extent',
-      'effectExtent',
-      'wrapNone',
-      'wrapSquare',
-      'wrapTight',
-      'wrapThrough',
-      'docPr',
-    ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
+    // ⚡ Bolt: Use precompiled, combined regular expressions instead of iterating over arrays
+    // and dynamically creating new RegExp on every document generation. This reduces
+    // full string passes from 58 down to 6.
+    xmlString = xmlString.replace(wpRegex, '<wp:$1$2')
+    xmlString = xmlString.replace(wpCloseRegex, '</wp:$1>')
 
-    // a: (drawingML main) elements
-    const aElements = [
-      'graphic',
-      'graphicData',
-      'blip',
-      'srcRect',
-      'stretch',
-      'fillRect',
-      'xfrm',
-      'off',
-      'ext',
-      'prstGeom',
-    ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
+    xmlString = xmlString.replace(aRegex, '<a:$1$2')
+    xmlString = xmlString.replace(aCloseRegex, '</a:$1>')
 
-    // pic: (picture) elements
-    const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
+    xmlString = xmlString.replace(picRegex, '<pic:$1$2')
+    xmlString = xmlString.replace(picCloseRegex, '</pic:$1>')
 
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
