@@ -101,13 +101,13 @@ export function extractParagraphProperties(paragraphXml) {
   // Extract spacing before
   const spacingBeforeMatch = paragraphXml.match(SPACING_BEFORE_REGEX)
   if (spacingBeforeMatch) {
-    properties.spacingBefore = parseInt(spacingBeforeMatch[1], 10)
+    properties.spacingBefore = Number.parseInt(spacingBeforeMatch[1], 10)
   }
 
   // Extract spacing after
   const spacingAfterMatch = paragraphXml.match(SPACING_AFTER_REGEX)
   if (spacingAfterMatch) {
-    properties.spacingAfter = parseInt(spacingAfterMatch[1], 10)
+    properties.spacingAfter = Number.parseInt(spacingAfterMatch[1], 10)
   }
 
   return properties
@@ -157,7 +157,7 @@ export function extractRunProperties(paragraphXml) {
     // Extract font size
     const sizeMatch = runXml.match(FONT_SIZE_REGEX)
     if (sizeMatch) {
-      runProps.fontSize = parseInt(sizeMatch[1], 10)
+      runProps.fontSize = Number.parseInt(sizeMatch[1], 10)
     }
 
     // Extract text content

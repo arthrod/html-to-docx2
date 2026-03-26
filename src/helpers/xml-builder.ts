@@ -260,49 +260,38 @@ const fixupColorCode = (colorCodeString: string): string => {
 
     return rgbToHex(red, green, blue)
   }
-  if (rgbRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(rgbRegex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  let matchedParts: RegExpMatchArray | null
+  if ((matchedParts = colorCodeString.match(rgbRegex))) {
+    const red = matchedParts[1]
+    const green = matchedParts[2]
+    const blue = matchedParts[3]
 
-      return rgbToHex(
-        Number.parseInt(red, 10),
-        Number.parseInt(green, 10),
-        Number.parseInt(blue, 10)
-      )
-    }
+    return rgbToHex(
+      Number.parseInt(red, 10),
+      Number.parseInt(green, 10),
+      Number.parseInt(blue, 10)
+    )
   }
-  if (hslRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hslRegex)
-    if (matchedParts) {
-      const hue = matchedParts[1]
-      const saturation = matchedParts[2]
-      const luminosity = matchedParts[3]
+  if ((matchedParts = colorCodeString.match(hslRegex))) {
+    const hue = matchedParts[1]
+    const saturation = matchedParts[2]
+    const luminosity = matchedParts[3]
 
-      return hslToHex(
-        Number.parseInt(hue, 10),
-        Number.parseInt(saturation, 10),
-        Number.parseInt(luminosity, 10)
-      )
-    }
+    return hslToHex(
+      Number.parseInt(hue, 10),
+      Number.parseInt(saturation, 10),
+      Number.parseInt(luminosity, 10)
+    )
   }
-  if (hexRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hexRegex)
-    if (matchedParts) {
-      return matchedParts[1]
-    }
+  if ((matchedParts = colorCodeString.match(hexRegex))) {
+    return matchedParts[1]
   }
-  if (hex3Regex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hex3Regex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  if ((matchedParts = colorCodeString.match(hex3Regex))) {
+    const red = matchedParts[1]
+    const green = matchedParts[2]
+    const blue = matchedParts[3]
 
-      return hex3ToHex(red, green, blue)
-    }
+    return hex3ToHex(red, green, blue)
   }
   return '000000'
 }
@@ -650,49 +639,33 @@ const fixupLineHeight = (lineHeight: number, fontSize: number | null): number =>
 }
 
 const fixupFontSize = (fontSizeString: string): number | undefined => {
-  if (pointRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  let matchedParts: RegExpMatchArray | null
+  if ((matchedParts = fontSizeString.match(pointRegex))) {
+    // convert point to half point
+    return pointToHIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = fontSizeString.match(pixelRegex))) {
+    // convert pixels to half point
+    return pixelToHIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
 
 const fixupRowHeight = (rowHeightString: string): number | undefined => {
-  if (pointRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  let matchedParts: RegExpMatchArray | null
+  if ((matchedParts = rowHeightString.match(pointRegex))) {
+    // convert point to half point
+    return pointToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = rowHeightString.match(pixelRegex))) {
+    // convert pixels to half point
+    return pixelToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (cmRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(cmRegex)
-    if (matchedParts) {
-      return cmToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = rowHeightString.match(cmRegex))) {
+    return cmToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (inchRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(inchRegex)
-    if (matchedParts) {
-      return inchToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = rowHeightString.match(inchRegex))) {
+    return inchToTWIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
@@ -702,67 +675,48 @@ const fixupColumnWidth = (
 ): ColumnWidthInfo | null => {
   if (!columnWidthString) return null
 
-  if (pointRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(pointRegex)
-    if (matchedParts) {
-      return {
-        value: pointToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  let matchedParts: RegExpMatchArray | null
+  if ((matchedParts = columnWidthString.match(pointRegex))) {
+    return {
+      value: pointToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (pixelRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(pixelRegex)
-    if (matchedParts) {
-      return {
-        value: pixelToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  if ((matchedParts = columnWidthString.match(pixelRegex))) {
+    return {
+      value: pixelToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (cmRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(cmRegex)
-    if (matchedParts) {
-      return {
-        value: cmToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  if ((matchedParts = columnWidthString.match(cmRegex))) {
+    return {
+      value: cmToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (inchRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(inchRegex)
-    if (matchedParts) {
-      return {
-        value: inchToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  if ((matchedParts = columnWidthString.match(inchRegex))) {
+    return {
+      value: inchToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (percentageRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(percentageRegex)
-    if (matchedParts) {
-      // Convert percentage to fiftieths of a percent (pct in OOXML)
-      // 50% = 50 * 50 = 2500 (fiftieths of a percent)
-      return { value: Number.parseFloat(matchedParts[1]) * 50, type: 'pct' }
-    }
+  if ((matchedParts = columnWidthString.match(percentageRegex))) {
+    // Convert percentage to fiftieths of a percent (pct in OOXML)
+    // 50% = 50 * 50 = 2500 (fiftieths of a percent)
+    return { value: Number.parseFloat(matchedParts[1]) * 50, type: 'pct' }
   }
   return null
 }
 
 const fixupMargin = (marginString: string): number | undefined => {
-  if (pointRegex.test(marginString)) {
-    const matchedParts = marginString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  let matchedParts: RegExpMatchArray | null
+  if ((matchedParts = marginString.match(pointRegex))) {
+    // convert point to half point
+    return pointToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(marginString)) {
-    const matchedParts = marginString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = marginString.match(pixelRegex))) {
+    // convert pixels to half point
+    return pixelToTWIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
@@ -1563,19 +1517,14 @@ const computeImageDimensions = (
 
   if (vNode.properties?.style) {
     const style = vNode.properties.style
+    let match: RegExpMatchArray | null
     if (style.width) {
       if (style.width !== 'auto') {
-        if (pixelRegex.test(style.width)) {
-          const match = style.width.match(pixelRegex)
-          if (match) {
-            modifiedWidth = pixelToEMU(Number.parseFloat(match[1]))
-          }
-        } else if (percentageRegex.test(style.width)) {
-          const match = style.width.match(percentageRegex)
-          if (match) {
-            const percentageValue = Number.parseFloat(match[1])
-            modifiedWidth = Math.round((percentageValue / 100) * originalWidthInEMU)
-          }
+        if ((match = style.width.match(pixelRegex))) {
+          modifiedWidth = pixelToEMU(Number.parseFloat(match[1]))
+        } else if ((match = style.width.match(percentageRegex))) {
+          const percentageValue = Number.parseFloat(match[1])
+          modifiedWidth = Math.round((percentageValue / 100) * originalWidthInEMU)
         }
       } else if (style.height && style.height === 'auto') {
         modifiedWidth = originalWidthInEMU
@@ -1584,19 +1533,13 @@ const computeImageDimensions = (
     }
     if (style.height) {
       if (style.height !== 'auto') {
-        if (pixelRegex.test(style.height)) {
-          const match = style.height.match(pixelRegex)
-          if (match) {
-            modifiedHeight = pixelToEMU(Number.parseFloat(match[1]))
-          }
-        } else if (percentageRegex.test(style.height)) {
-          const match = style.width?.match(percentageRegex)
-          if (match) {
-            const percentageValue = Number.parseFloat(match[1])
-            modifiedHeight = Math.round((percentageValue / 100) * originalHeightInEMU)
-            if (!modifiedWidth) {
-              modifiedWidth = Math.round(modifiedHeight * aspectRatio)
-            }
+        if ((match = style.height.match(pixelRegex))) {
+          modifiedHeight = pixelToEMU(Number.parseFloat(match[1]))
+        } else if ((match = style.height.match(percentageRegex))) {
+          const percentageValue = Number.parseFloat(match[1])
+          modifiedHeight = Math.round((percentageValue / 100) * originalHeightInEMU)
+          if (!modifiedWidth) {
+            modifiedWidth = Math.round(modifiedHeight * aspectRatio)
           }
         }
       } else if (modifiedWidth) {
@@ -2711,14 +2654,13 @@ const cssBorderParser = (borderString: string): [number, string, string] => {
   }
 
   let sizeNum: number
-  if (pointRegex.test(size)) {
-    const matchedParts = size.match(pointRegex)
+  let matchedParts: RegExpMatchArray | null
+  if ((matchedParts = size.match(pointRegex))) {
     // convert point to eighth of a point
-    sizeNum = matchedParts ? pointToEIP(Number.parseFloat(matchedParts[1])) : 0
-  } else if (pixelRegex.test(size)) {
-    const matchedParts = size.match(pixelRegex)
+    sizeNum = pointToEIP(Number.parseFloat(matchedParts[1]))
+  } else if ((matchedParts = size.match(pixelRegex))) {
     // convert pixels to eighth of a point
-    sizeNum = matchedParts ? pixelToEIP(Number.parseFloat(matchedParts[1])) : 0
+    sizeNum = pixelToEIP(Number.parseFloat(matchedParts[1]))
   } else {
     sizeNum = 0
   }
@@ -2794,47 +2736,37 @@ const buildTable = async (
     let minimumWidth: number | undefined
     let maximumWidth: number | undefined
     let width: number | undefined
+    let match: RegExpMatchArray | null
     // Calculate minimum width of table
-    if (tableStyles['min-width'] && pixelRegex.test(tableStyles['min-width'])) {
-      const match = tableStyles['min-width'].match(pixelRegex)
-      if (match) {
-        minimumWidth = pixelToTWIP(Number.parseFloat(match[1]))
-      }
-    } else if (tableStyles['min-width'] && percentageRegex.test(tableStyles['min-width'])) {
-      const match = tableStyles['min-width'].match(percentageRegex)
-      if (match) {
-        const percentageValue = Number.parseFloat(match[1])
-        minimumWidth = Math.round((percentageValue / 100) * (attributes.maximumWidth || 0))
-      }
+    if (tableStyles['min-width'] && (match = tableStyles['min-width'].match(pixelRegex))) {
+      minimumWidth = pixelToTWIP(Number.parseFloat(match[1]))
+    } else if (
+      tableStyles['min-width'] &&
+      (match = tableStyles['min-width'].match(percentageRegex))
+    ) {
+      const percentageValue = Number.parseFloat(match[1])
+      minimumWidth = Math.round((percentageValue / 100) * (attributes.maximumWidth || 0))
     }
 
     // Calculate maximum width of table
-    if (tableStyles['max-width'] && pixelRegex.test(tableStyles['max-width'])) {
+    if (tableStyles['max-width']) {
       pixelRegex.lastIndex = 0
-      const match = tableStyles['max-width'].match(pixelRegex)
-      if (match) {
-        maximumWidth = pixelToTWIP(Number.parseFloat(match[1]))
-      }
-    } else if (tableStyles['max-width'] && percentageRegex.test(tableStyles['max-width'])) {
       percentageRegex.lastIndex = 0
-      const match = tableStyles['max-width'].match(percentageRegex)
-      if (match) {
+      if ((match = tableStyles['max-width'].match(pixelRegex))) {
+        maximumWidth = pixelToTWIP(Number.parseFloat(match[1]))
+      } else if ((match = tableStyles['max-width'].match(percentageRegex))) {
         const percentageValue = Number.parseFloat(match[1])
         maximumWidth = Math.round((percentageValue / 100) * (attributes.maximumWidth || 0))
       }
     }
 
     // Calculate specified width of table
-    if (tableStyles.width && pixelRegex.test(tableStyles.width)) {
+    if (tableStyles.width) {
       pixelRegex.lastIndex = 0
-      const match = tableStyles.width.match(pixelRegex)
-      if (match) {
-        width = pixelToTWIP(Number.parseFloat(match[1]))
-      }
-    } else if (tableStyles.width && percentageRegex.test(tableStyles.width)) {
       percentageRegex.lastIndex = 0
-      const match = tableStyles.width.match(percentageRegex)
-      if (match) {
+      if ((match = tableStyles.width.match(pixelRegex))) {
+        width = pixelToTWIP(Number.parseFloat(match[1]))
+      } else if ((match = tableStyles.width.match(percentageRegex))) {
         const percentageValue = Number.parseFloat(match[1])
         width = Math.round((percentageValue / 100) * (attributes.maximumWidth || 0))
       }
