@@ -191,11 +191,11 @@
     "xmlbuilder2": "4.0.3"
   },
   "overrides": {
-    "bl": "^1.2.3",
+    "bl": "^6.0.0",
     "semver": "^7.6.0"
   },
   "resolutions": {
-    "bl": "^1.2.3",
+    "bl": "^6.0.0",
     "semver": "^7.6.0"
   },
   "lint-staged": {
