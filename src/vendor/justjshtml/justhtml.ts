@@ -1,5 +1,16 @@
+import { FragmentContext } from './context.js'
 import { decodeHTML } from './encoding.js'
 import { parseDocument } from './parser.js'
+import { TokenizerOpts } from './tokenizer.js'
+
+export interface JustHTMLOptions {
+  collectErrors?: boolean
+  encoding?: string | null
+  strict?: boolean
+  fragmentContext?: FragmentContext | null
+  iframeSrcdoc?: boolean
+  tokenizerOpts?: TokenizerOpts | Record<string, unknown> | null
+}
 
 export class StrictModeError extends SyntaxError {
   error: any
