@@ -25,7 +25,10 @@ describe('URL utilities', () => {
   test('should reject non-http URLs', () => {
     expect(isValidUrl('ftp://example.com')).toBe(false)
     expect(isValidUrl('javascript:alert(1)')).toBe(false)
-    expect(isValidUrl('data:text/html,test')).toBe(false)
+  })
+
+  test('should allow data: URLs', () => {
+    expect(isValidUrl('data:text/html,test')).toBe(true)
   })
 
   test('should reject invalid URLs', () => {

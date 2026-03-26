@@ -1,0 +1,4 @@
+## 2025-02-18 - Bun native fetch LFI via file:// protocol
+**Vulnerability:** Native `fetch` API in Bun environments processes `file://` URLs natively, which can lead to Local File Inclusion (LFI) if user-provided URLs are not validated before being passed to `fetch`.
+**Learning:** This vulnerability exists because `fetch` natively resolves to local files on Bun when a URL includes the `file://` protocol. If applications fetch unvalidated URLs (e.g. for downloading images), attackers can exfiltrate local files. However, completely restricting URLs to only `http:` and `https:` can break functionality relying on `data:` URIs (such as inline base64 images).
+**Prevention:** Always validate all user-supplied URLs to ensure they only use allowed protocols (e.g., `http:`, `https:`, and `data:`) before passing them to `fetch()`. The `isValidUrl` utility restricts inputs appropriately to prevent `file:` LFI.
