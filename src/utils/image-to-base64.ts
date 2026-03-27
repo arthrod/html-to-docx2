@@ -119,6 +119,16 @@ const downloadImage = async (
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
+    let parsedUrl: URL | null = null
+    try {
+      parsedUrl = new URL(imageUrl)
+    } catch {
+      // Ignore parse errors for relative URLs
+    }
+    if (parsedUrl && !['http:', 'https:', 'data:'].includes(parsedUrl.protocol.toLowerCase())) {
+      throw new Error('Invalid URL protocol')
+    }
+
     const response = await fetch(imageUrl, { signal: controller.signal })
 
     if (!response.ok) {

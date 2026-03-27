@@ -312,6 +312,16 @@ export const downloadImageToBase64 = async (
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
+    let parsedUrl: URL | null = null
+    try {
+      parsedUrl = new URL(url)
+    } catch {
+      // Ignore parse errors for relative URLs
+    }
+    if (parsedUrl && !['http:', 'https:', 'data:'].includes(parsedUrl.protocol.toLowerCase())) {
+      throw new Error('Invalid URL protocol')
+    }
+
     const response = await fetch(url, { signal: controller.signal })
 
     if (!response.ok) {
