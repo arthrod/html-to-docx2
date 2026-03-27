@@ -308,22 +308,22 @@ class SimpleSelector {
 }
 
 class CompoundSelector {
-  selectors: any
-  constructor(selectors = []) {
+  selectors: SimpleSelector[]
+  constructor(selectors: SimpleSelector[] = []) {
     this.selectors = selectors
   }
 }
 
 class ComplexSelector {
-  parts: any
+  parts: [string | null, CompoundSelector][]
   constructor() {
     this.parts = []
   }
 }
 
 class SelectorList {
-  selectors: any
-  constructor(selectors = []) {
+  selectors: (ComplexSelector | null)[]
+  constructor(selectors: (ComplexSelector | null)[] = []) {
     this.selectors = selectors
   }
 }
@@ -355,7 +355,7 @@ class SelectorParser {
   }
 
   parse() {
-    const selectors = []
+    const selectors: (ComplexSelector | null)[] = []
     selectors.push(this._parseComplexSelector())
 
     while (this._peek().type === TokenType.COMMA) {
@@ -368,7 +368,6 @@ class SelectorParser {
       throw new SelectorError(`Unexpected token: ${this._peek()}`)
 
     if (selectors.length === 1) return selectors[0]
-    // @ts-expect-error TS(2345) FIXME: Argument of type '(ComplexSelector | null)[]' is n... Remove this comment to see the full error message
     return new SelectorList(selectors)
   }
 
@@ -390,7 +389,7 @@ class SelectorParser {
   }
 
   _parseCompoundSelector() {
-    const simpleSelectors = []
+    const simpleSelectors: SimpleSelector[] = []
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -424,7 +423,6 @@ class SelectorParser {
     }
 
     if (!simpleSelectors.length) return null
-    // @ts-expect-error TS(2345) FIXME: Argument of type 'SimpleSelector[]' is not assigna... Remove this comment to see the full error message
     return new CompoundSelector(simpleSelectors)
   }
 
