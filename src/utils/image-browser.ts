@@ -282,6 +282,17 @@ export const downloadImageToBase64 = async (
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
+    // Prevent SSRF / LFI vulnerabilities (especially in Bun which supports file:// fetch)
+    const parsedUrl = new URL(String(url).trim(), 'http://dummy.base')
+    if (
+      parsedUrl.protocol !== 'http:' &&
+      parsedUrl.protocol !== 'https:' &&
+      parsedUrl.protocol !== 'data:' &&
+      parsedUrl.protocol !== 'blob:'
+    ) {
+      throw new Error(`Unsupported protocol: ${parsedUrl.protocol}`)
+    }
+
     const response = await fetch(url, { signal: controller.signal })
 
     if (!response.ok) {
