@@ -12,22 +12,22 @@ const BYTES_CONTENT_TYPE = new Uint8Array([
   0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2d, 0x74, 0x79, 0x70, 0x65,
 ]) // content-type
 
-function asciiLowerByte(b: any) {
+function asciiLowerByte(b: number) {
   if (b >= 0x41 && b <= 0x5a) return b | 0x20
   return b
 }
 
-function isAsciiAlphaByte(b: any) {
+function isAsciiAlphaByte(b: number) {
   const c = asciiLowerByte(b)
   return c >= 0x61 && c <= 0x7a
 }
 
-function skipAsciiWhitespace(data: any, i: any) {
+function skipAsciiWhitespace(data: Uint8Array, i: number) {
   while (i < data.length && ASCII_WHITESPACE.has(data[i])) i += 1
   return i
 }
 
-function stripAsciiWhitespace(value: any) {
+function stripAsciiWhitespace(value: Uint8Array | null) {
   if (value == null) return null
   let start = 0
   let end = value.length
@@ -36,7 +36,7 @@ function stripAsciiWhitespace(value: any) {
   return value.subarray(start, end)
 }
 
-function asciiDecodeIgnore(bytes: any) {
+function asciiDecodeIgnore(bytes: Uint8Array) {
   let out = ''
   for (const b of bytes) {
     if (b <= 0x7f) out += String.fromCharCode(b)
@@ -44,14 +44,14 @@ function asciiDecodeIgnore(bytes: any) {
   return out
 }
 
-function indexOfByte(data: any, byte: any, start: any) {
+function indexOfByte(data: Uint8Array, byte: number, start: number) {
   for (let i = start; i < data.length; i += 1) {
     if (data[i] === byte) return i
   }
   return -1
 }
 
-function indexOfSubarray(data: any, pattern: any, start: any) {
+function indexOfSubarray(data: Uint8Array, pattern: Uint8Array, start: number) {
   outer: for (let i = start; i <= data.length - pattern.length; i += 1) {
     for (let j = 0; j < pattern.length; j += 1) {
       if (data[i + j] !== pattern[j]) continue outer
@@ -61,7 +61,7 @@ function indexOfSubarray(data: any, pattern: any, start: any) {
   return -1
 }
 
-function bytesEqualLower(data: any, start: any, end: any, asciiLowerPattern: any) {
+function bytesEqualLower(data: Uint8Array, start: number, end: number, asciiLowerPattern: Uint8Array) {
   const len = end - start
   if (len !== asciiLowerPattern.length) return false
   for (let i = 0; i < len; i += 1) {
@@ -70,7 +70,7 @@ function bytesEqualLower(data: any, start: any, end: any, asciiLowerPattern: any
   return true
 }
 
-function bytesEqualIgnoreAsciiCase(data: any, asciiLowerPattern: any) {
+function bytesEqualIgnoreAsciiCase(data: Uint8Array, asciiLowerPattern: Uint8Array) {
   if (data.length !== asciiLowerPattern.length) return false
   for (let i = 0; i < asciiLowerPattern.length; i += 1) {
     if (asciiLowerByte(data[i]) !== asciiLowerPattern[i]) return false
