@@ -255,54 +255,47 @@ type FormattingOptions = {
 }
 
 const fixupColorCode = (colorCodeString: string): string => {
-  if (Object.hasOwn(colorNames, colorCodeString.toLowerCase())) {
-    const [red, green, blue] = colorNames[colorCodeString.toLowerCase()]
+  // ⚡ Bolt: Prevent redundant toLowerCase() execution
+  const lowerColor = colorCodeString.toLowerCase()
+  if (Object.hasOwn(colorNames, lowerColor)) {
+    const [red, green, blue] = colorNames[lowerColor]
 
     return rgbToHex(red, green, blue)
   }
-  if (rgbRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(rgbRegex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
 
-      return rgbToHex(
-        Number.parseInt(red, 10),
-        Number.parseInt(green, 10),
-        Number.parseInt(blue, 10)
-      )
-    }
-  }
-  if (hslRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hslRegex)
-    if (matchedParts) {
-      const hue = matchedParts[1]
-      const saturation = matchedParts[2]
-      const luminosity = matchedParts[3]
+  // ⚡ Bolt: Prevent redundant regex execution via inline assignment
+  let matchedParts = colorCodeString.match(rgbRegex)
+  if (matchedParts) {
+    const red = matchedParts[1]
+    const green = matchedParts[2]
+    const blue = matchedParts[3]
 
-      return hslToHex(
-        Number.parseInt(hue, 10),
-        Number.parseInt(saturation, 10),
-        Number.parseInt(luminosity, 10)
-      )
-    }
+    return rgbToHex(
+      Number.parseInt(red, 10),
+      Number.parseInt(green, 10),
+      Number.parseInt(blue, 10)
+    )
   }
-  if (hexRegex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hexRegex)
-    if (matchedParts) {
-      return matchedParts[1]
-    }
-  }
-  if (hex3Regex.test(colorCodeString)) {
-    const matchedParts = colorCodeString.match(hex3Regex)
-    if (matchedParts) {
-      const red = matchedParts[1]
-      const green = matchedParts[2]
-      const blue = matchedParts[3]
+  if ((matchedParts = colorCodeString.match(hslRegex))) {
+    const hue = matchedParts[1]
+    const saturation = matchedParts[2]
+    const luminosity = matchedParts[3]
 
-      return hex3ToHex(red, green, blue)
-    }
+    return hslToHex(
+      Number.parseInt(hue, 10),
+      Number.parseInt(saturation, 10),
+      Number.parseInt(luminosity, 10)
+    )
+  }
+  if ((matchedParts = colorCodeString.match(hexRegex))) {
+    return matchedParts[1]
+  }
+  if ((matchedParts = colorCodeString.match(hex3Regex))) {
+    const red = matchedParts[1]
+    const green = matchedParts[2]
+    const blue = matchedParts[3]
+
+    return hex3ToHex(red, green, blue)
   }
   return '000000'
 }
@@ -650,49 +643,35 @@ const fixupLineHeight = (lineHeight: number, fontSize: number | null): number =>
 }
 
 const fixupFontSize = (fontSizeString: string): number | undefined => {
-  if (pointRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  // ⚡ Bolt: Prevent redundant regex execution via inline assignment
+  let matchedParts = fontSizeString.match(pointRegex)
+  if (matchedParts) {
+    // convert point to half point
+    return pointToHIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(fontSizeString)) {
-    const matchedParts = fontSizeString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToHIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = fontSizeString.match(pixelRegex))) {
+    // convert pixels to half point
+    return pixelToHIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
 
 const fixupRowHeight = (rowHeightString: string): number | undefined => {
-  if (pointRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  // ⚡ Bolt: Prevent redundant regex execution via inline assignment
+  let matchedParts = rowHeightString.match(pointRegex)
+  if (matchedParts) {
+    // convert point to half point
+    return pointToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = rowHeightString.match(pixelRegex))) {
+    // convert pixels to half point
+    return pixelToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (cmRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(cmRegex)
-    if (matchedParts) {
-      return cmToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = rowHeightString.match(cmRegex))) {
+    return cmToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (inchRegex.test(rowHeightString)) {
-    const matchedParts = rowHeightString.match(inchRegex)
-    if (matchedParts) {
-      return inchToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = rowHeightString.match(inchRegex))) {
+    return inchToTWIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
@@ -702,67 +681,50 @@ const fixupColumnWidth = (
 ): ColumnWidthInfo | null => {
   if (!columnWidthString) return null
 
-  if (pointRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(pointRegex)
-    if (matchedParts) {
-      return {
-        value: pointToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  // ⚡ Bolt: Prevent redundant regex execution via inline assignment
+  let matchedParts = columnWidthString.match(pointRegex)
+  if (matchedParts) {
+    return {
+      value: pointToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (pixelRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(pixelRegex)
-    if (matchedParts) {
-      return {
-        value: pixelToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  if ((matchedParts = columnWidthString.match(pixelRegex))) {
+    return {
+      value: pixelToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (cmRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(cmRegex)
-    if (matchedParts) {
-      return {
-        value: cmToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  if ((matchedParts = columnWidthString.match(cmRegex))) {
+    return {
+      value: cmToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (inchRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(inchRegex)
-    if (matchedParts) {
-      return {
-        value: inchToTWIP(Number.parseFloat(matchedParts[1])),
-        type: 'dxa',
-      }
+  if ((matchedParts = columnWidthString.match(inchRegex))) {
+    return {
+      value: inchToTWIP(Number.parseFloat(matchedParts[1])),
+      type: 'dxa',
     }
   }
-  if (percentageRegex.test(columnWidthString)) {
-    const matchedParts = columnWidthString.match(percentageRegex)
-    if (matchedParts) {
-      // Convert percentage to fiftieths of a percent (pct in OOXML)
-      // 50% = 50 * 50 = 2500 (fiftieths of a percent)
-      return { value: Number.parseFloat(matchedParts[1]) * 50, type: 'pct' }
-    }
+  if ((matchedParts = columnWidthString.match(percentageRegex))) {
+    // Convert percentage to fiftieths of a percent (pct in OOXML)
+    // 50% = 50 * 50 = 2500 (fiftieths of a percent)
+    return { value: Number.parseFloat(matchedParts[1]) * 50, type: 'pct' }
   }
   return null
 }
 
 const fixupMargin = (marginString: string): number | undefined => {
-  if (pointRegex.test(marginString)) {
-    const matchedParts = marginString.match(pointRegex)
-    if (matchedParts) {
-      // convert point to half point
-      return pointToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  // ⚡ Bolt: Prevent redundant regex execution via inline assignment
+  let matchedParts = marginString.match(pointRegex)
+  if (matchedParts) {
+    // convert point to half point
+    return pointToTWIP(Number.parseFloat(matchedParts[1]))
   }
-  if (pixelRegex.test(marginString)) {
-    const matchedParts = marginString.match(pixelRegex)
-    if (matchedParts) {
-      // convert pixels to half point
-      return pixelToTWIP(Number.parseFloat(matchedParts[1]))
-    }
+  if ((matchedParts = marginString.match(pixelRegex))) {
+    // convert pixels to half point
+    return pixelToTWIP(Number.parseFloat(matchedParts[1]))
   }
   return
 }
@@ -2711,14 +2673,14 @@ const cssBorderParser = (borderString: string): [number, string, string] => {
   }
 
   let sizeNum: number
-  if (pointRegex.test(size)) {
-    const matchedParts = size.match(pointRegex)
+  // ⚡ Bolt: Prevent redundant regex execution via inline assignment
+  let matchedParts = size.match(pointRegex)
+  if (matchedParts) {
     // convert point to eighth of a point
-    sizeNum = matchedParts ? pointToEIP(Number.parseFloat(matchedParts[1])) : 0
-  } else if (pixelRegex.test(size)) {
-    const matchedParts = size.match(pixelRegex)
+    sizeNum = pointToEIP(Number.parseFloat(matchedParts[1]))
+  } else if ((matchedParts = size.match(pixelRegex))) {
     // convert pixels to eighth of a point
-    sizeNum = matchedParts ? pixelToEIP(Number.parseFloat(matchedParts[1])) : 0
+    sizeNum = pixelToEIP(Number.parseFloat(matchedParts[1]))
   } else {
     sizeNum = 0
   }
