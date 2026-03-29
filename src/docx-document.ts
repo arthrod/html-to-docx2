@@ -625,51 +625,33 @@ class DocxDocument {
     // xmlbuilder2 doesn't correctly preserve namespace prefixes when importing fragments
     // so we need to post-process the XML string to fix them
 
-    // wp: (wordprocessingDrawing) elements
-    const wpElements = [
-      'inline',
-      'anchor',
-      'simplePos',
-      'positionH',
-      'positionV',
-      'posOffset',
-      'extent',
-      'effectExtent',
-      'wrapNone',
-      'wrapSquare',
-      'wrapTight',
-      'wrapThrough',
-      'docPr',
-    ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
+    // ⚡ Bolt: Use alternation to compile a single regular expression for namespace tags
+    // This is significantly faster than creating a new regex for each element type in a forEach loop
+    xmlString = xmlString
+      .replace(
+        /<w:(inline|anchor|simplePos|positionH|positionV|posOffset|extent|effectExtent|wrapNone|wrapSquare|wrapTight|wrapThrough|docPr)([ />])/g,
+        '<wp:$1$2'
+      )
+      .replace(
+        /<\/w:(inline|anchor|simplePos|positionH|positionV|posOffset|extent|effectExtent|wrapNone|wrapSquare|wrapTight|wrapThrough|docPr)>/g,
+        '</wp:$1>'
+      )
 
     // a: (drawingML main) elements
-    const aElements = [
-      'graphic',
-      'graphicData',
-      'blip',
-      'srcRect',
-      'stretch',
-      'fillRect',
-      'xfrm',
-      'off',
-      'ext',
-      'prstGeom',
-    ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
+    xmlString = xmlString
+      .replace(
+        /<w:(graphic|graphicData|blip|srcRect|stretch|fillRect|xfrm|off|ext|prstGeom)([ />])/g,
+        '<a:$1$2'
+      )
+      .replace(
+        /<\/w:(graphic|graphicData|blip|srcRect|stretch|fillRect|xfrm|off|ext|prstGeom)>/g,
+        '</a:$1>'
+      )
 
     // pic: (picture) elements
-    const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
+    xmlString = xmlString
+      .replace(/<w:(pic|nvPicPr|cNvPr|cNvPicPr|blipFill|spPr)([ />])/g, '<pic:$1$2')
+      .replace(/<\/w:(pic|nvPicPr|cNvPr|cNvPicPr|blipFill|spPr)>/g, '</pic:$1>')
 
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
