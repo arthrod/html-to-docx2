@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 // @ts-check
 
-const fs = require('node:fs')
+const fs = require('fs')
 // const HTMLtoDOCX = require('html-to-docx');
 const { default: HTMLtoDOCX } = require('../dist/index.cjs')
 

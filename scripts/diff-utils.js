@@ -1,7 +1,7 @@
 // @ts-check
 
-const fs = require('node:fs')
-const path = require('node:path')
+const fs = require('fs')
+const path = require('path')
 const JSZip = require('jszip')
 
 /**
