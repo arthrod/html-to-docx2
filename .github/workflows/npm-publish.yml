@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: 18
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
       # Install dependencies with clean install (respects package-lock.json exactly)
       - run: bun install
 
@@ -35,6 +40,11 @@ jobs:
         with:
           node-version: 18
           registry-url: https://registry.npmjs.org/ # Configure npm registry for publishing
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
       # Install dependencies
       - run: bun install
