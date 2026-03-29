@@ -37,6 +37,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: baseline/package-lock.json
 
+      - name: Setup Bun for baseline
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
       - name: Install dependencies (baseline)
         working-directory: baseline
         run: npm ci
@@ -60,6 +65,11 @@ jobs:
           node-version: 18
           cache: 'npm'
           cache-dependency-path: current/package-lock.json
+
+      - name: Setup Bun for current
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
       - name: Install dependencies (current)
         working-directory: current
