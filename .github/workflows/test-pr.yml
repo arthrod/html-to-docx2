@@ -26,8 +26,11 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install # Standard install instead of ci since no lockfile exists
+        uses: oven-sh/setup-bun@v2
+
+      - name: Run bun install
+        run: bun install # Standard install instead of ci since no lockfile exists
 
       - name: Run all tests
         # Runs: unit tests (Jest), integration tests, heading styles examples, and TypeScript tests
-        run: npm run test:all
+        run: bun run test:all

@@ -35,16 +35,19 @@ jobs:
         with:
           node-version: 18
 
+      - name: Setup Bun for baseline
+        uses: oven-sh/setup-bun@v2
+
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: npm install
+        run: bun install
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
+          bun run test
           mv example-node.docx ../baseline.docx
 
       - name: Checkout PR branch
@@ -57,16 +60,19 @@ jobs:
         with:
           node-version: 18
 
+      - name: Setup Bun for current
+        uses: oven-sh/setup-bun@v2
+
       - name: Install dependencies (current)
         working-directory: current
-        run: npm install
+        run: bun install
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
+          bun run test
           mv example-node.docx ../current.docx
 
       - name: Run TurboDocx DOCX diff analysis
