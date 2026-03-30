@@ -45,7 +45,7 @@ jobs:
           DETERMINISTIC_IDS: 'true'
         run: |
           bun run test
-          mv example-node.docx ../baseline.docx
+          mv tmp/example-node-node.docx ../baseline.docx
 
       - name: Checkout PR branch
         uses: actions/checkout@v6
@@ -67,7 +67,7 @@ jobs:
           DETERMINISTIC_IDS: 'true'
         run: |
           bun run test
-          mv example-node.docx ../current.docx
+          mv tmp/example-node-node.docx ../current.docx
 
       - name: Run TurboDocx DOCX diff analysis
         id: diff
