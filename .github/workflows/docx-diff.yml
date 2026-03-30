@@ -36,7 +36,7 @@ jobs:
       - name: Setup Node.js for baseline
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install dependencies (baseline)
         working-directory: baseline
@@ -61,7 +61,7 @@ jobs:
       - name: Setup Node.js for current
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install dependencies (current)
         working-directory: current
