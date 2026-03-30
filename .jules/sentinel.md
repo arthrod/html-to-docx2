@@ -1,0 +1,4 @@
+## 2025-02-17 - Bun Native Fetch SSRF/LFI via file://
+**Vulnerability:** The application used `fetch(url)` in `src/utils/image.ts`, `src/utils/image-browser.ts`, and `src/utils/image-to-base64.ts` without validating the URL protocol.
+**Learning:** Bun natively supports `file://` protocols with its native `fetch()`, which allows unvalidated image download helpers to perform Local File Inclusion (LFI) by reading local server files (e.g. `file:///etc/passwd`). Relying on regex validation for URLs is dangerous because `fetch()` strips leading spaces, enabling easy bypasses.
+**Prevention:** Always parse untrusted URLs using the native `URL` constructor (providing a dummy base URL to gracefully handle relative paths) and explicitly verify that the protocol is in an allowlist (e.g., `['http:', 'https:', 'data:', 'blob:']`) before invoking `fetch`.
