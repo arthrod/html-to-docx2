@@ -420,10 +420,7 @@ interface SerializeOptions {
   quote_char?: string
 }
 
-export function serializeSerializerTokenStream(
-  tokens: any,
-  options: SerializeOptions = {}
-) {
+export function serializeSerializerTokenStream(tokens: any, options: SerializeOptions = {}) {
   if (!Array.isArray(tokens)) return null
 
   let tokenStream = tokens
