@@ -390,7 +390,9 @@ function modeAfterHead(self: any, token: any): ModeHandlerResult {
     if (token.kind === Tag.START && token.name === 'input') {
       let inputType = null
       const attrs = token.attrs || {}
-      for (const [name, value] of Object.entries(attrs)) {
+      for (const name in attrs) {
+        if (!Object.hasOwn(attrs, name)) continue
+        const value = attrs[name]
         if (name === 'type') {
           inputType = String(value || '').toLowerCase()
           break
@@ -772,7 +774,9 @@ function handleBodyStartSimpleVoid(self: any, token: Tag): ModeHandlerResult {
 function handleBodyStartInput(self: any, token: Tag): ModeHandlerResult {
   let inputType = null
   const attrs = token.attrs || {}
-  for (const [name, value] of Object.entries(attrs)) {
+  for (const name in attrs) {
+    if (!Object.hasOwn(attrs, name)) continue
+    const value = attrs[name]
     if (name === 'type') {
       inputType = String(value || '').toLowerCase()
       break
@@ -1331,7 +1335,9 @@ function modeInTable(self: any, token: any): ModeHandlerResult {
       if (name === 'input') {
         let inputType = null
         const attrs = token.attrs || {}
-        for (const [attrName, attrValue] of Object.entries(attrs)) {
+        for (const attrName in attrs) {
+          if (!Object.hasOwn(attrs, attrName)) continue
+          const attrValue = attrs[attrName]
           if (attrName === 'type') {
             inputType = String(attrValue || '').toLowerCase()
             break
@@ -2884,7 +2890,9 @@ export class TreeBuilder {
   _add_missing_attributes(node: Node, attrs: AttributeMapInput) {
     if (!attrs) return
     const existing: AttributeMap = (node.attrs as AttributeMap) || {}
-    for (const [name, value] of Object.entries(attrs)) {
+    for (const name in attrs) {
+      if (!Object.hasOwn(attrs, name)) continue
+      const value = attrs[name]
       if (!Object.prototype.hasOwnProperty.call(existing, name))
         existing[name] = value ?? null
     }
@@ -3403,7 +3411,9 @@ export class TreeBuilder {
   ): AttributeMap {
     if (!attrs) return {}
     const adjusted: AttributeMap = {}
-    for (const [name0, value] of Object.entries(attrs)) {
+    for (const name0 in attrs) {
+      if (!Object.hasOwn(attrs, name0)) continue
+      const value = attrs[name0]
       let name = name0
       let lowerName = lowerAscii(name)
 
@@ -3435,7 +3445,9 @@ export class TreeBuilder {
   _node_attribute_value(node: Node | null, name: string): string | null {
     const target = lowerAscii(name)
     const attrs: AttributeMap = (node?.attrs as AttributeMap) || {}
-    for (const [attrName, attrValue] of Object.entries(attrs)) {
+    for (const attrName in attrs) {
+      if (!Object.hasOwn(attrs, attrName)) continue
+      const attrValue = attrs[attrName]
       if (lowerAscii(attrName) === target) return attrValue || ''
     }
     return null
