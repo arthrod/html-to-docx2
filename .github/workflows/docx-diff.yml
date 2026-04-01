@@ -35,11 +35,11 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: baseline/package-lock.json
+          cache-dependency-path: baseline/bun.lock
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: npm ci
+        run: npm install
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
@@ -59,11 +59,11 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: current/package-lock.json
+          cache-dependency-path: current/bun.lock
 
       - name: Install dependencies (current)
         working-directory: current
-        run: npm ci
+        run: npm install
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
