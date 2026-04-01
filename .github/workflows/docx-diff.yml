@@ -39,6 +39,10 @@ jobs:
         working-directory: baseline
         run: bun install --ignore-scripts
 
+      - name: Install Playwright Browsers (baseline)
+        working-directory: baseline
+        run: npx playwright install
+
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
         env:
@@ -60,6 +64,10 @@ jobs:
       - name: Install dependencies (current)
         working-directory: current
         run: bun install --ignore-scripts
+
+      - name: Install Playwright Browsers (current)
+        working-directory: current
+        run: npx playwright install
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
