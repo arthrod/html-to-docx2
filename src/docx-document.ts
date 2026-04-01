@@ -625,6 +625,9 @@ class DocxDocument {
     // xmlbuilder2 doesn't correctly preserve namespace prefixes when importing fragments
     // so we need to post-process the XML string to fix them
 
+    // ⚡ Bolt: Combines multiple tags into a single regular expression using alternation
+    // to significantly reduce full-string scans and dynamic regex compilations.
+
     // wp: (wordprocessingDrawing) elements
     const wpElements = [
       'inline',
@@ -641,10 +644,8 @@ class DocxDocument {
       'wrapThrough',
       'docPr',
     ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
+    const wpRegex = new RegExp(`<(/?)w:(${wpElements.join('|')})([ />])`, 'g')
+    xmlString = xmlString.replace(wpRegex, '<$1wp:$2$3')
 
     // a: (drawingML main) elements
     const aElements = [
@@ -659,21 +660,15 @@ class DocxDocument {
       'ext',
       'prstGeom',
     ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
+    const aRegex = new RegExp(`<(/?)w:(${aElements.join('|')})([ />])`, 'g')
+    xmlString = xmlString.replace(aRegex, '<$1a:$2$3')
 
     // pic: (picture) elements
     const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
+    const picRegex = new RegExp(`<(/?)w:(${picElements.join('|')})([ />])`, 'g')
+    xmlString = xmlString.replace(picRegex, '<$1pic:$2$3')
 
-    xmlString = xmlString
-      .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
-      .replace(/<\/w:svgBlip>/g, '</asvg:svgBlip>')
+    xmlString = xmlString.replace(/<(\/?)w:svgBlip([ />])/g, '<$1asvg:svgBlip$2')
 
     // OOXML spec requires w:sectPr to be the LAST child of w:body.
     // The template places it first so header/footer refs can target it positionally,
