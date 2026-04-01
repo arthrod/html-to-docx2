@@ -1,7 +1,7 @@
 // @ts-check
 
-import fs from 'node:fs'
-import path from 'node:path'
+import fs from 'fs'
+import path from 'path'
 
 // Cross-platform directory resolution (works on Windows, macOS, Linux)
 // process.cwd() returns current working directory and is supported in all Node.js environments
