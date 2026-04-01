@@ -19,7 +19,7 @@ jobs:
           node-version: 18
 
       # Install dependencies with clean install (respects package-lock.json exactly)
-      - run: npm ci
+      - run: npm install
 
       # Run all test suites: unit tests, integration tests, heading styles examples, and TypeScript tests
       - run: npm run test:all
@@ -37,7 +37,7 @@ jobs:
           registry-url: https://registry.npmjs.org/ # Configure npm registry for publishing
 
       # Install dependencies
-      - run: npm ci
+      - run: npm install
 
       # Build the production bundle (bundles modules, minifies code with terser)
       - run: npm run build:prod
