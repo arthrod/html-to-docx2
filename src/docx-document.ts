@@ -1061,11 +1061,11 @@ class DocxDocument {
     return lastRelsId
   }
 
-   async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
+  async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
     return this.generateSectionXML(vTree, 'header') as Promise<HeaderResult>
   }
 
-   async generateFooterXML(vTree: VTree): Promise<FooterResult> {
+  async generateFooterXML(vTree: VTree): Promise<FooterResult> {
     return this.generateSectionXML(vTree, 'footer') as Promise<FooterResult>
   }
 
