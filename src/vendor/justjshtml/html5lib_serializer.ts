@@ -1,16 +1,15 @@
 import { VOID_ELEMENTS } from './constants.js'
 
-function attrListToDict(attrs: any) {
+function attrListToDict(attrs: any): Record<string, string | null> {
   if (!attrs) return {}
-  if (!Array.isArray(attrs) && typeof attrs === 'object') return attrs
+  if (!Array.isArray(attrs) && typeof attrs === 'object') return attrs as Record<string, string | null>
   if (!Array.isArray(attrs)) return {}
 
-  const out = {}
+  const out: Record<string, string | null> = {}
   for (const entry of attrs) {
     if (!entry || typeof entry !== 'object') continue
-    const name = entry.name
-    // @ts-expect-error TS(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
-    out[name] = Object.prototype.hasOwnProperty.call(entry, 'value') ? entry.value : null
+    const name = String(entry.name)
+    out[name] = Object.prototype.hasOwnProperty.call(entry, 'value') ? String(entry.value) : null
   }
   return out
 }
