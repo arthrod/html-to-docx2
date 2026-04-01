@@ -278,6 +278,12 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  // Validate protocol to prevent SSRF/LFI in Bun environments
+  const parsedUrl = new URL(String(url).trim(), 'http://dummy.base')
+  if (!['http:', 'https:', 'data:', 'blob:'].includes(parsedUrl.protocol)) {
+    throw new Error(`Invalid or unsupported image URL protocol: ${parsedUrl.protocol}`)
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
