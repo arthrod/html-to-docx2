@@ -30,4 +30,7 @@ jobs:
 
       - name: Run all tests
         # Runs: unit tests (Jest), integration tests, heading styles examples, and TypeScript tests
-        run: bun run test
+        run: bun run test:all
+
+      - name: Rename baseline docx for diffing
+        run: mv tmp/example-node-node.docx example-node.docx || true
