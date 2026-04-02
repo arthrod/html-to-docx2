@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import fs from 'fs'
+import fs from 'node:fs'
 // FIXME: Incase you have the npm package
 // import htmlToDocx from 'html-to-docx';
 import htmlToDocx from '../dist/index.mjs'
