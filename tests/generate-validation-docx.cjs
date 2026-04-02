@@ -4,8 +4,8 @@
  * Run: node tests/generate-validation-docx.cjs
  * Then validate each with: python3 .claude/skills/docx/scripts/office/validate.py <file>.docx -v
  */
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 /** @typedef {Blob | Buffer | Uint8Array | ArrayBuffer} HtmlToDocxResult */
 /**
  * @typedef {(html: string, headerHtml: string | null, options: Record<string, string | number | boolean | { svgHandling: 'convert' | 'native' }>) => Promise<HtmlToDocxResult>} HtmlToDocxConvert

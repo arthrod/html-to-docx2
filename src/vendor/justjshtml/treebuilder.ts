@@ -390,11 +390,9 @@ function modeAfterHead(self: any, token: any): ModeHandlerResult {
     if (token.kind === Tag.START && token.name === 'input') {
       let inputType = null
       const attrs = token.attrs || {}
-      for (const [name, value] of Object.entries(attrs)) {
-        if (name === 'type') {
-          inputType = String(value || '').toLowerCase()
-          break
-        }
+      if (Object.prototype.hasOwnProperty.call(attrs, 'type')) {
+        // ⚡ Bolt: Use direct O(1) property access instead of O(N) Object.entries() iteration
+        inputType = String(attrs.type || '').toLowerCase()
       }
       if (inputType === 'hidden') {
         self._parse_error('unexpected-hidden-input-after-head')
@@ -772,11 +770,9 @@ function handleBodyStartSimpleVoid(self: any, token: Tag): ModeHandlerResult {
 function handleBodyStartInput(self: any, token: Tag): ModeHandlerResult {
   let inputType = null
   const attrs = token.attrs || {}
-  for (const [name, value] of Object.entries(attrs)) {
-    if (name === 'type') {
-      inputType = String(value || '').toLowerCase()
-      break
-    }
+  if (Object.prototype.hasOwnProperty.call(attrs, 'type')) {
+    // ⚡ Bolt: Use direct O(1) property access instead of O(N) Object.entries() iteration
+    inputType = String(attrs.type || '').toLowerCase()
   }
   self._insert_element(token, { push: false })
   if (inputType !== 'hidden') self.frameset_ok = false
@@ -1331,11 +1327,9 @@ function modeInTable(self: any, token: any): ModeHandlerResult {
       if (name === 'input') {
         let inputType = null
         const attrs = token.attrs || {}
-        for (const [attrName, attrValue] of Object.entries(attrs)) {
-          if (attrName === 'type') {
-            inputType = String(attrValue || '').toLowerCase()
-            break
-          }
+        if (Object.prototype.hasOwnProperty.call(attrs, 'type')) {
+          // ⚡ Bolt: Use direct O(1) property access instead of O(N) Object.entries() iteration
+          inputType = String(attrs.type || '').toLowerCase()
         }
         if (inputType === 'hidden') {
           self._parse_error('unexpected-hidden-input-in-table')
