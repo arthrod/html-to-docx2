@@ -1,0 +1,4 @@
+## 2025-02-24 - V8 String Processing Hot Paths
+
+**Learning:** In Bun/V8, when escaping large strings for XML/HTML in hot paths, a manual `for` loop combined with a `switch` statement on `charCodeAt` (e.g., `str.charCodeAt(i) === 38` for `&`) and substring concatenation is significantly faster (often 2x-3x) and allocates less memory than using sequential chained `.replace()` calls or a single `.replace()` with a global RegExp and map.
+**Action:** When optimizing string processing in hot paths (like `escapeXml`), benchmark manual char-code-based loops before defaulting to RegEx replacements, especially when the target strings can be large or frequently processed.
