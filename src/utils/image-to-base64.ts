@@ -115,6 +115,12 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  const parsedUrl = new URL(String(imageUrl).trim(), 'http://dummy.base')
+  const allowedProtocols = ['http:', 'https:', 'data:', 'blob:']
+  if (!allowedProtocols.includes(parsedUrl.protocol)) {
+    throw new Error('Invalid URL provided')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
