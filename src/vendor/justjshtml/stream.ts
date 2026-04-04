@@ -42,7 +42,12 @@ class StreamSink {
   }
 }
 
-export function* stream(html: any, { encoding = null, tokenizerOpts = null } = {}) {
+export interface StreamOpts {
+  encoding?: string | null
+  tokenizerOpts?: TokenizerOpts | Record<string, unknown> | null
+}
+
+export function* stream(html: any, { encoding = null, tokenizerOpts = null }: StreamOpts = {}) {
   let input = html
   if (input == null) input = ''
 
@@ -60,7 +65,6 @@ export function* stream(html: any, { encoding = null, tokenizerOpts = null } = {
   }
 
   const sink = new StreamSink()
-  // @ts-expect-error TS(2358) FIXME: The left-hand side of an 'instanceof' expression m... Remove this comment to see the full error message
   const opts =
     tokenizerOpts instanceof TokenizerOpts
       ? tokenizerOpts
