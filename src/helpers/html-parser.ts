@@ -244,13 +244,18 @@ function getPropertyInfo(attributeName: string): PropertyInfo {
 /**
  * Parse CSS style string into object
  */
+// ⚡ Bolt: optimized CSS parsing by avoiding RegExp and intermediate array allocations
 function parseStyles(input: string): Record<string, string> {
   const attributes = input.split(';')
   const styles: Record<string, string> = {}
   for (const attribute of attributes) {
-    const entry = attribute.split(/:(.*)/)
-    if (entry[0] && entry[1]) {
-      styles[entry[0].trim()] = entry[1].trim()
+    const colonIndex = attribute.indexOf(':')
+    if (colonIndex !== -1) {
+      const key = attribute.slice(0, colonIndex).trim()
+      const value = attribute.slice(colonIndex + 1).trim()
+      if (key && value) {
+        styles[key] = value
+      }
     }
   }
   return styles
@@ -358,18 +363,21 @@ function getPropertySetter(propInfo: PropertyInfo): {
  * Convert tag attributes to VNode properties
  */
 
+// ⚡ Bolt: optimized tag attribute conversion by removing Object.keys() array allocation
 function convertTagAttributes(tag: ParsedNode): VNodeProperties {
   const attributes = tag.attrs || {}
   const vNodeProperties = {
     attributes: {},
   }
 
-  Object.keys(attributes).forEach((attributeName) => {
-    const value = attributes[attributeName]
-    const propInfo = getPropertyInfo(attributeName)
-    const propertySetter = getPropertySetter(propInfo)
-    propertySetter.set(vNodeProperties, propInfo, value)
-  })
+  for (const attributeName in attributes) {
+    if (Object.hasOwn(attributes, attributeName)) {
+      const value = attributes[attributeName]
+      const propInfo = getPropertyInfo(attributeName)
+      const propertySetter = getPropertySetter(propInfo)
+      propertySetter.set(vNodeProperties, propInfo, value)
+    }
+  }
 
   return vNodeProperties
 }
