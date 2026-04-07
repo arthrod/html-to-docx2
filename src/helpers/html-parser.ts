@@ -248,9 +248,14 @@ function parseStyles(input: string): Record<string, string> {
   const attributes = input.split(';')
   const styles: Record<string, string> = {}
   for (const attribute of attributes) {
-    const entry = attribute.split(/:(.*)/)
-    if (entry[0] && entry[1]) {
-      styles[entry[0].trim()] = entry[1].trim()
+    // ⚡ Bolt: Replace regex split(/:(.*)/) with indexOf and slice for faster CSS parsing and reduced memory allocation
+    const colonIndex = attribute.indexOf(':')
+    if (colonIndex > 0) {
+      const key = attribute.slice(0, colonIndex).trim()
+      const value = attribute.slice(colonIndex + 1).trim()
+      if (key && value) {
+        styles[key] = value
+      }
     }
   }
   return styles
