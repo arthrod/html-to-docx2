@@ -1,0 +1,4 @@
+## 2025-04-07 - Fix LFI in Image Fetching Utilities
+**Vulnerability:** Local File Inclusion (LFI) allowing reading of internal server files (e.g., `file:///etc/passwd`).
+**Learning:** `fetch()` blindly follows protocols including `file:///`. If input validation is naive or missing before `fetch()`, files from the local filesystem can be returned to users. Furthermore, regex-based validation of URLs is insufficient because `fetch()` strips leading whitespace natively (e.g. `   file:///etc/passwd` bypassing `^http`).
+**Prevention:** Always validate URLs using the native `URL` constructor (which also normalizes whitespace correctly) and check the parsed `.protocol` property against an explicit allowlist (like `http:`, `https:`, `data:`, `blob:`) before invoking `fetch()`. Use a dummy base URL (`http://dummy.base`) during parsing to gracefully allow relative URLs.
