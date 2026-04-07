@@ -150,8 +150,12 @@ function canUnquoteAttrValue(value: any) {
 
 function serializeStartTag(name: any, attrs: any) {
   const parts = ['<', name]
-  if (attrs && Object.keys(attrs).length) {
-    for (const [key, value] of Object.entries(attrs)) {
+  if (attrs) {
+    // ⚡ Bolt: Use `for...in` instead of `Object.entries` for iterating over attributes to prevent
+    // intermediate array allocations, reducing garbage collection pressure during HTML serialization.
+    for (const key in attrs) {
+      if (!Object.prototype.hasOwnProperty.call(attrs, key)) continue
+      const value = attrs[key]
       if (value == null || value === '') {
         parts.push(' ', key)
         continue
