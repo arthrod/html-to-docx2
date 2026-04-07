@@ -568,10 +568,13 @@ class SelectorMatcher {
 
     let found = false
     let attrValue = null
-    for (const [name, value] of Object.entries(attrs)) {
+    // ⚡ Bolt: Use `for...in` instead of `Object.entries` for iterating over attributes to prevent
+    // intermediate array allocations, reducing garbage collection pressure during HTML parsing.
+    for (const name in attrs) {
+      if (!Object.prototype.hasOwnProperty.call(attrs, name)) continue
       if (name.toLowerCase() === attrName) {
         found = true
-        attrValue = value
+        attrValue = attrs[name]
         break
       }
     }
