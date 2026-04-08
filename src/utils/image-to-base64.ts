@@ -115,6 +115,22 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(String(imageUrl).trim(), 'http://dummy.base')
+  } catch {
+    throw new Error('Invalid URL provided')
+  }
+
+  if (
+    parsedUrl.protocol !== 'http:' &&
+    parsedUrl.protocol !== 'https:' &&
+    parsedUrl.protocol !== 'data:' &&
+    parsedUrl.protocol !== 'blob:'
+  ) {
+    throw new Error('Invalid protocol: only http, https, data, and blob are allowed')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -161,7 +177,7 @@ const downloadImage = async (
  * Kept for backward compatibility with existing callers.
  */
 export async function imageToBase64(imageUrl: string): Promise<string> {
-  // Validate URL
+  // Validate URL (kept for backward compatibility, strictly only http/https)
   const url = new URL(imageUrl)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Invalid URL provided')

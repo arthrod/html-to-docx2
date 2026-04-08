@@ -308,6 +308,22 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(String(url).trim(), 'http://dummy.base')
+  } catch {
+    throw new Error('Invalid URL provided')
+  }
+
+  if (
+    parsedUrl.protocol !== 'http:' &&
+    parsedUrl.protocol !== 'https:' &&
+    parsedUrl.protocol !== 'data:' &&
+    parsedUrl.protocol !== 'blob:'
+  ) {
+    throw new Error('Invalid protocol: only http, https, data, and blob are allowed')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
