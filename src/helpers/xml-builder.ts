@@ -83,6 +83,66 @@ import { vNodeHasChildren } from '../utils/vnode'
 // eslint-disable-next-line import/no-cycle
 import { buildImage, buildList } from './render-document-file'
 
+const RUN_TAGS = new Set([
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  'ins',
+  'strike',
+  'del',
+  's',
+  'sub',
+  'sup',
+  'mark',
+  'blockquote',
+  'code',
+  'kbd',
+  'pre',
+])
+
+const TEMP_RUN_TAGS = new Set([
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  'ins',
+  'strike',
+  'del',
+  's',
+  'sub',
+  'sup',
+  'mark',
+  'code',
+  'kbd',
+  'pre',
+])
+
+const PARAGRAPH_TAGS = new Set([
+  'span',
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  'ins',
+  'strike',
+  'del',
+  's',
+  'sub',
+  'sup',
+  'mark',
+  'a',
+  'code',
+  'pre',
+])
+
+const LIST_TAGS = new Set(['ul', 'ol'])
+const TABLE_CELL_TAGS = new Set(['td', 'th'])
+const TEXT_ALIGN_VALUES = new Set(['left', 'right', 'center', 'justify'])
+
 // Types for Virtual DOM
 type VNodeProperties = {
   alt?: string
@@ -806,7 +866,7 @@ const modifiedStyleAttributesBuilder = (
 
     if (
       style['text-align'] &&
-      ['left', 'right', 'center', 'justify'].includes(style['text-align'])
+      TEXT_ALIGN_VALUES.has(style['text-align'])
     ) {
       modifiedAttributes.textAlign = style['text-align']
     }
@@ -966,24 +1026,7 @@ const buildRun = async (
 
   if (
     isVNode(vNode) &&
-    [
-      'strong',
-      'b',
-      'em',
-      'i',
-      'u',
-      'ins',
-      'strike',
-      'del',
-      's',
-      'sub',
-      'sup',
-      'mark',
-      'blockquote',
-      'code',
-      'kbd',
-      'pre',
-    ].includes((vNode as VNodeType).tagName || '')
+    RUN_TAGS.has((vNode as VNodeType).tagName || '')
   ) {
     const runFragmentsArray: XMLBuilderType[] = []
 
@@ -1030,23 +1073,7 @@ const buildRun = async (
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
         if (
-          [
-            'strong',
-            'b',
-            'em',
-            'i',
-            'u',
-            'ins',
-            'strike',
-            'del',
-            's',
-            'sub',
-            'sup',
-            'mark',
-            'code',
-            'kbd',
-            'pre',
-          ].includes(tempVn.tagName || '')
+          TEMP_RUN_TAGS.has(tempVn.tagName || '')
         ) {
           tempAttributes = {}
           switch (tempVn.tagName) {
@@ -1740,24 +1767,7 @@ const buildParagraph = async (
   if (isVNode(vNode) && vNodeHasChildren(vNode as VNodeType)) {
     const vn = vNode as VNodeType
     if (
-      [
-        'span',
-        'strong',
-        'b',
-        'em',
-        'i',
-        'u',
-        'ins',
-        'strike',
-        'del',
-        's',
-        'sub',
-        'sup',
-        'mark',
-        'a',
-        'code',
-        'pre',
-      ].includes(vn.tagName || '')
+      PARAGRAPH_TAGS.has(vn.tagName || '')
     ) {
       const runOrHyperlinkFragments = await buildRunOrHyperLink(
         vNode,
@@ -2262,7 +2272,7 @@ const buildTableCell = async (
         }
       } else if (
         isVNode(childVNode) &&
-        ['ul', 'ol'].includes((childVNode as VNodeType).tagName || '')
+        LIST_TAGS.has((childVNode as VNodeType).tagName || '')
       ) {
         // render list in table
         const listVn = childVNode as VNodeType
@@ -2286,7 +2296,7 @@ const buildTableCell = async (
               }
             } else if (
               isVNode(divChild) &&
-              ['ul', 'ol'].includes((divChild as VNodeType).tagName || '')
+              LIST_TAGS.has((divChild as VNodeType).tagName || '')
             ) {
               const listVn = divChild as VNodeType
               if (vNodeHasChildren(listVn)) {
@@ -2453,7 +2463,7 @@ const buildTableRow = async (
 
   if (vNodeHasChildren(vNode)) {
     const tableColumns = (vNode.children || []).filter((childVNode) =>
-      ['td', 'th'].includes((childVNode as VNodeType).tagName || '')
+      TABLE_CELL_TAGS.has((childVNode as VNodeType).tagName || '')
     )
     const maximumColumnWidth =
       docxDocumentInstance.availableDocumentSpace / tableColumns.length
