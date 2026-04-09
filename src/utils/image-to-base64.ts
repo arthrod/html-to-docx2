@@ -115,6 +115,18 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  // Validate URL protocol to prevent SSRF / LFI
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(String(imageUrl).trim(), 'http://dummy.base')
+  } catch {
+    throw new Error('Invalid URL')
+  }
+  const allowedProtocols = ['http:', 'https:', 'data:', 'blob:']
+  if (!allowedProtocols.includes(parsedUrl.protocol)) {
+    throw new Error('Invalid protocol')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
