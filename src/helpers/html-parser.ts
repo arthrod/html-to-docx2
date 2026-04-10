@@ -208,23 +208,26 @@ function checkMask(value: number, bitmask: number): boolean {
 
 // Build property info lookup table
 const propInfoByAttributeName: Record<string, PropertyInfo> = {}
-Object.keys(Properties).forEach((propName) => {
-  const propConfig = Properties[propName] || 0
-  const attributeName = PropertyToAttributeMapping[propName] || propName.toLowerCase()
+// ⚡ Bolt: Use for...in over Object.keys().forEach() to prevent array allocation overhead.
+for (const propName in Properties) {
+  if (Object.prototype.hasOwnProperty.call(Properties, propName)) {
+    const propConfig = Properties[propName] || 0
+    const attributeName = PropertyToAttributeMapping[propName] || propName.toLowerCase()
 
-  const propertyInfo: PropertyInfo = {
-    attributeName,
-    propertyName: propName,
-    mustUseAttribute: checkMask(propConfig, MUST_USE_ATTRIBUTE),
-    mustUseProperty: checkMask(propConfig, MUST_USE_PROPERTY),
-    hasBooleanValue: checkMask(propConfig, HAS_BOOLEAN_VALUE),
-    hasNumericValue: checkMask(propConfig, HAS_NUMERIC_VALUE),
-    hasPositiveNumericValue: checkMask(propConfig, HAS_POSITIVE_NUMERIC_VALUE),
-    hasOverloadedBooleanValue: checkMask(propConfig, HAS_OVERLOADED_BOOLEAN_VALUE),
+    const propertyInfo: PropertyInfo = {
+      attributeName,
+      propertyName: propName,
+      mustUseAttribute: checkMask(propConfig, MUST_USE_ATTRIBUTE),
+      mustUseProperty: checkMask(propConfig, MUST_USE_PROPERTY),
+      hasBooleanValue: checkMask(propConfig, HAS_BOOLEAN_VALUE),
+      hasNumericValue: checkMask(propConfig, HAS_NUMERIC_VALUE),
+      hasPositiveNumericValue: checkMask(propConfig, HAS_POSITIVE_NUMERIC_VALUE),
+      hasOverloadedBooleanValue: checkMask(propConfig, HAS_OVERLOADED_BOOLEAN_VALUE),
+    }
+
+    propInfoByAttributeName[attributeName] = propertyInfo
   }
-
-  propInfoByAttributeName[attributeName] = propertyInfo
-})
+}
 
 function getPropertyInfo(attributeName: string): PropertyInfo {
   const lowerCased = attributeName.toLowerCase()
@@ -364,12 +367,15 @@ function convertTagAttributes(tag: ParsedNode): VNodeProperties {
     attributes: {},
   }
 
-  Object.keys(attributes).forEach((attributeName) => {
-    const value = attributes[attributeName]
-    const propInfo = getPropertyInfo(attributeName)
-    const propertySetter = getPropertySetter(propInfo)
-    propertySetter.set(vNodeProperties, propInfo, value)
-  })
+  // ⚡ Bolt: Use for...in over Object.keys().forEach() to prevent array allocation overhead.
+  for (const attributeName in attributes) {
+    if (Object.prototype.hasOwnProperty.call(attributes, attributeName)) {
+      const value = attributes[attributeName]
+      const propInfo = getPropertyInfo(attributeName)
+      const propertySetter = getPropertySetter(propInfo)
+      propertySetter.set(vNodeProperties, propInfo, value)
+    }
+  }
 
   return vNodeProperties
 }
