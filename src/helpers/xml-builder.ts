@@ -1410,17 +1410,18 @@ const buildParagraphBorder = (): XMLBuilderType => {
   const paragraphBorderFragment = fragment({
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'pBdr')
-  const bordersObject = cloneDeep(paragraphBordersObject)
 
-  Object.keys(bordersObject).forEach((borderName) => {
-    const border = bordersObject[borderName as keyof typeof bordersObject]
+  // ⚡ Bolt: Removed cloneDeep and replaced Object.keys().forEach with Object.entries() iteration
+  // over the constant paragraphBordersObject to avoid unnecessary memory allocations
+  // and redundant property lookups.
+  for (const [borderName, border] of Object.entries(paragraphBordersObject)) {
     if (border) {
       const { size, spacing, color } = border
 
       const borderFragment = buildBorder(borderName, size, spacing, color)
       paragraphBorderFragment.import(borderFragment)
     }
-  })
+  }
 
   paragraphBorderFragment.up()
 
