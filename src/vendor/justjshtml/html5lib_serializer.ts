@@ -1,5 +1,17 @@
 import { VOID_ELEMENTS } from './constants.js'
 
+export interface SerializerOptions {
+  inject_meta_charset?: boolean
+  encoding?: string
+  strip_whitespace?: boolean
+  escape_rcdata?: boolean
+  quote_attr_values?: boolean
+  minimize_boolean_attributes?: boolean
+  use_trailing_solidus?: boolean
+  escape_lt_in_attrs?: boolean
+  quote_char?: string | null
+}
+
 function attrListToDict(attrs: any) {
   if (!attrs) return {}
   if (!Array.isArray(attrs) && typeof attrs === 'object') return attrs
@@ -18,35 +30,33 @@ function attrListToDict(attrs: any) {
 function escapeText(text: any) {
   if (!text) return ''
   return String(text)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
+    .replace(/&/g, '&amp;')
+    .replace(/\u00A0/g, '&nbsp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 }
 
 function escapeAttrValue(value: any, quoteChar: any, escapeLtInAttrs: any) {
-  if (value == null) return ''
-  let out = String(value).replaceAll('&', '&amp;')
-  if (escapeLtInAttrs) out = out.replaceAll('<', '&lt;')
-  if (quoteChar === '"') return out.replaceAll('"', '&quot;')
-  return out.replaceAll("'", '&#39;')
+  if (!value) return ''
+  let v = String(value).replace(/&/g, '&amp;')
+  if (escapeLtInAttrs) v = v.replace(/</g, '&lt;')
+  if (quoteChar === '"') v = v.replace(/"/g, '&quot;')
+  else if (quoteChar === "'") v = v.replace(/'/g, '&#39;')
+  return v
 }
 
 function chooseAttrQuote(value: any, forcedQuoteChar = null) {
   if (forcedQuoteChar === '"' || forcedQuoteChar === "'") return forcedQuoteChar
-  if (value == null) return '"'
-  const s = String(value)
-  if (s.includes('"') && !s.includes("'")) return "'"
+  const hasDouble = String(value).includes('"')
+  const hasSingle = String(value).includes("'")
+  if (hasDouble && !hasSingle) return "'"
   return '"'
 }
 
 function canUnquoteAttrValue(value: any) {
-  if (value == null) return false
-  const s = String(value)
-  for (const ch of s) {
-    if (ch === '>') return false
-    if (ch === '"' || ch === "'" || ch === '=') return false
-    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\f' || ch === '\r') return false
-  }
+  const v = String(value)
+  if (v === '') return false
+  if (v.match(/[\t\n\f\r "'=<>`]/)) return false
   return true
 }
 
@@ -56,7 +66,7 @@ function shouldMinimizeAttrValue(name: any, value: any, minimizeBooleanAttribute
   return String(value).toLowerCase() === String(name).toLowerCase()
 }
 
-function serializeStartTag(name: any, attrs: any, options: any, isVoid: any) {
+function serializeStartTag(name: any, attrs: any, options: SerializerOptions, isVoid: any) {
   const quoteAttrValues = Boolean(options.quote_attr_values)
   const minimizeBooleanAttributes =
     options.minimize_boolean_attributes === undefined
@@ -78,110 +88,80 @@ function serializeStartTag(name: any, attrs: any, options: any, isVoid: any) {
         continue
       }
 
-      if (value == null) {
-        parts.push(' ', key, '=""')
-        continue
-      }
-
-      value = String(value)
-      if (value === '') {
-        if (minimizeBooleanAttributes) parts.push(' ', key)
-        else parts.push(' ', key, '=""')
-        continue
-      }
+      const quote = chooseAttrQuote(value, forcedQuote)
+      value = escapeAttrValue(value, quote, escapeLtInAttrs)
 
       if (!quoteAttrValues && canUnquoteAttrValue(value)) {
-        let escaped = value.replaceAll('&', '&amp;')
-        if (escapeLtInAttrs) escaped = escaped.replaceAll('<', '&lt;')
-        parts.push(' ', key, '=', escaped)
-        continue
+        parts.push(' ', key, '=', value)
+      } else {
+        parts.push(' ', key, '=', quote, value, quote)
       }
-
-      const quote = chooseAttrQuote(value, forcedQuote)
-      const escaped = escapeAttrValue(value, quote, escapeLtInAttrs)
-      parts.push(' ', key, '=', quote, escaped, quote)
     }
   }
 
-  if (useTrailingSolidus && isVoid) parts.push(' />')
-  else parts.push('>')
-
+  if (isVoid && useTrailingSolidus) parts.push(' /')
+  parts.push('>')
   return parts.join('')
 }
 
 function stripWhitespace(text: any) {
-  if (!text) return ''
-  const out = []
-  let lastSpace = false
-  for (const ch of String(text)) {
-    const mapped = ch === '\t' || ch === '\r' || ch === '\n' || ch === '\f' ? ' ' : ch
-    if (mapped === ' ') {
-      if (lastSpace) continue
-      lastSpace = true
-      out.push(' ')
-    } else {
-      lastSpace = false
-      out.push(mapped)
-    }
-  }
-  return out.join('')
+  return String(text).replace(/^[\t\n\f\r ]+/, '').replace(/[\t\n\f\r ]+$/, '')
 }
 
-function updateMetaContentTypeCharset(content: any, encoding: any) {
-  if (content == null) return null
-  if (!encoding) return content
-  const s = String(content)
-  const lower = s.toLowerCase()
-  const idx = lower.indexOf('charset=')
-  if (idx === -1) return s
+const VOID_ELEMENTS_SET = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr'
+])
 
-  const start = idx + 'charset='.length
-  let end = start
-  while (end < s.length) {
-    const ch = s[end]
-    if (
-      ch === ';' ||
-      ch === ' ' ||
-      ch === '\t' ||
-      ch === '\r' ||
-      ch === '\n' ||
-      ch === '\f'
-    )
-      break
-    end += 1
-  }
-  return s.slice(0, start) + String(encoding) + s.slice(end)
+function updateMetaContentTypeCharset(content: any, encoding: any) {
+  let parts = String(content || '').split(';')
+  let hasCharset = false
+  parts = parts.map((p) => {
+    const pTrim = p.trim()
+    if (pTrim.toLowerCase().startsWith('charset=')) {
+      hasCharset = true
+      return `charset=${encoding}`
+    }
+    return p
+  })
+  if (!hasCharset) parts.push(`charset=${encoding}`)
+  return parts.join('; ')
 }
 
 function applyInjectMetaCharset(tokens: any, encoding: any) {
-  if (!encoding) return []
-
-  let sawHead = false
-  let inHead = false
-  let contentTokens = []
-
-  for (const tok of tokens) {
-    const kind = tok?.[0]
-    if (!inHead) {
-      if (kind === 'StartTag' && tok?.[2] === 'head') {
-        sawHead = true
-        inHead = true
-      }
-      continue
-    }
-    if (kind === 'EndTag' && tok?.[2] === 'head') break
-    contentTokens.push(tok)
-  }
-
-  if (!sawHead) contentTokens = [...tokens]
-
   const processed = []
   let foundCharset = false
 
-  for (const tok of contentTokens) {
-    if (tok?.[0] === 'EmptyTag' && tok?.[1] === 'meta') {
-      const attrs = attrListToDict(tok?.[2] ?? {})
-      if (Object.prototype.hasOwnProperty.call(attrs, 'charset')) {
+  for (const tok of tokens) {
+    const kind = tok?.[0]
+    if (kind === 'StartTag' && tok[2] === 'meta') {
+      const attrs = tok.length > 3 ? tok[3] : {}
+      if ('charset' in attrs) {
+        attrs.charset = encoding
+        foundCharset = true
+      } else if (
+        String(attrs['http-equiv'] || '').toLowerCase() === 'content-type' &&
+        'content' in attrs
+      ) {
+        attrs.content = updateMetaContentTypeCharset(attrs.content, encoding)
+        foundCharset = true
+      }
+      processed.push(['StartTag', 'meta', attrs])
+    } else if (kind === 'EmptyTag' && tok[1] === 'meta') {
+      const attrs = tok.length > 2 ? tok[2] : {}
+      if ('charset' in attrs) {
         attrs.charset = encoding
         foundCharset = true
       } else if (
@@ -409,13 +389,11 @@ function shouldOmitEndTag(name: any, nextTok: any) {
   return false
 }
 
-export function serializeSerializerTokenStream(tokens: any, options = {}) {
+export function serializeSerializerTokenStream(tokens: any, options: SerializerOptions = {}) {
   if (!Array.isArray(tokens)) return null
 
   let tokenStream = tokens
-  // @ts-expect-error TS(2339) FIXME: Property 'inject_meta_charset' does not exist on t... Remove this comment to see the full error message
   if (options.inject_meta_charset) {
-    // @ts-expect-error TS(2339) FIXME: Property 'encoding' does not exist on type '{}'.
     const encoding = options.encoding
     if (!encoding) return ''
     tokenStream = applyInjectMetaCharset(tokenStream, encoding)
@@ -425,9 +403,7 @@ export function serializeSerializerTokenStream(tokens: any, options = {}) {
   let rawtext = null
 
   const openElements = []
-  // @ts-expect-error TS(2339) FIXME: Property 'strip_whitespace' does not exist on type... Remove this comment to see the full error message
   const stripWs = Boolean(options.strip_whitespace)
-  // @ts-expect-error TS(2339) FIXME: Property 'escape_rcdata' does not exist on type '{... Remove this comment to see the full error message
   const escapeRcdata = Boolean(options.escape_rcdata)
   const wsPreserve = new Set(['pre', 'textarea', 'script', 'style'])
 
