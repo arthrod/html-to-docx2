@@ -19,8 +19,6 @@ export function parseDocument(html: any, options: ParseDocumentOptions = {}) {
 
   const shouldCollect = Boolean(collectErrors)
   const treeBuilder = new TreeBuilder(fragmentContext, iframeSrcdoc, shouldCollect)
-  // @ts-expect-error TS(2551) FIXME: Property 'openElements' does not exist on type 'Tr... Remove this comment to see the full error message
-  treeBuilder.openElements = treeBuilder.open_elements
 
   const opts =
     tokenizerOpts instanceof TokenizerOpts
