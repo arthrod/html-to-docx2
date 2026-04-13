@@ -243,16 +243,44 @@ function getPropertyInfo(attributeName: string): PropertyInfo {
 
 /**
  * Parse CSS style string into object
+ * ⚡ Bolt: Optimized string splitting and regex evaluation to significantly
+ * reduce object/array allocations and speed up styling parsing on hot paths.
  */
 function parseStyles(input: string): Record<string, string> {
-  const attributes = input.split(';')
   const styles: Record<string, string> = {}
-  for (const attribute of attributes) {
-    const entry = attribute.split(/:(.*)/)
-    if (entry[0] && entry[1]) {
-      styles[entry[0].trim()] = entry[1].trim()
+  let start = 0
+  let end = input.indexOf(';')
+
+  while (end !== -1) {
+    const attribute = input.slice(start, end)
+    const colonIndex = attribute.indexOf(':')
+
+    if (colonIndex !== -1) {
+      const key = attribute.slice(0, colonIndex).trim()
+      const value = attribute.slice(colonIndex + 1).trim()
+      if (key && value) {
+        styles[key] = value
+      }
+    }
+
+    start = end + 1
+    end = input.indexOf(';', start)
+  }
+
+  // Handle last attribute (or single attribute without trailing semicolon)
+  if (start < input.length) {
+    const attribute = input.slice(start)
+    const colonIndex = attribute.indexOf(':')
+
+    if (colonIndex !== -1) {
+      const key = attribute.slice(0, colonIndex).trim()
+      const value = attribute.slice(colonIndex + 1).trim()
+      if (key && value) {
+        styles[key] = value
+      }
     }
   }
+
   return styles
 }
 
