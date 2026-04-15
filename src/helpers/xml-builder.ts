@@ -439,7 +439,7 @@ const buildTextRunFragment = (
   options?: { deleted?: boolean }
 ): XMLBuilderType => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  const runPropertiesFragment = buildRunProperties(attributes)
 
   runFragment.import(runPropertiesFragment)
   runFragment.import(
@@ -925,11 +925,9 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'rPr')
   if (attributes && attributes.constructor === Object) {
-    ;(Object.keys(attributes) as Array<keyof RunAttributes>).forEach((key) => {
-      const value = attributes[key]
-
+    for (const [key, value] of Object.entries(attributes)) {
       // Skip undefined values to prevent default 'black' being applied
-      if (value === undefined) return
+      if (value === undefined) continue
 
       const options: FormattingOptions = {}
       if (key === 'color' || key === 'backgroundColor' || key === 'highlightColor') {
@@ -944,7 +942,7 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
       if (formattingFragment) {
         runPropertiesFragment.import(formattingFragment)
       }
-    })
+    }
   }
   runPropertiesFragment.up()
 
@@ -957,7 +955,7 @@ const buildRun = async (
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  const runPropertiesFragment = buildRunProperties(attributes)
 
   // case where we have recursive spans representing font changes
   if (isVNode(vNode) && (vNode as VNodeType).tagName === 'span') {
