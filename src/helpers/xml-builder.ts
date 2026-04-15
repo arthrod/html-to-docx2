@@ -925,11 +925,12 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'rPr')
   if (attributes && attributes.constructor === Object) {
-    ;(Object.keys(attributes) as Array<keyof RunAttributes>).forEach((key) => {
-      const value = attributes[key]
+    for (const key in attributes) {
+      if (!Object.prototype.hasOwnProperty.call(attributes, key)) continue
+      const value = attributes[key as keyof RunAttributes]
 
       // Skip undefined values to prevent default 'black' being applied
-      if (value === undefined) return
+      if (value === undefined) continue
 
       const options: FormattingOptions = {}
       if (key === 'color' || key === 'backgroundColor' || key === 'highlightColor') {
@@ -944,7 +945,7 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
       if (formattingFragment) {
         runPropertiesFragment.import(formattingFragment)
       }
-    })
+    }
   }
   runPropertiesFragment.up()
 
@@ -1412,7 +1413,8 @@ const buildParagraphBorder = (): XMLBuilderType => {
   }).ele('@w', 'pBdr')
   const bordersObject = cloneDeep(paragraphBordersObject)
 
-  Object.keys(bordersObject).forEach((borderName) => {
+  for (const borderName in bordersObject) {
+    if (!Object.prototype.hasOwnProperty.call(bordersObject, borderName)) continue
     const border = bordersObject[borderName as keyof typeof bordersObject]
     if (border) {
       const { size, spacing, color } = border
@@ -1420,7 +1422,7 @@ const buildParagraphBorder = (): XMLBuilderType => {
       const borderFragment = buildBorder(borderName, size, spacing, color)
       paragraphBorderFragment.import(borderFragment)
     }
-  })
+  }
 
   paragraphBorderFragment.up()
 
@@ -2378,7 +2380,8 @@ const buildTableRowProperties = (
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'trPr')
   if (attributes && attributes.constructor === Object) {
-    Object.keys(attributes).forEach((key) => {
+    for (const key in attributes) {
+      if (!Object.prototype.hasOwnProperty.call(attributes, key)) continue
       switch (key) {
         case 'tableRowHeight': {
           if (attributes[key] !== null && attributes[key] !== undefined) {
@@ -2403,7 +2406,7 @@ const buildTableRowProperties = (
         default:
           break
       }
-    })
+    }
   }
   tableRowPropertiesFragment.up()
   return tableRowPropertiesFragment

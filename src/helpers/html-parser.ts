@@ -208,7 +208,9 @@ function checkMask(value: number, bitmask: number): boolean {
 
 // Build property info lookup table
 const propInfoByAttributeName: Record<string, PropertyInfo> = {}
-Object.keys(Properties).forEach((propName) => {
+const keys = Object.keys(Properties)
+for (let i = 0; i < keys.length; i++) {
+  const propName = keys[i]
   const propConfig = Properties[propName] || 0
   const attributeName = PropertyToAttributeMapping[propName] || propName.toLowerCase()
 
@@ -224,7 +226,7 @@ Object.keys(Properties).forEach((propName) => {
   }
 
   propInfoByAttributeName[attributeName] = propertyInfo
-})
+}
 
 function getPropertyInfo(attributeName: string): PropertyInfo {
   const lowerCased = attributeName.toLowerCase()
@@ -245,14 +247,35 @@ function getPropertyInfo(attributeName: string): PropertyInfo {
  * Parse CSS style string into object
  */
 function parseStyles(input: string): Record<string, string> {
-  const attributes = input.split(';')
   const styles: Record<string, string> = {}
-  for (const attribute of attributes) {
-    const entry = attribute.split(/:(.*)/)
-    if (entry[0] && entry[1]) {
-      styles[entry[0].trim()] = entry[1].trim()
+  let start = 0
+  let end = 0
+
+  while ((end = input.indexOf(';', start)) !== -1) {
+    const attribute = input.slice(start, end)
+    const colonIndex = attribute.indexOf(':')
+    if (colonIndex !== -1) {
+      const key = attribute.slice(0, colonIndex).trim()
+      const valueRaw = attribute.slice(colonIndex + 1)
+      if (key && valueRaw) {
+        styles[key] = valueRaw.trim()
+      }
+    }
+    start = end + 1
+  }
+
+  if (start < input.length) {
+    const attribute = input.slice(start)
+    const colonIndex = attribute.indexOf(':')
+    if (colonIndex !== -1) {
+      const key = attribute.slice(0, colonIndex).trim()
+      const valueRaw = attribute.slice(colonIndex + 1)
+      if (key && valueRaw) {
+        styles[key] = valueRaw.trim()
+      }
     }
   }
+
   return styles
 }
 
@@ -364,12 +387,14 @@ function convertTagAttributes(tag: ParsedNode): VNodeProperties {
     attributes: {},
   }
 
-  Object.keys(attributes).forEach((attributeName) => {
-    const value = attributes[attributeName]
-    const propInfo = getPropertyInfo(attributeName)
-    const propertySetter = getPropertySetter(propInfo)
-    propertySetter.set(vNodeProperties, propInfo, value)
-  })
+  for (const attributeName in attributes) {
+    if (Object.prototype.hasOwnProperty.call(attributes, attributeName)) {
+      const value = attributes[attributeName]
+      const propInfo = getPropertyInfo(attributeName)
+      const propertySetter = getPropertySetter(propInfo)
+      propertySetter.set(vNodeProperties, propInfo, value)
+    }
+  }
 
   return vNodeProperties
 }
