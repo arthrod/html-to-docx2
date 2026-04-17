@@ -439,7 +439,7 @@ const buildTextRunFragment = (
   options?: { deleted?: boolean }
 ): XMLBuilderType => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  const runPropertiesFragment = buildRunProperties(attributes)
 
   runFragment.import(runPropertiesFragment)
   runFragment.import(
@@ -925,11 +925,12 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'rPr')
   if (attributes && attributes.constructor === Object) {
-    ;(Object.keys(attributes) as Array<keyof RunAttributes>).forEach((key) => {
-      const value = attributes[key]
+    for (const key in attributes) {
+      if (!Object.prototype.hasOwnProperty.call(attributes, key)) continue;
+      const value = attributes[key as keyof RunAttributes]
 
       // Skip undefined values to prevent default 'black' being applied
-      if (value === undefined) return
+      if (value === undefined) continue
 
       const options: FormattingOptions = {}
       if (key === 'color' || key === 'backgroundColor' || key === 'highlightColor') {
@@ -944,7 +945,7 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
       if (formattingFragment) {
         runPropertiesFragment.import(formattingFragment)
       }
-    })
+    }
   }
   runPropertiesFragment.up()
 
@@ -957,7 +958,7 @@ const buildRun = async (
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  const runPropertiesFragment = buildRunProperties(attributes)
 
   // case where we have recursive spans representing font changes
   if (isVNode(vNode) && (vNode as VNodeType).tagName === 'span') {
@@ -990,7 +991,7 @@ const buildRun = async (
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
     // create temp run fragments to split the paragraph into different runs
     let baseAttributes: ParagraphAttributes = attributes
-    let tempAttributes: RunAttributes = cloneDeep(baseAttributes)
+    let tempAttributes: RunAttributes = { ...baseAttributes }
     let tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     while (vNodes.length) {
@@ -1009,7 +1010,7 @@ const buildRun = async (
           if (trackingFragments) {
             runFragmentsArray.push(...trackingFragments)
             // re initialize temp run fragments with new fragment
-            tempAttributes = cloneDeep(baseAttributes)
+            tempAttributes = { ...baseAttributes }
             tempRunFragment = fragment({
               namespaceAlias: { w: namespaces.w },
             }).ele('@w', 'r')
@@ -1025,7 +1026,7 @@ const buildRun = async (
         runFragmentsArray.push(tempRunFragment)
 
         // re initialize temp run fragments with new fragment
-        tempAttributes = cloneDeep(baseAttributes)
+        tempAttributes = { ...baseAttributes }
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
@@ -1410,17 +1411,16 @@ const buildParagraphBorder = (): XMLBuilderType => {
   const paragraphBorderFragment = fragment({
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'pBdr')
-  const bordersObject = cloneDeep(paragraphBordersObject)
-
-  Object.keys(bordersObject).forEach((borderName) => {
-    const border = bordersObject[borderName as keyof typeof bordersObject]
+  for (const borderName in paragraphBordersObject) {
+    if (!Object.prototype.hasOwnProperty.call(paragraphBordersObject, borderName)) continue;
+    const border = paragraphBordersObject[borderName as keyof typeof paragraphBordersObject]
     if (border) {
       const { size, spacing, color } = border
 
       const borderFragment = buildBorder(borderName, size, spacing, color)
       paragraphBorderFragment.import(borderFragment)
     }
-  })
+  }
 
   paragraphBorderFragment.up()
 
@@ -2378,7 +2378,9 @@ const buildTableRowProperties = (
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'trPr')
   if (attributes && attributes.constructor === Object) {
-    Object.keys(attributes).forEach((key) => {
+    const keys = Object.keys(attributes)
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
       switch (key) {
         case 'tableRowHeight': {
           if (attributes[key] !== null && attributes[key] !== undefined) {
@@ -2403,7 +2405,7 @@ const buildTableRowProperties = (
         default:
           break
       }
-    })
+    }
   }
   tableRowPropertiesFragment.up()
   return tableRowPropertiesFragment
