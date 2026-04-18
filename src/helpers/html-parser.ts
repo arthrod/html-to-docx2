@@ -245,13 +245,22 @@ function getPropertyInfo(attributeName: string): PropertyInfo {
  * Parse CSS style string into object
  */
 function parseStyles(input: string): Record<string, string> {
-  const attributes = input.split(';')
   const styles: Record<string, string> = {}
-  for (const attribute of attributes) {
-    const entry = attribute.split(/:(.*)/)
-    if (entry[0] && entry[1]) {
-      styles[entry[0].trim()] = entry[1].trim()
+  let start = 0
+  const len = input.length
+  while (start < len) {
+    let semiIdx = input.indexOf(';', start)
+    if (semiIdx === -1) semiIdx = len
+
+    const colonIdx = input.indexOf(':', start)
+    if (colonIdx !== -1 && colonIdx < semiIdx) {
+      const key = input.slice(start, colonIdx).trim()
+      const val = input.slice(colonIdx + 1, semiIdx).trim()
+      if (key && val) {
+        styles[key] = val
+      }
     }
+    start = semiIdx + 1
   }
   return styles
 }
