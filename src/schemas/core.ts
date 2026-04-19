@@ -1,14 +1,7 @@
 /* biome-ignore-all lint: legacy code */
 import { applicationName } from '../constants'
 import namespaces from '../namespaces'
-
-const escapeXml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+import { escapeXml } from '../utils/xml-escape'
 
 /**
  * Format a Date as local time with Z suffix.

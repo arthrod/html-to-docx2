@@ -1,12 +1,5 @@
 import { defaultFont } from '../constants'
-
-const escapeXml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+import { escapeXml } from '../utils/xml-escape'
 
 const generateThemeXML = (font: string = defaultFont): string => `
     <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
