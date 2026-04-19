@@ -7,14 +7,7 @@ import {
   type HeadingStyleOptions,
 } from '../constants'
 import namespaces from '../namespaces'
-
-const escapeXml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+import { escapeXml } from '../utils/xml-escape'
 
 const headingKeys: Array<keyof HeadingOptions> = [
   'heading1',
