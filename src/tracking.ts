@@ -206,9 +206,15 @@ export function resetAllocatedIds(): void {
 /** Generate a unique 8-char uppercase hex ID < 0x7FFFFFFF per OOXML spec. */
 export function generateHexId(): string {
   let id: string
+  const randomArray = new Uint32Array(1)
 
   do {
-    const val = Math.floor(Math.random() * 0x7f_ff_ff_fe) + 1
+    // SECURITY: Use crypto API instead of Math.random for secure ID generation
+    globalThis.crypto.getRandomValues(randomArray)
+    // Mask to ensure < 0x7FFFFFFF and greater than 0
+    let val = randomArray[0] & 0x7f_ff_ff_ff
+    if (val === 0) val = 1
+    if (val >= 0x7f_ff_ff_ff) val = 0x7f_ff_ff_fe // Ensure strictly less than 0x7FFFFFFF
     id = val.toString(16).toUpperCase().padStart(8, '0')
   } while (allocatedIds.has(id))
 
