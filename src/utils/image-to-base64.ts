@@ -115,6 +115,11 @@ const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
 ): Promise<{ base64: string; mimeType: string }> => {
+  const urlObj = new URL(String(imageUrl).trim())
+  if (!['http:', 'https:', 'data:', 'blob:'].includes(urlObj.protocol)) {
+    throw new Error('Invalid URL')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -162,7 +167,7 @@ const downloadImage = async (
  */
 export async function imageToBase64(imageUrl: string): Promise<string> {
   // Validate URL
-  const url = new URL(imageUrl)
+  const url = new URL(String(imageUrl).trim())
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Invalid URL provided')
   }
