@@ -1,0 +1,3 @@
+## 2024-05-18 - Replacing cloneDeep with shallow copy in xml-builder
+**Learning:** In hot path XML building operations (like buildRun and buildTextRunFragment), using \`cloneDeep\` from es-toolkit for flat property objects (like \`RunAttributes\` or \`ParagraphBorders\`) introduces massive memory allocation and CPU overhead compared to a shallow spread (\`{ ...attributes }\`). Because these property objects do not contain nested reference types that require deep duplication, shallow copying safely guarantees immutability while eliminating the heavy performance tax.
+**Action:** Always favor shallow spread operations (\`{ ...obj }\`) or native shallow clones when deep object traversal isn't strictly necessary for flat structures in tight iterative loops.

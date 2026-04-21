@@ -3,7 +3,6 @@
 /* biome-ignore-all lint/performance/useTopLevelRegex: legacy code */
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
-import { cloneDeep } from 'es-toolkit/compat'
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
@@ -439,7 +438,9 @@ const buildTextRunFragment = (
   options?: { deleted?: boolean }
 ): XMLBuilderType => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  // ⚡ Bolt: Using shallow spread ({ ...attributes }) instead of cloneDeep for flat objects
+  // drastically improves performance by avoiding deep traversal and allocation overhead in hot paths.
+  const runPropertiesFragment = buildRunProperties({ ...attributes })
 
   runFragment.import(runPropertiesFragment)
   runFragment.import(
@@ -957,7 +958,9 @@ const buildRun = async (
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  // ⚡ Bolt: Using shallow spread ({ ...attributes }) instead of cloneDeep for flat objects
+  // drastically improves performance by avoiding deep traversal and allocation overhead in hot paths.
+  const runPropertiesFragment = buildRunProperties({ ...attributes })
 
   // case where we have recursive spans representing font changes
   if (isVNode(vNode) && (vNode as VNodeType).tagName === 'span') {
@@ -990,7 +993,8 @@ const buildRun = async (
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
     // create temp run fragments to split the paragraph into different runs
     let baseAttributes: ParagraphAttributes = attributes
-    let tempAttributes: RunAttributes = cloneDeep(baseAttributes)
+    // ⚡ Bolt: Use shallow spread here to avoid deep clone overhead
+    let tempAttributes: RunAttributes = { ...baseAttributes }
     let tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     while (vNodes.length) {
@@ -1009,7 +1013,7 @@ const buildRun = async (
           if (trackingFragments) {
             runFragmentsArray.push(...trackingFragments)
             // re initialize temp run fragments with new fragment
-            tempAttributes = cloneDeep(baseAttributes)
+            tempAttributes = { ...baseAttributes } // ⚡ Bolt: shallow copy
             tempRunFragment = fragment({
               namespaceAlias: { w: namespaces.w },
             }).ele('@w', 'r')
@@ -1025,7 +1029,7 @@ const buildRun = async (
         runFragmentsArray.push(tempRunFragment)
 
         // re initialize temp run fragments with new fragment
-        tempAttributes = cloneDeep(baseAttributes)
+        tempAttributes = { ...baseAttributes } // ⚡ Bolt: shallow copy
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
@@ -1410,7 +1414,9 @@ const buildParagraphBorder = (): XMLBuilderType => {
   const paragraphBorderFragment = fragment({
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'pBdr')
-  const bordersObject = cloneDeep(paragraphBordersObject)
+  // ⚡ Bolt: Using shallow spread ({ ...paragraphBordersObject }) instead of cloneDeep for flat objects
+  // drastically improves performance by avoiding deep traversal and allocation overhead in hot paths.
+  const bordersObject = { ...paragraphBordersObject }
 
   Object.keys(bordersObject).forEach((borderName) => {
     const border = bordersObject[borderName as keyof typeof bordersObject]
