@@ -2052,9 +2052,17 @@ const buildTableCellProperties = (
     // 4. tcBorders
     if (attributes.tableCellBorder !== undefined) {
       const border = attributes.tableCellBorder
-      const hasVisibleBorder = Object.entries(border).some(
-        ([k, v]) => k !== 'color' && k !== 'stroke' && typeof v === 'number' && v > 0
-      )
+      let hasVisibleBorder = false
+      for (const k in border) {
+        if (Object.prototype.hasOwnProperty.call(border, k)) {
+          const v = border[k as keyof typeof border]
+          if (k !== 'color' && k !== 'stroke' && typeof v === 'number' && v > 0) {
+            hasVisibleBorder = true
+            break
+          }
+        }
+      }
+
       if (hasVisibleBorder) {
         const tableCellBorderFragment = buildTableCellBorders(border)
         tableCellPropertiesFragment.import(tableCellBorderFragment)
@@ -2671,9 +2679,17 @@ const buildTableProperties = (attributes: TableAttributes | undefined): XMLBuild
     // 4. tblBorders
     if (attributes.tableBorder) {
       const border = attributes.tableBorder
-      const hasVisibleBorder = Object.entries(border).some(
-        ([k, v]) => k !== 'color' && k !== 'stroke' && v && v > 0
-      )
+      let hasVisibleBorder = false
+      for (const k in border) {
+        if (Object.prototype.hasOwnProperty.call(border, k)) {
+          const v = border[k as keyof typeof border]
+          if (k !== 'color' && k !== 'stroke' && v && v > 0) {
+            hasVisibleBorder = true
+            break
+          }
+        }
+      }
+
       if (hasVisibleBorder) {
         const tableBordersFragment = buildTableBorders(border)
         tablePropertiesFragment.import(tableBordersFragment)
