@@ -1,0 +1,3 @@
+## 2024-05-14 - Replace Object.entries with faster loops
+**Learning:** Performance benchmarking in the `@turbodocx/html-to-docx` codebase indicates that replacing expensive operations like `Object.entries().forEach()` or `Object.entries().some()` with native iterations (like `for...in` or indexed `keys` loops) on hot paths can result in massive execution time reductions. Avoiding `Object.entries()` in these hot paths eliminates the performance-degrading array allocation overhead.
+**Action:** When iterating over objects in hot paths, prefer `for...in` or indexed `Object.keys()` loops over `Object.entries()` or `Object.keys().forEach()`.
