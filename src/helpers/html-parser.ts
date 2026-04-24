@@ -245,13 +245,30 @@ function getPropertyInfo(attributeName: string): PropertyInfo {
  * Parse CSS style string into object
  */
 function parseStyles(input: string): Record<string, string> {
-  const attributes = input.split(';')
   const styles: Record<string, string> = {}
-  for (const attribute of attributes) {
-    const entry = attribute.split(/:(.*)/)
-    if (entry[0] && entry[1]) {
-      styles[entry[0].trim()] = entry[1].trim()
+  let pos = 0
+  const len = input.length
+
+  // Bolt optimization: use while loop with indexOf and slice instead of split and regex
+  // for much faster parsing with fewer allocations
+  while (pos < len) {
+    let semiPos = input.indexOf(';', pos)
+    if (semiPos === -1) {
+      semiPos = len
     }
+
+    const colonPos = input.indexOf(':', pos)
+    if (colonPos !== -1 && colonPos < semiPos) {
+      const key = input.slice(pos, colonPos).trim()
+      if (key) {
+        const val = input.slice(colonPos + 1, semiPos).trim()
+        if (val) {
+          styles[key] = val
+        }
+      }
+    }
+
+    pos = semiPos + 1
   }
   return styles
 }
