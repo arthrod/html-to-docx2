@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, test } from 'vitest';
 // @ts-check
 
 // Unit tests for inline image caching functionality

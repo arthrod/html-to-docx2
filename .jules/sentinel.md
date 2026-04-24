@@ -1,0 +1,4 @@
+## 2024-04-24 - [Local File Inclusion in Image URL validation]
+**Vulnerability:** The native `URL` constructor does not prevent SSRF or Local File Inclusion (LFI) by itself, and its `url.protocol` check must explicitly restrict protocols (like 'file:') if external fetch is being performed.
+**Learning:** URL validation for node environment fetch operations using the native `URL` constructor needs explicit filtering against Local File Inclusion (LFI) via "file://", or other custom protocols. Ensure "http:", "https:", "data:", and "blob:" are allowed. Also trim input before parsing. To support relative URLs, validate inside a catch block using a dummy base URL.
+**Prevention:** Make sure all URL handling includes protocol whitelists (e.g., `protocol === 'http:' || protocol === 'https:' || protocol === 'data:' || protocol === 'blob:'`). Always enforce strict validation around inputs that end up executing network calls, handling relative paths safely.

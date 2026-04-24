@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, test } from 'vitest';
 // Unit tests for image processing functionality
 // Tests image download, base64 conversion, dimension handling, and configuration options
 

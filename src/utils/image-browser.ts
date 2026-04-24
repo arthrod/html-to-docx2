@@ -278,6 +278,25 @@ export const downloadImageToBase64 = async (
   url: string,
   timeout = 5000
 ): Promise<string> => {
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(String(url).trim())
+  } catch {
+    // If it's a relative URL, it will fail parsing without a base.
+    // For Node/browser environments processing relative URLs, we can fallback to a dummy base
+    // to strictly check if it's somehow trying to use a file:// or other malicious scheme
+    // relatively, though relative paths will resolve with the dummy http base.
+    parsedUrl = new URL(String(url).trim(), 'http://dummy.base')
+  }
+
+  if (
+    parsedUrl.protocol !== 'http:' &&
+    parsedUrl.protocol !== 'https:' &&
+    parsedUrl.protocol !== 'data:' &&
+    parsedUrl.protocol !== 'blob:'
+  ) {
+    throw new Error('Invalid URL')
+  }
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
