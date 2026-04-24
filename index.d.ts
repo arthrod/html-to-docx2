@@ -72,6 +72,20 @@ declare namespace HTMLtoDOCX {
     heading6?: HeadingStyle
   }
 
+  type UnmappedTypeLocation = 'block' | 'formatting' | 'inline'
+
+  interface UnmappedTypeInfo {
+    context?: string
+    location: UnmappedTypeLocation
+    tagName: string
+  }
+
+  interface UnmappedTypeHandling {
+    enabled?: boolean
+    logToConsole?: boolean
+    onUnmappedType?: (info: UnmappedTypeInfo) => void
+  }
+
   interface DocumentOptions {
     orientation?: 'portrait' | 'landscape'
     pageSize?: PageSize
@@ -118,6 +132,7 @@ declare namespace HTMLtoDOCX {
       svgHandling?: 'convert' | 'native'
       suppressSharpWarning?: boolean
     }
+    unmappedTypeHandling?: UnmappedTypeHandling
   }
 }
 

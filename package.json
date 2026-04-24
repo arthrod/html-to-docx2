@@ -203,7 +203,7 @@
       "oxfmt --write"
     ],
     "**/*.{ts,tsx,js,mjs,cjs}": [
-      "oxlint --fix"
+      "oxlint --fix --tsconfig=tsconfig.build.json"
     ]
   }
 }

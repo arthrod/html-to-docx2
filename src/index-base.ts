@@ -4,10 +4,16 @@
  *
  * This module provides tools for converting HTML to DOCX format.
  */
+import type { UnmappedTypeHandling } from './helpers/unmapped-type-reporter'
 import type { DocxListStyleType } from './utils/list'
 
 // Re-export types for backwards compatibility
 export type { DocumentMargins } from './schemas'
+export type {
+  UnmappedTypeHandling,
+  UnmappedTypeInfo,
+  UnmappedTypeLocation,
+} from './helpers/unmapped-type-reporter'
 
 // Re-export tracking utilities
 export * from './tracking'
@@ -141,6 +147,7 @@ export type DocumentOptions = {
   subject?: string
   table?: TableOptions
   title?: string
+  unmappedTypeHandling?: UnmappedTypeHandling
 }
 
 export type { ImageDimensions } from './utils/image-dimensions'

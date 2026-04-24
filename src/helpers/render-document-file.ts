@@ -14,6 +14,7 @@ import { getImageDimensions } from '../utils/image-dimensions'
 import { downloadAndCacheImage } from '../utils/image-to-base64'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
 import { vNodeHasChildren } from '../utils/vnode'
+import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
 // FIXME: remove the cyclic dependency
 // eslint-disable-next-line import/no-cycle -- FIXME: known cyclic dependency
 import * as xmlBuilder from './xml-builder'
@@ -88,6 +89,7 @@ type DocxDocumentInstance = {
   htmlString: string
   imageProcessing?: typeof defaultDocumentOptions.imageProcessing
   relationshipFilename: string
+  unmappedTypeHandling?: UnmappedTypeHandling
   _imageCache?: Map<string, string | null>
   _retryStats?: {
     finalFailures: number
@@ -973,8 +975,16 @@ async function findXMLEquivalent(
     }
     case 'head':
       return
-    default:
+    default: {
+      const tagName = vNode.tagName
+      if (typeof tagName === 'string' && tagName !== '') {
+        reportUnmappedType(
+          { location: 'block', tagName },
+          docxDocumentInstance.unmappedTypeHandling
+        )
+      }
       break
+    }
   }
   if (vNodeHasChildren(vNode)) {
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */

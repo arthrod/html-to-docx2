@@ -84,6 +84,7 @@ interface NormalizedDocumentOptions {
   subject?: string
   table?: TableOptions
   title?: string
+  unmappedTypeHandling?: DocumentOptions['unmappedTypeHandling']
 }
 
 interface LineNumberOptions {
@@ -242,6 +243,8 @@ const normalizeDocumentOptions = (
   if (documentOptions.subject !== undefined) result.subject = documentOptions.subject
   if (documentOptions.table !== undefined) result.table = documentOptions.table
   if (documentOptions.title !== undefined) result.title = documentOptions.title
+  if (documentOptions.unmappedTypeHandling !== undefined)
+    result.unmappedTypeHandling = documentOptions.unmappedTypeHandling
 
   // Transform properties that need unit conversion
   if (documentOptions.pageSize !== undefined) {

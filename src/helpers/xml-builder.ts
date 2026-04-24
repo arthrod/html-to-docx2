@@ -82,6 +82,7 @@ import { vNodeHasChildren } from '../utils/vnode'
 // FIXME: remove the cyclic dependency
 // eslint-disable-next-line import/no-cycle
 import { buildImage, buildList } from './render-document-file'
+import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
 
 // Types for Virtual DOM
 type VNodeProperties = {
@@ -132,6 +133,7 @@ type DocxDocumentInstance = Partial<TrackingDocumentInstance> & {
     retryDelayBase?: number
     verboseLogging?: boolean
   }
+  unmappedTypeHandling?: UnmappedTypeHandling
   _imageCache?: Map<string, string | null>
   _retryStats?: {
     finalFailures: number
@@ -873,7 +875,8 @@ const modifiedStyleAttributesBuilder = (
 // options are passed to the formatting function if needed
 const buildFormatting = (
   htmlTag: string,
-  options?: FormattingOptions
+  options?: FormattingOptions,
+  unmappedTypeHandling?: UnmappedTypeHandling
 ): XMLBuilderType | null => {
   switch (htmlTag) {
     case 'strong':
@@ -914,6 +917,12 @@ const buildFormatting = (
     case 'hyperlink':
       return buildRunStyleFragment('Hyperlink')
     default:
+      if (htmlTag !== '') {
+        reportUnmappedType(
+          { location: 'formatting', tagName: htmlTag },
+          unmappedTypeHandling
+        )
+      }
       break
   }
 
