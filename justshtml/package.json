@@ -1,0 +1,19 @@
+{
+  "name": "justjshtml",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Dependency-free JavaScript HTML5 parser (browser + Node.js) built as a port of the Python project [JustHTML](https://github.com/EmilStenstrom/justhtml).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "ts-migrate": "^0.1.35",
+    "typescript": "^4.9.5"
+  }
+}

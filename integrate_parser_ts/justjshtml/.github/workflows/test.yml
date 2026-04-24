@@ -1,0 +1,26 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: node scripts/smoke.js
+      - run: node scripts/run-selector-tests.js
+      - run: node scripts/run-stream-tests.js
+      - run: node scripts/run-markdown-tests.js
+      - uses: actions/checkout@v4
+        with:
+          repository: html5lib/html5lib-tests
+          path: html5lib-tests
+      - run: node scripts/run-encoding-tests.js
+      - run: node scripts/run-tokenizer-tests.js
+      - run: node scripts/run-tree-construction-tests.js
+      - run: node scripts/run-serializer-tests.js
