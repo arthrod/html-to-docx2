@@ -45,21 +45,21 @@ type VNodeChild = VNode | VText | WidgetNode | ThunkNode
  * Helper to check if something is a VNode (internal)
  */
 function _isVNode(x: VNodeChild | null | undefined): x is VNode {
-  return x && x.type === 'VirtualNode'
+  return typeof x === 'object' && x !== null && x.type === 'VirtualNode'
 }
 
 /**
  * Helper to check if something is a Widget
  */
 function isWidget(x: VNodeChild | null | undefined): x is WidgetNode {
-  return x && x.type === 'Widget'
+  return typeof x === 'object' && x !== null && x.type === 'Widget'
 }
 
 /**
  * Helper to check if something is a Thunk
  */
 function isThunk(x: VNodeChild | null | undefined): x is ThunkNode {
-  return x && x.type === 'Thunk'
+  return typeof x === 'object' && x !== null && x.type === 'Thunk'
 }
 
 /**
@@ -67,7 +67,8 @@ function isThunk(x: VNodeChild | null | undefined): x is ThunkNode {
  */
 function isVHook(x: VNodePropertyValue): x is VHook {
   return (
-    x &&
+    typeof x === 'object' &&
+    x !== null &&
     ((typeof x.hook === 'function' && !Object.hasOwn(x, 'hook')) ||
       (typeof x.unhook === 'function' && !Object.hasOwn(x, 'unhook')))
   )
@@ -191,12 +192,12 @@ VText.prototype.type = 'VirtualText'
  * Check if a value is a VNode (exported for compatibility)
  */
 export function isVNode(vnode: VNodeChild | null | undefined): vnode is VNode {
-  return vnode && vnode.type === 'VirtualNode'
+  return typeof vnode === 'object' && vnode !== null && vnode.type === 'VirtualNode'
 }
 
 /**
  * Check if a value is a VText (exported for compatibility)
  */
 export function isVText(vtext: VNodeChild | null | undefined): vtext is VText {
-  return vtext && vtext.type === 'VirtualText'
+  return typeof vtext === 'object' && vtext !== null && vtext.type === 'VirtualText'
 }
