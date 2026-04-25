@@ -1,5 +1,7 @@
 import { cloneDeep } from 'es-toolkit/compat'
 
+import type { UnmappedTypeHandling } from './helpers/unmapped-type-reporter'
+
 export type Orientation = 'landscape' | 'portrait'
 
 export type Direction = 'ltr' | 'rtl'
@@ -149,6 +151,7 @@ export type DocumentOptions = {
   subject: string
   table: TableOptions
   title: string
+  unmappedTypeHandling: UnmappedTypeHandling
 }
 
 const applicationName = 'html-to-docx'
@@ -316,6 +319,7 @@ const defaultDocumentOptions: DocumentOptions = {
     },
   },
   title: '',
+  unmappedTypeHandling: { enabled: false },
 }
 const defaultHTMLString = '<p></p>'
 const relsFolderName = '_rels'

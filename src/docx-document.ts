@@ -39,6 +39,7 @@ import {
   themeType as themeFileType,
 } from './constants'
 import { convertVTreeToXML } from './helpers'
+import type { UnmappedTypeHandling } from './helpers/unmapped-type-reporter'
 import namespaces from './namespaces'
 import {
   contentTypesXML as contentTypesXMLString,
@@ -228,6 +229,7 @@ export interface DocxDocumentProperties {
   subject?: string
   table?: TableOptions
   title?: string
+  unmappedTypeHandling?: UnmappedTypeHandling
   zip: JSZip
 }
 
@@ -409,6 +411,7 @@ class DocxDocument {
   subject: string
   tableRowCantSplit: boolean
   title: string
+  unmappedTypeHandling: UnmappedTypeHandling
   width: number
   zip: JSZip
   _imageCache?: Map<string, string | null>
@@ -472,6 +475,8 @@ class DocxDocument {
     this.imageProcessing =
       properties.imageProcessing || defaultDocumentOptions.imageProcessing
     this.tableRowCantSplit = properties.table?.row?.cantSplit || false
+    this.unmappedTypeHandling =
+      properties.unmappedTypeHandling ?? defaultDocumentOptions.unmappedTypeHandling
     this.pageNumber = properties.pageNumber || false
     this.skipFirstHeaderFooter = properties.skipFirstHeaderFooter || false
     this.lineNumber = properties.lineNumber ? properties.lineNumberOptions || null : null
@@ -1066,11 +1071,11 @@ class DocxDocument {
     return lastRelsId
   }
 
-   async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
+  async generateHeaderXML(vTree: VTree): Promise<HeaderResult> {
     return this.generateSectionXML(vTree, 'header') as Promise<HeaderResult>
   }
 
-   async generateFooterXML(vTree: VTree): Promise<FooterResult> {
+  async generateFooterXML(vTree: VTree): Promise<FooterResult> {
     return this.generateSectionXML(vTree, 'footer') as Promise<FooterResult>
   }
 

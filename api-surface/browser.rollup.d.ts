@@ -185,6 +185,7 @@ declare type DocumentOptions$1 = {
     subject: string;
     table: TableOptions$2;
     title: string;
+    unmappedTypeHandling: UnmappedTypeHandling;
 };
 
 export declare type DocumentOptions = {
@@ -218,6 +219,7 @@ export declare type DocumentOptions = {
     subject?: string;
     table?: TableOptions;
     title?: string;
+    unmappedTypeHandling?: UnmappedTypeHandling;
 };
 
 export declare const DOCX_COMMENT_END_TOKEN_PREFIX = "[[DOCX_CMT_END:";
@@ -270,6 +272,7 @@ export declare interface DocxDocumentProperties {
     subject?: string;
     table?: TableOptions$1;
     title?: string;
+    unmappedTypeHandling?: UnmappedTypeHandling;
     zip: JSZip;
 }
 
@@ -773,6 +776,20 @@ export declare interface TrackingState {
     suggestionStack: ActiveSuggestion[];
     replyIdsByParent: Map<string, string[]>;
 }
+
+export declare type UnmappedTypeHandling = {
+    enabled?: boolean;
+    logToConsole?: boolean;
+    onUnmappedType?: (info: UnmappedTypeInfo) => void;
+};
+
+export declare type UnmappedTypeInfo = {
+    context?: string;
+    location: UnmappedTypeLocation;
+    tagName: string;
+};
+
+export declare type UnmappedTypeLocation = 'block' | 'formatting' | 'inline';
 
 export declare type VerticalAlign = 'bottom' | 'middle' | 'top';
 
