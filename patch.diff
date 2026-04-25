@@ -1,0 +1,62 @@
+--- src/helpers/xml-builder.ts
++++ src/helpers/xml-builder.ts
+@@ -5,3 +5,2 @@
+ /* biome-ignore-all lint/style/useForOf: legacy code */
+-import { cloneDeep } from 'es-toolkit/compat'
+ import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
+@@ -442,5 +441,5 @@
+ ): XMLBuilderType => {
+   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
+-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
++  const runPropertiesFragment = buildRunProperties({ ...attributes })
+
+   runFragment.import(runPropertiesFragment)
+@@ -967,5 +966,5 @@
+ ): Promise<XMLBuilderType | XMLBuilderType[]> => {
+   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
+-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
++  const runPropertiesFragment = buildRunProperties({ ...attributes })
+
+   // case where we have recursive spans representing font changes
+@@ -1000,5 +999,5 @@
+     // create temp run fragments to split the paragraph into different runs
+     let baseAttributes: ParagraphAttributes = attributes
+-    let tempAttributes: RunAttributes = cloneDeep(baseAttributes)
++    let tempAttributes: RunAttributes = { ...baseAttributes }
+     let tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
+     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
+@@ -1020,5 +1019,5 @@
+             // re initialize temp run fragments with new fragment
+-            tempAttributes = cloneDeep(baseAttributes)
++            tempAttributes = { ...baseAttributes }
+             tempRunFragment = fragment({
+               namespaceAlias: { w: namespaces.w },
+@@ -1036,5 +1035,5 @@
+         // re initialize temp run fragments with new fragment
+-        tempAttributes = cloneDeep(baseAttributes)
++        tempAttributes = { ...baseAttributes }
+         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
+       } else if (isVNode(tempVNode)) {
+@@ -1421,12 +1420,13 @@
+   }).ele('@w', 'pBdr')
+-  const bordersObject = cloneDeep(paragraphBordersObject)
+
+-  Object.keys(bordersObject).forEach((borderName) => {
+-    const border = bordersObject[borderName as keyof typeof bordersObject]
+-    if (border) {
+-      const { size, spacing, color } = border
++  for (const borderName in paragraphBordersObject) {
++    if (Object.prototype.hasOwnProperty.call(paragraphBordersObject, borderName)) {
++      const border =
++        paragraphBordersObject[borderName as keyof typeof paragraphBordersObject]
++      if (border) {
++        const { size, spacing, color } = border
+
+-      const borderFragment = buildBorder(borderName, size, spacing, color)
+-      paragraphBorderFragment.import(borderFragment)
++        const borderFragment = buildBorder(borderName, size, spacing, color)
++        paragraphBorderFragment.import(borderFragment)
++      }
+     }
+-  })
++  }
