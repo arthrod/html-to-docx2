@@ -1,0 +1,5 @@
+## 2025-02-26 - SSRF Protection on Image Fetching Utilities
+
+**Vulnerability:** Server-Side Request Forgery (SSRF) and Local File Inclusion (LFI) risk via native URL fetching (`fetch()`) in `downloadImageToBase64` and `downloadImage` functions.
+**Learning:** Node/Bun `fetch()` defaults to fetching the provided URL directly, which makes it easy for attackers to craft malicious URLs addressing internal systems (e.g., `http://localhost`, `http://169.254.169.254`) or local files (e.g., `file:///etc/passwd`). The codebase was validating URLs through instantiation of `new URL()` to check protocol schemes but wasn't verifying if the `hostname` targeted localhost or internal IP structures.
+**Prevention:** Always sanitize the fully parsed hostname before handing user-supplied remote URLs to the native `fetch()` functions. An explicit `validateFetchUrl` function checking for forbidden loopback, local, or specialized IPv4/v6 structures should act as an internal guard for cross-network and unauthenticated network invocations. Ensure this function parses absolute and handles local schema fallbacks to protect legacy compatibility.

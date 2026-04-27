@@ -1,4 +1,5 @@
 import { SVG_UNIT_TO_PIXEL_CONVERSIONS } from '../constants'
+import { validateFetchUrl } from './url'
 import {
   downloadAndCacheImage,
   guessMimeTypeFromBytes,
@@ -312,6 +313,7 @@ export const downloadImageToBase64 = async (
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
+    validateFetchUrl(url)
     const response = await fetch(url, { signal: controller.signal })
 
     if (!response.ok) {

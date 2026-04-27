@@ -1,4 +1,5 @@
 import { defaultDocumentOptions } from '../constants'
+import { validateFetchUrl } from './url'
 
 type DownloadOptions = {
   maxSize?: number
@@ -119,6 +120,7 @@ const downloadImage = async (
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
+    validateFetchUrl(imageUrl)
     const response = await fetch(imageUrl, { signal: controller.signal })
 
     if (!response.ok) {
