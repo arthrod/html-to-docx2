@@ -2369,7 +2369,8 @@ export class TreeBuilder {
   ignore_lf: any
   insert_from_table: any
   mode: any
-  open_elements: any
+  open_elements: Node[]
+  openElements!: Node[]
   original_mode: any
   pending_table_text: any
   quirks_mode: any
