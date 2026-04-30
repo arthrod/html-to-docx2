@@ -187,7 +187,7 @@
     "es-toolkit": "^1.45.1",
     "html-entities": "^2.3.3",
     "jszip": "^3.7.1",
-    "nanoid": "5.1.6",
+    "nanoid": "5.1.11",
     "xmlbuilder2": "4.0.3"
   },
   "overrides": {
