@@ -2356,6 +2356,7 @@ const MODE_HANDLERS = [
 ]
 
 export class TreeBuilder {
+  openElements?: Node[]
   active_formatting: any
   collect_errors: any
   document: any
@@ -2369,7 +2370,7 @@ export class TreeBuilder {
   ignore_lf: any
   insert_from_table: any
   mode: any
-  open_elements: any
+  open_elements: Node[]
   original_mode: any
   pending_table_text: any
   quirks_mode: any
