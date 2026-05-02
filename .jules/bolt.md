@@ -1,0 +1,3 @@
+## 2025-05-18 - Optimized Memory Allocation by Removing cloneDeep in XML Builder
+**Learning:** In highly recursive or looping XML tree construction routines (like `buildRunProperties`), deep cloning configuration objects via `cloneDeep` from `es-toolkit` creates massive, unnecessary object instantiations leading to severe performance bottlenecks.
+**Action:** Replace `cloneDeep` operations on shallow or read-only attribute configurations with simple iteration (`for...in`) directly on the source dictionary or shallow copying (spread operators like `{ ...attributes }`). Ensure the logic does not mutate properties inside the mapping iteration.
