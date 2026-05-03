@@ -1,0 +1,3 @@
+## 2025-02-12 - [Performance] Removing expensive object clones on read paths
+**Learning:** `cloneDeep` is often unnecessarily used on flat style attribute objects (`RunAttributes`, `ParagraphAttributes`) during object spreading and iterations. The overhead of deep-cloning an object over 100,000 times compared to an object spread (`{ ...obj }`) is massive (~480ms vs ~4ms).
+**Action:** When inspecting iterations or object copying functions, ensure `cloneDeep` is strictly used only when the object contains nested reference types that are actively mutated. Use shallow copies or direct references when passing flat style configuration objects to read-only builder functions.
