@@ -2370,6 +2370,7 @@ export class TreeBuilder {
   insert_from_table: any
   mode: any
   open_elements: any
+  openElements!: Node[]
   original_mode: any
   pending_table_text: any
   quirks_mode: any
