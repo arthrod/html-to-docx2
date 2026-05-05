@@ -129,13 +129,7 @@ function normalizeMetaDeclaredEncoding(label: any) {
   if (
     enc === 'utf-16' ||
     enc === 'utf-16le' ||
-    enc === 'utf-16be' ||
-    // @ts-expect-error TS(2367) FIXME: This condition will always return 'false' since th... Remove this comment to see the full error message
-    enc === 'utf-32' ||
-    // @ts-expect-error TS(2367) FIXME: This condition will always return 'false' since th... Remove this comment to see the full error message
-    enc === 'utf-32le' ||
-    // @ts-expect-error TS(2367) FIXME: This condition will always return 'false' since th... Remove this comment to see the full error message
-    enc === 'utf-32be'
+    enc === 'utf-16be'
   ) {
     return 'utf-8'
   }
