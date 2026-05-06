@@ -55,7 +55,19 @@ function shouldMinimizeAttrValue(name: any, value: any, minimizeBooleanAttribute
   return String(value).toLowerCase() === String(name).toLowerCase()
 }
 
-function serializeStartTag(name: any, attrs: any, options: any, isVoid: any) {
+export interface HTML5LibSerializerOptions {
+  inject_meta_charset?: boolean
+  encoding?: string
+  strip_whitespace?: boolean
+  escape_rcdata?: boolean
+  quote_attr_values?: boolean
+  minimize_boolean_attributes?: boolean
+  use_trailing_solidus?: boolean
+  escape_lt_in_attrs?: boolean
+  quote_char?: string | null
+}
+
+function serializeStartTag(name: any, attrs: any, options: HTML5LibSerializerOptions, isVoid: any) {
   const quoteAttrValues = Boolean(options.quote_attr_values)
   const minimizeBooleanAttributes =
     options.minimize_boolean_attributes === undefined
@@ -408,13 +420,11 @@ function shouldOmitEndTag(name: any, nextTok: any) {
   return false
 }
 
-export function serializeSerializerTokenStream(tokens: any, options = {}) {
+export function serializeSerializerTokenStream(tokens: any, options: HTML5LibSerializerOptions = {}) {
   if (!Array.isArray(tokens)) return null
 
   let tokenStream = tokens
-  // @ts-expect-error TS(2339) FIXME: Property 'inject_meta_charset' does not exist on t... Remove this comment to see the full error message
   if (options.inject_meta_charset) {
-    // @ts-expect-error TS(2339) FIXME: Property 'encoding' does not exist on type '{}'.
     const encoding = options.encoding
     if (!encoding) return ''
     tokenStream = applyInjectMetaCharset(tokenStream, encoding)
@@ -424,9 +434,7 @@ export function serializeSerializerTokenStream(tokens: any, options = {}) {
   let rawtext = null
 
   const openElements = []
-  // @ts-expect-error TS(2339) FIXME: Property 'strip_whitespace' does not exist on type... Remove this comment to see the full error message
   const stripWs = Boolean(options.strip_whitespace)
-  // @ts-expect-error TS(2339) FIXME: Property 'escape_rcdata' does not exist on type '{... Remove this comment to see the full error message
   const escapeRcdata = Boolean(options.escape_rcdata)
   const wsPreserve = new Set(['pre', 'textarea', 'script', 'style'])
 
