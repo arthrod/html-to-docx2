@@ -236,6 +236,9 @@ export const DOCX_COMMENT_TOKEN_SUFFIX = ']]'
 /** Regex to match all DOCX tracking tokens */
 const DOCX_TOKEN_REGEX = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/g
 
+/** Fast non-global regex for testing if a string contains tokens before processing */
+const HAS_TOKEN_REGEX = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/
+
 // ============================================================================
 // Token Parsing
 // ============================================================================
@@ -284,13 +287,20 @@ function parseDocxToken(
  * Split text into an array of text segments and parsed tokens.
  */
 export function splitDocxTrackingTokens(text: string): ParsedToken[] {
+  // Fast path: if no tokens exist, return the whole text as a single segment
+  if (!HAS_TOKEN_REGEX.test(text)) {
+    return text ? [{ type: 'text', value: text }] : []
+  }
+
   const parts: ParsedToken[] = []
   let lastIndex = 0
-  const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
   let match: RegExpExecArray | null
 
+  // Reset global regex state before iteration
+  DOCX_TOKEN_REGEX.lastIndex = 0
+
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
-  while ((match = tokenRegex.exec(text)) !== null) {
+  while ((match = DOCX_TOKEN_REGEX.exec(text)) !== null) {
     // Add text before this token
     if (match.index > lastIndex) {
       parts.push({ type: 'text', value: text.slice(lastIndex, match.index) })
@@ -320,22 +330,25 @@ export function splitDocxTrackingTokens(text: string): ParsedToken[] {
  * Check if text contains any DOCX tracking tokens.
  */
 export function hasTrackingTokens(text: string): boolean {
-  // Create a new regex each time to avoid state issues with global flag
-  // biome-ignore lint/performance/useTopLevelRegex: avoid global flag state issues
-  const tokenRegex = /\[\[DOCX_(INS|DEL|CMT)_(START|END):(.+?)\]\]/
-  return tokenRegex.test(text)
+  return HAS_TOKEN_REGEX.test(text)
 }
 
 /**
  * Collect all tracking token strings from text.
  */
 export function findDocxTrackingTokens(text: string): string[] {
+  if (!HAS_TOKEN_REGEX.test(text)) {
+    return []
+  }
+
   const tokens: string[] = []
-  const tokenRegex = new RegExp(DOCX_TOKEN_REGEX)
   let match: RegExpExecArray | null
 
+  // Reset global regex state before iteration
+  DOCX_TOKEN_REGEX.lastIndex = 0
+
   // biome-ignore lint/suspicious/noAssignInExpressions: idiomatic regex loop
-  while ((match = tokenRegex.exec(text)) !== null) {
+  while ((match = DOCX_TOKEN_REGEX.exec(text)) !== null) {
     tokens.push(match[0])
   }
 
