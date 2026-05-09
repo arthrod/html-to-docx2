@@ -1,0 +1,3 @@
+## 2024-05-09 - [Eliminate cloneDeep in Paragraph Borders]
+**Learning:** In the performance-sensitive `buildParagraphBorder` OOXML generation loop, unnecessary `cloneDeep` operations on constants like `paragraphBordersObject` cause significant memory allocation overhead. Additionally, using `Object.keys()` iterations is slower than native `for...in` loops.
+**Action:** Remove `cloneDeep` calls on static constants when only reading values, and replace `Object.keys().forEach()` with native `for...in` loops with `hasOwnProperty` checks to eliminate memory allocation overhead and improve execution speed.
