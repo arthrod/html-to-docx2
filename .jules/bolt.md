@@ -1,0 +1,4 @@
+
+## 2024-05-18 - Memory Allocation in Document Generation Hot Paths
+**Learning:** In @turbodocx/html-to-docx, deep cloning flat attribute objects (like RunAttributes) using `cloneDeep` from es-toolkit allocates significant memory and slows down hot path execution when generating paragraphs and text runs. Replacing `cloneDeep` with native shallow spread syntax `{ ...attributes }` eliminates this overhead and speeds up the process significantly. Furthermore, using `for...in` instead of `Object.keys().forEach()` on simple attribute objects is a faster pattern, but one must remember to replace array method `return` statements with `continue` to preserve identical iteration skip logic.
+**Action:** Use native object shallow cloning (spread syntax) instead of `cloneDeep` for flat attribute structures, and utilize `for...in` loops over `Object.keys()` for fast iterations while preserving control flow with `continue`. Avoid cloning constants if they are not mutated.
