@@ -2,15 +2,22 @@ import { decodeHTML } from './encoding.js'
 import { Tokenizer, TokenizerOpts } from './tokenizer.js'
 import { CommentToken, DoctypeToken, Tag, TokenSinkResult } from './tokens.js'
 
+type StreamEvent =
+  | ['start', [string, Record<string, string>]]
+  | ['end', string]
+  | ['comment', string]
+  | ['doctype', [string | null, string | null, string | null]]
+  | ['text', string]
+
 class StreamSink {
-  events: any
-  openElements: any
+  events: StreamEvent[]
+  openElements: Array<{ namespace: string }>
   constructor() {
     this.events = []
     this.openElements = [{ namespace: 'html' }]
   }
 
-  processToken(token: any) {
+  processToken(token: Tag | CommentToken | DoctypeToken) {
     if (token instanceof Tag) {
       if (token.kind === Tag.START) {
         this.events.push(['start', [token.name, { ...(token.attrs || {}) }]])
@@ -37,12 +44,20 @@ class StreamSink {
     return TokenSinkResult.Continue
   }
 
-  processCharacters(data: any) {
+  processCharacters(data: string) {
     this.events.push(['text', data])
   }
 }
 
-export function* stream(html: any, { encoding = null, tokenizerOpts = null } = {}) {
+interface StreamOpts {
+  encoding?: string | null
+  tokenizerOpts?: Partial<TokenizerOpts> | TokenizerOpts | null
+}
+
+export function* stream(
+  html: string | ArrayBuffer | Uint8Array | null | undefined,
+  { encoding = null, tokenizerOpts = null }: StreamOpts = {}
+) {
   let input = html
   if (input == null) input = ''
 
@@ -60,7 +75,6 @@ export function* stream(html: any, { encoding = null, tokenizerOpts = null } = {
   }
 
   const sink = new StreamSink()
-  // @ts-expect-error TS(2358) FIXME: The left-hand side of an 'instanceof' expression m... Remove this comment to see the full error message
   const opts =
     tokenizerOpts instanceof TokenizerOpts
       ? tokenizerOpts
