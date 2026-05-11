@@ -32,10 +32,14 @@ function doctypeToTestFormat(node: any) {
   return parts.join('')
 }
 
+export interface TestFormatOptions {
+  foreignAttributeAdjustments?: Record<string, string> | null;
+}
+
 function attrsToTestFormat(
   node: any,
   indent: any,
-  { foreignAttributeAdjustments = null } = {}
+  { foreignAttributeAdjustments = null }: TestFormatOptions = {}
 ) {
   const attrs = node.attrs || {}
   const keys = Object.keys(attrs)
@@ -99,10 +103,7 @@ function nodeToTestFormat(node: any, indent: any, options: any) {
   return sections.join('\n')
 }
 
-export function toTestFormat(
-  node: any,
-  options: { foreignAttributeAdjustments?: Record<string, string> | null } = {}
-) {
+export function toTestFormat(node: any, options: TestFormatOptions = {}) {
   const { foreignAttributeAdjustments = FOREIGN_ATTRIBUTE_ADJUSTMENTS } = options
   const opts = { foreignAttributeAdjustments }
 
