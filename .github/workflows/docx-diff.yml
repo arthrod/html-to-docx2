@@ -31,7 +31,7 @@ jobs:
           path: baseline
 
       - name: Setup Node.js for baseline
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 18
           cache: 'npm'
@@ -55,7 +55,7 @@ jobs:
           path: current
 
       - name: Setup Node.js for current
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 18
           cache: 'npm'
