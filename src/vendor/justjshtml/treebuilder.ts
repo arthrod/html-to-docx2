@@ -2369,7 +2369,8 @@ export class TreeBuilder {
   ignore_lf: any
   insert_from_table: any
   mode: any
-  open_elements: any
+  open_elements: Node[]
+  openElements: Node[]
   original_mode: any
   pending_table_text: any
   quirks_mode: any
@@ -2398,6 +2399,7 @@ export class TreeBuilder {
     this.original_mode = null
     this.table_text_original_mode = null
     this.open_elements = []
+    this.openElements = this.open_elements
     this.head_element = null
     this.form_element = null
     this.frameset_ok = true
