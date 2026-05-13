@@ -12,22 +12,22 @@ const BYTES_CONTENT_TYPE = new Uint8Array([
   0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x2d, 0x74, 0x79, 0x70, 0x65,
 ]) // content-type
 
-function asciiLowerByte(b: any) {
+function asciiLowerByte(b: number) {
   if (b >= 0x41 && b <= 0x5a) return b | 0x20
   return b
 }
 
-function isAsciiAlphaByte(b: any) {
+function isAsciiAlphaByte(b: number) {
   const c = asciiLowerByte(b)
   return c >= 0x61 && c <= 0x7a
 }
 
-function skipAsciiWhitespace(data: any, i: any) {
+function skipAsciiWhitespace(data: Uint8Array, i: number) {
   while (i < data.length && ASCII_WHITESPACE.has(data[i])) i += 1
   return i
 }
 
-function stripAsciiWhitespace(value: any) {
+function stripAsciiWhitespace(value: Uint8Array | null) {
   if (value == null) return null
   let start = 0
   let end = value.length
@@ -36,7 +36,7 @@ function stripAsciiWhitespace(value: any) {
   return value.subarray(start, end)
 }
 
-function asciiDecodeIgnore(bytes: any) {
+function asciiDecodeIgnore(bytes: Uint8Array) {
   let out = ''
   for (const b of bytes) {
     if (b <= 0x7f) out += String.fromCharCode(b)
@@ -44,14 +44,14 @@ function asciiDecodeIgnore(bytes: any) {
   return out
 }
 
-function indexOfByte(data: any, byte: any, start: any) {
+function indexOfByte(data: Uint8Array, byte: number, start: number) {
   for (let i = start; i < data.length; i += 1) {
     if (data[i] === byte) return i
   }
   return -1
 }
 
-function indexOfSubarray(data: any, pattern: any, start: any) {
+function indexOfSubarray(data: Uint8Array, pattern: Uint8Array, start: number) {
   outer: for (let i = start; i <= data.length - pattern.length; i += 1) {
     for (let j = 0; j < pattern.length; j += 1) {
       if (data[i + j] !== pattern[j]) continue outer
@@ -61,7 +61,7 @@ function indexOfSubarray(data: any, pattern: any, start: any) {
   return -1
 }
 
-function bytesEqualLower(data: any, start: any, end: any, asciiLowerPattern: any) {
+function bytesEqualLower(data: Uint8Array, start: number, end: number, asciiLowerPattern: Uint8Array) {
   const len = end - start
   if (len !== asciiLowerPattern.length) return false
   for (let i = 0; i < len; i += 1) {
@@ -70,7 +70,7 @@ function bytesEqualLower(data: any, start: any, end: any, asciiLowerPattern: any
   return true
 }
 
-function bytesEqualIgnoreAsciiCase(data: any, asciiLowerPattern: any) {
+function bytesEqualIgnoreAsciiCase(data: Uint8Array, asciiLowerPattern: Uint8Array) {
   if (data.length !== asciiLowerPattern.length) return false
   for (let i = 0; i < asciiLowerPattern.length; i += 1) {
     if (asciiLowerByte(data[i]) !== asciiLowerPattern[i]) return false
@@ -78,7 +78,7 @@ function bytesEqualIgnoreAsciiCase(data: any, asciiLowerPattern: any) {
   return true
 }
 
-export function normalizeEncodingLabel(label: any) {
+export function normalizeEncodingLabel(label: string | null) {
   if (!label) return null
 
   let s = ''
@@ -122,7 +122,7 @@ export function normalizeEncodingLabel(label: any) {
   return null
 }
 
-function normalizeMetaDeclaredEncoding(label: any) {
+function normalizeMetaDeclaredEncoding(label: string | null) {
   const enc = normalizeEncodingLabel(label)
   if (enc == null) return null
 
@@ -143,7 +143,7 @@ function normalizeMetaDeclaredEncoding(label: any) {
   return enc
 }
 
-function sniffBOM(data: any) {
+function sniffBOM(data: Uint8Array) {
   if (data.length >= 3 && data[0] === 0xef && data[1] === 0xbb && data[2] === 0xbf)
     return ['utf-8', 3]
   if (data.length >= 2 && data[0] === 0xff && data[1] === 0xfe) return ['utf-16le', 2]
@@ -151,7 +151,7 @@ function sniffBOM(data: any) {
   return [null, 0]
 }
 
-function extractCharsetFromContent(contentBytes: any) {
+function extractCharsetFromContent(contentBytes: Uint8Array) {
   if (contentBytes == null || contentBytes.length === 0) return null
 
   const normalized = new Uint8Array(contentBytes.length)
@@ -194,7 +194,7 @@ function extractCharsetFromContent(contentBytes: any) {
   return normalized.subarray(start, i)
 }
 
-function prescanForMetaCharset(data: any) {
+function prescanForMetaCharset(data: Uint8Array) {
   const maxNonComment = 1024
   const maxTotalScan = 65536
 
@@ -381,7 +381,7 @@ function prescanForMetaCharset(data: any) {
   return null
 }
 
-export function sniffHTMLEncoding(data: any, { transportEncoding = null } = {}) {
+export function sniffHTMLEncoding(data: Uint8Array, { transportEncoding = null }: { transportEncoding?: string | null } = {}) {
   const transport = normalizeEncodingLabel(transportEncoding)
   if (transport) return { encoding: transport, bomLength: 0 }
 
@@ -394,7 +394,7 @@ export function sniffHTMLEncoding(data: any, { transportEncoding = null } = {}) 
   return { encoding: 'windows-1252', bomLength: 0 }
 }
 
-export function decodeHTML(data: any, { transportEncoding = null } = {}) {
+export function decodeHTML(data: Uint8Array, { transportEncoding = null }: { transportEncoding?: string | null } = {}) {
   const { encoding, bomLength } = sniffHTMLEncoding(data, { transportEncoding })
 
   let enc = encoding
