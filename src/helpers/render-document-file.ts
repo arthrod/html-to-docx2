@@ -207,29 +207,21 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
     svg += ' xmlns="http://www.w3.org/2000/svg"'
   }
 
-  for (const key in attributes) {
-    if (Object.prototype.hasOwnProperty.call(attributes, key)) {
-      const value = attributes[key as keyof typeof attributes]
-      if (value) {
-        const escapedValue = String(value)
-          .replace(/&/g, '&amp;')
-          .replace(/"/g, '&quot;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-        svg += ` ${key}="${escapedValue}"`
-      }
+  Object.entries(attributes).forEach(([key, value]) => {
+    if (value) {
+      const escapedValue = String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+      svg += ` ${key}="${escapedValue}"`
     }
-  }
+  })
 
-  const styleKeys = Object.keys(style)
-  if (styleKeys.length > 0) {
-    let styleString = ''
-    for (let i = 0; i < styleKeys.length; i++) {
-      const key = styleKeys[i]
-      const value = style[key as keyof typeof style]
-      if (i > 0) styleString += ';'
-      styleString += `${key}:${value}`
-    }
+  if (Object.keys(style).length > 0) {
+    const styleString = Object.entries(style)
+      .map(([key, value]) => `${key}:${value}`)
+      .join(';')
     svg += ` style="${styleString}"`
   }
 
