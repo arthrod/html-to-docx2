@@ -99,10 +99,8 @@ function nodeToTestFormat(node: any, indent: any, options: any) {
   return sections.join('\n')
 }
 
-export function toTestFormat(
-  node: any,
-  options: { foreignAttributeAdjustments?: Record<string, string> | null } = {}
-) {
+export function toTestFormat(node: any, options = {}) {
+  // @ts-expect-error TS(2339) FIXME: Property 'foreignAttributeAdjustments' does not ex... Remove this comment to see the full error message
   const { foreignAttributeAdjustments = FOREIGN_ATTRIBUTE_ADJUSTMENTS } = options
   const opts = { foreignAttributeAdjustments }
 
