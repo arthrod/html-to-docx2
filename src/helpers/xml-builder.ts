@@ -260,7 +260,7 @@ const fixupColorCode = (colorCodeString: string): string => {
 
     return rgbToHex(red, green, blue)
   }
-  {
+  if (rgbRegex.test(colorCodeString)) {
     const matchedParts = colorCodeString.match(rgbRegex)
     if (matchedParts) {
       const red = matchedParts[1]
@@ -274,7 +274,7 @@ const fixupColorCode = (colorCodeString: string): string => {
       )
     }
   }
-  {
+  if (hslRegex.test(colorCodeString)) {
     const matchedParts = colorCodeString.match(hslRegex)
     if (matchedParts) {
       const hue = matchedParts[1]
@@ -288,13 +288,13 @@ const fixupColorCode = (colorCodeString: string): string => {
       )
     }
   }
-  {
+  if (hexRegex.test(colorCodeString)) {
     const matchedParts = colorCodeString.match(hexRegex)
     if (matchedParts) {
       return matchedParts[1]
     }
   }
-  {
+  if (hex3Regex.test(colorCodeString)) {
     const matchedParts = colorCodeString.match(hex3Regex)
     if (matchedParts) {
       const red = matchedParts[1]
