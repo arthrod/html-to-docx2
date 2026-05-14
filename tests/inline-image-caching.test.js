@@ -20,7 +20,7 @@ import { parseDOCX } from './helpers/docx-assertions'
  *   blob: () => Promise<Blob>
  * }>}
  */
-async function mockFetchFromBase64(base64, contentType = 'image/png') {
+function mockFetchFromBase64(base64, contentType = 'image/png') {
   const buffer = Buffer.from(base64, 'base64')
   const arrayBuffer = buffer.buffer.slice(
     buffer.byteOffset,
@@ -31,8 +31,8 @@ async function mockFetchFromBase64(base64, contentType = 'image/png') {
     status: 200,
     statusText: 'OK',
     headers: new Headers({ 'content-type': contentType }),
-    arrayBuffer: async () => Promise.resolve(arrayBuffer),
-    blob: async () => Promise.resolve(new Blob([arrayBuffer])),
+    arrayBuffer: () => Promise.resolve(arrayBuffer),
+    blob: () => Promise.resolve(new Blob([arrayBuffer])),
   })
 }
 
@@ -47,7 +47,7 @@ describe('Inline Image Caching', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation(async () => mockFetchFromBase64(PNG_1x1_BASE64))
+        .mockImplementation(() => mockFetchFromBase64(PNG_1x1_BASE64))
 
       const htmlString = `
         <p>Text with inline image: <img src="${testUrl}" width="50" height="50" /></p>
@@ -73,7 +73,7 @@ describe('Inline Image Caching', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation(async () => mockFetchFromBase64(PNG_1x1_BASE64))
+        .mockImplementation(() => mockFetchFromBase64(PNG_1x1_BASE64))
 
       const htmlString = `
         <p>First inline: <img src="${testUrl}" width="50" height="50" /></p>
@@ -100,7 +100,7 @@ describe('Inline Image Caching', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation(async () => mockFetchFromBase64(PNG_1x1_BASE64))
+        .mockImplementation(() => mockFetchFromBase64(PNG_1x1_BASE64))
 
       const htmlString = `
         <img src="${testUrl}" width="100" height="100" />
@@ -126,7 +126,7 @@ describe('Inline Image Caching', () => {
       const testUrl = 'https://example.com/retry-test.png'
 
       let callCount = 0
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => {
         callCount++
         if (callCount === 1) {
           return Promise.reject(new Error('Network timeout'))
@@ -154,7 +154,7 @@ describe('Inline Image Caching', () => {
     test('should skip inline image after all retries fail', async () => {
       const testUrl = 'https://example.com/always-fails.png'
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
         Promise.reject(new Error('Network error'))
       )
 
@@ -181,7 +181,7 @@ describe('Inline Image Caching', () => {
       const testUrl = 'https://example.com/cache-failure.png'
 
       let attemptCount = 0
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => {
         attemptCount++
         return Promise.reject(new Error('404 Not Found'))
       })
@@ -213,7 +213,7 @@ describe('Inline Image Caching', () => {
     test('should track inline image cache hits in statistics', async () => {
       const testUrl = 'https://example.com/stats-test.png'
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
         mockFetchFromBase64(JPEG_1x1_BASE64, 'image/jpeg')
       )
 
@@ -264,7 +264,7 @@ describe('Inline Image Caching', () => {
       const url1 = 'https://example.com/image1.png'
       const url2 = 'https://example.com/image2.jpg'
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
         if (String(url).includes('image1')) {
           return mockFetchFromBase64(PNG_1x1_BASE64)
         }
@@ -293,7 +293,7 @@ describe('Inline Image Caching', () => {
       const goodUrl = 'https://example.com/good.png'
       const badUrl = 'https://example.com/bad.png'
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
         if (String(url).includes('good')) {
           return mockFetchFromBase64(PNG_1x1_BASE64)
         }
@@ -328,7 +328,7 @@ describe('Inline Image Caching', () => {
     test('should respect cache size limits with inline images', async () => {
       const urls = Array.from({ length: 5 }, (_, i) => `https://example.com/image${i}.png`)
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() =>
         mockFetchFromBase64(PNG_1x1_BASE64)
       )
 
@@ -356,7 +356,7 @@ describe('Inline Image Caching', () => {
     test('should respect timeout configuration for inline images', async () => {
       const testUrl = 'https://example.com/slow-image.png'
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(() => {
         return new Promise((_, reject) => {
           setTimeout(() => {
             const error = new Error('The operation was aborted')
