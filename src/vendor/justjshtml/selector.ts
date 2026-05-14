@@ -308,14 +308,14 @@ class SimpleSelector {
 }
 
 class CompoundSelector {
-  selectors: any
-  constructor(selectors = []) {
+  selectors: SimpleSelector[]
+  constructor(selectors: SimpleSelector[] = []) {
     this.selectors = selectors
   }
 }
 
 class ComplexSelector {
-  parts: any
+  parts: [string | null, CompoundSelector][]
   constructor() {
     this.parts = []
   }

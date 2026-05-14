@@ -240,10 +240,11 @@ function generateContentTypesFragments(
 ): void {
   if (objects && Array.isArray(objects)) {
     objects.forEach((object) => {
+      // Use 'in' operator to discriminate the type without unsafe assertions
       const id =
-        type === 'header'
-          ? (object as HeaderObject).headerId
-          : (object as FooterObject).footerId
+        'headerId' in object
+          ? object.headerId
+          : object.footerId
       const contentTypesFragment = fragment({
         defaultNamespace: { ele: namespaces.contentTypes },
       })
@@ -332,10 +333,15 @@ async function generateSectionXML(
   // @ts-expect-error - DocxDocument implements DocxDocumentInstance with slight variations
   await convertVTreeToXML(this, vTree, XMLFragment)
 
+  const firstNode = XMLFragment.first().node
+  const isElementNode = (node: unknown): node is { tagName: string } => {
+    return typeof node === 'object' && node !== null && 'nodeType' in node && node.nodeType === 1
+  }
+
   if (
     type === 'footer' &&
-    // @ts-expect-error - Node is actually an Element here
-    (XMLFragment.first().node as Element).tagName === 'p' &&
+    isElementNode(firstNode) &&
+    firstNode.tagName === 'p' &&
     this.pageNumber
   ) {
     XMLFragment.first().import(
