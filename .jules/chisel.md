@@ -1,7 +1,5 @@
+## 2025-02-18 - Safe Dynamic Object Indexing in Iterations
 
-## 2024-05-18 - [Typed JustHTML options objects]
-**Learning:** `JustHTML` and `parseDocument` options destructured default parameters like `options = {}` and used `@ts-expect-error` to suppress compiler warnings instead of explicitly typing the `options` signature.
-**Action:** Always define interfaces explicitly like `JustHTMLOptions` and `ParseDocumentOptions` for object parameters (even optional configuration ones), allowing the TS compiler to infer and match properties properly instead of suppressing the errors inside the function body.
-## 2024-05-18 - [Fix dynamically added openElements]
-**Learning:** `TreeBuilder` instances had `openElements` dynamically attached after construction, causing TS errors. By directly adding the property to the class and linking it in the constructor (`this.openElements = this.open_elements`), we remove the `@ts-expect-error` while maintaining the identical runtime behavior required by caller `parser.ts`.
-**Action:** When seeing properties dynamically attached on object instances with `@ts-expect-error`, define those properties correctly on the `class` itself and initialize them in the constructor.
+**Learning:** When dynamically assigning properties to an empty object `{}` during iterations, TypeScript flags `TS(7053)` (implicitly 'any' index signature) because the compiler doesn't know the intended shape, often causing developers to lazily suppress it with `@ts-expect-error`. Additionally, keys that might evaluate to nullish variables (e.g. `const name = entry.name` where `name` might be `null`) can silently assign an unwanted property `"null"` to the object when converted to a string index.
+
+**Action:** Explicitly type dynamic accumulator objects as `Record<string, ExpectedType>` rather than leaving them untyped. More importantly, wrap the string-based key assignments in safety checks (e.g., `if (name != null)`) and explicitly coerce the key using `String(name)` to defend against silent coercions masking a runtime assignment bug.
