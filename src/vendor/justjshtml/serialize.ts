@@ -99,11 +99,10 @@ function nodeToTestFormat(node: any, indent: any, options: any) {
   return sections.join('\n')
 }
 
-interface ToTestFormatOptions {
-  foreignAttributeAdjustments?: boolean
-}
-
-export function toTestFormat(node: any, options: ToTestFormatOptions = {}) {
+export function toTestFormat(
+  node: any,
+  options: { foreignAttributeAdjustments?: Record<string, string> | null } = {}
+) {
   const { foreignAttributeAdjustments = FOREIGN_ATTRIBUTE_ADJUSTMENTS } = options
   const opts = { foreignAttributeAdjustments }
 
