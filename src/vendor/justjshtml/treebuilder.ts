@@ -388,9 +388,14 @@ function modeAfterHead(self: any, token: any): ModeHandlerResult {
     }
 
     if (token.kind === Tag.START && token.name === 'input') {
+      let inputType = null
       const attrs = token.attrs || {}
-      const typeAttr = attrs.type
-      const inputType = typeAttr ? String(typeAttr).toLowerCase() : null
+      for (const [name, value] of Object.entries(attrs)) {
+        if (name === 'type') {
+          inputType = String(value || '').toLowerCase()
+          break
+        }
+      }
       if (inputType === 'hidden') {
         self._parse_error('unexpected-hidden-input-after-head')
         return null
@@ -765,9 +770,14 @@ function handleBodyStartSimpleVoid(self: any, token: Tag): ModeHandlerResult {
 }
 
 function handleBodyStartInput(self: any, token: Tag): ModeHandlerResult {
+  let inputType = null
   const attrs = token.attrs || {}
-  const typeAttr = attrs.type
-  const inputType = typeAttr ? String(typeAttr).toLowerCase() : null
+  for (const [name, value] of Object.entries(attrs)) {
+    if (name === 'type') {
+      inputType = String(value || '').toLowerCase()
+      break
+    }
+  }
   self._insert_element(token, { push: false })
   if (inputType !== 'hidden') self.frameset_ok = false
   return null
@@ -1319,9 +1329,14 @@ function modeInTable(self: any, token: any): ModeHandlerResult {
         return modeInHead(self, token)
       }
       if (name === 'input') {
+        let inputType = null
         const attrs = token.attrs || {}
-        const typeAttr = attrs.type
-        const inputType = typeAttr ? String(typeAttr).toLowerCase() : null
+        for (const [attrName, attrValue] of Object.entries(attrs)) {
+          if (attrName === 'type') {
+            inputType = String(attrValue || '').toLowerCase()
+            break
+          }
+        }
         if (inputType === 'hidden') {
           self._parse_error('unexpected-hidden-input-in-table')
           self._insert_element(token, { push: true })
@@ -2869,8 +2884,7 @@ export class TreeBuilder {
   _add_missing_attributes(node: Node, attrs: AttributeMapInput) {
     if (!attrs) return
     const existing: AttributeMap = (node.attrs as AttributeMap) || {}
-    for (const name in attrs) {
-      const value = attrs[name]
+    for (const [name, value] of Object.entries(attrs)) {
       if (!Object.prototype.hasOwnProperty.call(existing, name))
         existing[name] = value ?? null
     }
@@ -3389,8 +3403,7 @@ export class TreeBuilder {
   ): AttributeMap {
     if (!attrs) return {}
     const adjusted: AttributeMap = {}
-    for (const name0 in attrs) {
-      const value = attrs[name0]
+    for (const [name0, value] of Object.entries(attrs)) {
       let name = name0
       let lowerName = lowerAscii(name)
 
@@ -3422,8 +3435,7 @@ export class TreeBuilder {
   _node_attribute_value(node: Node | null, name: string): string | null {
     const target = lowerAscii(name)
     const attrs: AttributeMap = (node?.attrs as AttributeMap) || {}
-    for (const attrName in attrs) {
-      const attrValue = attrs[attrName]
+    for (const [attrName, attrValue] of Object.entries(attrs)) {
       if (lowerAscii(attrName) === target) return attrValue || ''
     }
     return null
@@ -3477,7 +3489,7 @@ export class TreeBuilder {
 
   _foreign_breakout_font(tag: any) {
     const attrs = tag.attrs || {}
-    for (const name in attrs) {
+    for (const name of Object.keys(attrs)) {
       const lowerName = lowerAscii(name)
       if (lowerName === 'color' || lowerName === 'face' || lowerName === 'size') return true
     }
