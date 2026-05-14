@@ -33,7 +33,7 @@ function doctypeToTestFormat(node: any) {
 }
 
 export interface TestFormatOptions {
-  foreignAttributeAdjustments?: Record<string, string> | null;
+  foreignAttributeAdjustments?: Record<string, [string | null, string, string]>
 }
 
 function attrsToTestFormat(
