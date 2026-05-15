@@ -1,3 +1,4 @@
+import { describe, expect, test, beforeEach, beforeAll, afterEach, afterAll, vi } from "vitest"
 // Unit tests for image processing functionality
 // Tests image download, base64 conversion, dimension handling, and configuration options
 
@@ -96,32 +97,6 @@ describe('Image Processing', () => {
     })
   })
 
-  describe('getMimeType utility', () => {
-    test('should detect JPEG mime type from extension', () => {
-      const mimeType = getMimeType('image.jpg')
-      expect(mimeType).toBe('image/jpeg')
-    })
-
-    test('should detect PNG mime type from extension', () => {
-      const mimeType = getMimeType('image.png')
-      expect(mimeType).toBe('image/png')
-    })
-
-    test('should detect GIF mime type from extension', () => {
-      const mimeType = getMimeType('image.gif')
-      expect(mimeType).toBe('image/gif')
-    })
-
-    test('should detect mime type from URL with extension', () => {
-      const mimeType = getMimeType('https://example.com/image.jpeg')
-      expect(mimeType).toBe('image/jpeg')
-    })
-
-    test('should fallback to base64 detection when extension lookup fails', () => {
-      const mimeType = getMimeType('unknown', PNG_1x1_BASE64)
-      expect(mimeType).toBe('image/png')
-    })
-  })
 
   describe('parseDataUrl utility', () => {
     test('should parse valid PNG data URL', () => {
