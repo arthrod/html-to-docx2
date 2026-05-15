@@ -241,10 +241,7 @@ function generateContentTypesFragments(
   if (objects && Array.isArray(objects)) {
     objects.forEach((object) => {
       // Use 'in' operator to discriminate the type without unsafe assertions
-      const id =
-        'headerId' in object
-          ? object.headerId
-          : object.footerId
+      const id = 'headerId' in object ? object.headerId : object.footerId
       const contentTypesFragment = fragment({
         defaultNamespace: { ele: namespaces.contentTypes },
       })
@@ -335,7 +332,9 @@ async function generateSectionXML(
 
   const firstNode = XMLFragment.first().node
   const isElementNode = (node: unknown): node is { tagName: string } => {
-    return typeof node === 'object' && node !== null && 'nodeType' in node && node.nodeType === 1
+    return (
+      typeof node === 'object' && node !== null && 'nodeType' in node && node.nodeType === 1
+    )
   }
 
   if (
@@ -430,6 +429,7 @@ class DocxDocument {
   // Tracking support for comments and suggestions
   _trackingState?: TrackingState
   comments: StoredComment[]
+  commentsByNumericId: Map<number, StoredComment>
   commentIdMap: Map<string, number>
   lastCommentId: number
   revisionIdMap: Map<string, number>
@@ -503,6 +503,7 @@ class DocxDocument {
 
     // Initialize tracking support
     this.comments = []
+    this.commentsByNumericId = new Map()
     this.commentIdMap = new Map()
     this.lastCommentId = 0
     this.revisionIdMap = new Map()
@@ -1124,7 +1125,7 @@ class DocxDocument {
       this.commentIdMap.set(commentId, numericId)
     }
 
-    const existing = this.comments.find((item) => item.id === numericId)
+    const existing = this.commentsByNumericId.get(numericId)
     if (existing) {
       // Update missing fields
       if (!existing.authorName && authorName) {
@@ -1166,6 +1167,7 @@ class DocxDocument {
       text: text || 'Imported comment',
     }
     this.comments.push(entry)
+    this.commentsByNumericId.set(numericId, entry)
 
     return numericId
   }
