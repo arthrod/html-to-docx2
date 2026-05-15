@@ -35,7 +35,7 @@
         "tsconfig-paths": "^4.2.0",
         "tsdown": "^0.21.0",
         "tslib": "^2.8.1",
-        "typescript": "^5.9.3",
+        "typescript": "^6.0.0",
         "vitest": "^4.0.18",
       },
       "optionalDependencies": {
@@ -1212,7 +1212,7 @@
 
     "typedarray-to-buffer": ["typedarray-to-buffer@1.0.4", "", {}, "sha512-vjMKrfSoUDN8/Vnqitw2FmstOfuJ73G6CrSEKnf11A6RmasVxHqfeBcnTb6RsL4pTMuV5Zsv9IiHRphMZyckUw=="],
 
-    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+    "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "uglify-js": ["uglify-js@3.19.3", "", { "bin": { "uglifyjs": "bin/uglifyjs" } }, "sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ=="],
 
