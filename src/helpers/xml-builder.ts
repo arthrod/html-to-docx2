@@ -589,9 +589,7 @@ const buildRunsFromTextWithTokens = (
         docxDocumentInstance.ensureComment
       ) {
         // Find parent's paraId for threading
-        const parentComment = docxDocumentInstance.comments.find(
-          (c) => c.id === parentCommentId
-        )
+        const parentComment = docxDocumentInstance.commentByNumericIdMap.get(parentCommentId)
         const parentParaId = parentComment?.paraId
 
         data.replies.forEach((reply, idx) => {

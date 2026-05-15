@@ -8,6 +8,7 @@ const createMockTrackingDocument = (
 ): TrackingDocumentInstance => ({
   comments: [],
   commentIdMap: new Map(),
+  commentByNumericIdMap: new Map(),
   lastCommentId: 0,
   revisionIdMap: new Map(),
   lastRevisionId: 0,
@@ -42,6 +43,8 @@ describe('buildRunsFromTextWithTokens', () => {
     // Populate commentIdMap as it would be during execution
     mockInstance.commentIdMap.set(parentId, parentNumericId)
     mockInstance.commentIdMap.set(compositeReplyId, replyNumericId)
+    mockInstance.commentByNumericIdMap.set(parentNumericId, { id: parentNumericId, paraId: "para" } as any)
+    mockInstance.commentByNumericIdMap.set(replyNumericId, { id: replyNumericId, paraId: "para" } as any)
 
     const tokenText = `[[DOCX_CMT_START:${encodeURIComponent(
       JSON.stringify({
@@ -94,6 +97,8 @@ describe('buildRunsFromTextWithTokens', () => {
 
     mockInstance.commentIdMap.set(parentId, parentNumericId)
     mockInstance.commentIdMap.set(expectedGeneratedId, replyNumericId)
+    mockInstance.commentByNumericIdMap.set(parentNumericId, { id: parentNumericId, paraId: "para" } as any)
+    mockInstance.commentByNumericIdMap.set(replyNumericId, { id: replyNumericId, paraId: "para" } as any)
 
     const tokenText = `[[DOCX_CMT_START:${encodeURIComponent(
       JSON.stringify({
