@@ -44,7 +44,7 @@
     },
   },
   "overrides": {
-    "bl": "^1.2.3",
+    "bl": "^7.0.0",
     "semver": "^7.6.0",
   },
   "packages": {
@@ -514,7 +514,7 @@
 
     "birpc": ["birpc@4.0.0", "", {}, "sha512-LShSxJP0KTmd101b6DRyGBj57LZxSDYWKitQNW/mi8GRMvZb078Uf9+pveax1DrVL89vm7mWe+TovdI/UDOuPw=="],
 
-    "bl": ["bl@1.2.3", "", { "dependencies": { "readable-stream": "^2.3.5", "safe-buffer": "^5.1.1" } }, "sha512-pvcNpa0UU69UT341rO6AYy4FVAIkUHuZXRIWbq+zHnsVcRzDDjIAhGuuYoi0d//cwIwtt4pkpKycWEfjdV+vww=="],
+    "bl": ["bl@7.0.2", "", {}, "sha512-XC99Uvj9/0JBuDZ+n8yoRoGpqiVg6eOh5V5mGC66jSfkg8n/Q22qexE5G1eTp9Cyd0RyiwIKPa0zxLP3Q8WEtg=="],
 
     "bn.js": ["bn.js@5.2.3", "", {}, "sha512-EAcmnPkxpntVL+DS7bO1zhcZNvCkxqtkd0ZY53h06GNQ3DEkkGZ/gKgmDv6DdZQGj9BgfSPKtJJ7Dp1GPP8f7w=="],
 
