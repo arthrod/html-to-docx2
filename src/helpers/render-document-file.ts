@@ -187,17 +187,25 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
   return false
 }
 
+
+const escapeTextRegex = /[&<>]/g
+const escapeAttrRegex = /[&<>"]/g
+const escapeMap: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+}
+const escapeReplacer = (match: string) => escapeMap[match] || match
+
 const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
   const textNode = asVText(node)
   if (textNode) {
-    return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return textNode.text.replace(escapeTextRegex, escapeReplacer)
   }
 
   const vNode = asVNode(node)
-  if (!vNode) {
-    return ''
-  }
-  if (!vNode.tagName) {
+  if (!vNode || !vNode.tagName) {
     return ''
   }
 
@@ -209,37 +217,41 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
     svg += ' xmlns="http://www.w3.org/2000/svg"'
   }
 
-  Object.entries(attributes).forEach(([key, value]) => {
-    if (value) {
-      const escapedValue = String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-      svg += ` ${key}="${escapedValue}"`
+  for (const key in attributes) {
+    if (Object.prototype.hasOwnProperty.call(attributes, key)) {
+      const value = attributes[key]
+      if (value) {
+        const escapedValue = String(value).replace(escapeAttrRegex, escapeReplacer)
+        svg += ` ${key}="${escapedValue}"`
+      }
     }
-  })
+  }
 
-  if (Object.keys(style).length > 0) {
-    const styleString = Object.entries(style)
-      .map(([key, value]) => `${key}:${value}`)
-      .join(';')
-    svg += ` style="${styleString}"`
+  let hasStyle = false
+  let styleStr = ' style="'
+  for (const key in style) {
+    if (Object.prototype.hasOwnProperty.call(style, key)) {
+      if (hasStyle) styleStr += ';'
+      styleStr += `${key}:${style[key]}`
+      hasStyle = true
+    }
+  }
+  if (hasStyle) {
+    styleStr += '"'
+    svg += styleStr
   }
 
   const children = vNode.children || []
-  if (children.length === 0) {
-    svg += ' />'
-    return svg
+  const len = children.length
+  if (len === 0) {
+    return svg + ' />'
   }
 
   svg += '>'
-  children.forEach((child) => {
-    svg += serializeVNodeToSVG(child, false)
-  })
-  svg += `</${vNode.tagName}>`
-
-  return svg
+  for (let i = 0; i < len; i++) {
+    svg += serializeVNodeToSVG(children[i], false)
+  }
+  return svg + `</${vNode.tagName}>`
 }
 
 const convertHTML = createHTMLToVDOM()
