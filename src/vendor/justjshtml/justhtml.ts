@@ -104,7 +104,7 @@ export class JustHTML {
     return this.toHTML({ indent, indentSize, pretty })
   }
 
-  query(selector: any) {
+  query(selector: string) {
     return this.root.query(selector)
   }
 
