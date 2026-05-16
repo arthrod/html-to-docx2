@@ -9,7 +9,7 @@ import { describe, expect, it, mock } from 'bun:test'
 
 import JSZip from 'jszip'
 
-import { htmlToDocxBlob } from '../exportDocx'
+import { HTMLtoDOCX as htmlToDocxBlob } from '../index'
 import {
   buildCommentEndToken,
   buildCommentStartToken,
@@ -26,11 +26,12 @@ import {
   DOCX_INSERTION_TOKEN_SUFFIX,
   hasTrackingTokens,
   splitDocxTrackingTokens,
+  ensureTrackingState,
 } from './tracking'
 
 // Helper to load zip from Blob
-async function loadZipFromBlob(blob: Blob): Promise<JSZip> {
-  const arrayBuffer = await blob.arrayBuffer()
+async function loadZipFromBlob(blob: any): Promise<JSZip> {
+  const arrayBuffer = blob instanceof Uint8Array || Buffer.isBuffer(blob) ? blob : await blob.arrayBuffer()
   return JSZip.loadAsync(arrayBuffer)
 }
 
@@ -423,5 +424,34 @@ describe('Round-trip Token Encoding', () => {
       expect(parts[0].data.authorName).toBe('田中太郎')
       expect(parts[0].data.text).toBe('Comment with emoji 🎉 and CJK 日本語')
     }
+  })
+})
+
+describe('ensureTrackingState', () => {
+  it('should initialize and return a new _trackingState if it does not exist', () => {
+    const docxDocumentInstance: any = {}
+
+    const state = ensureTrackingState(docxDocumentInstance)
+
+    expect(state).toBeDefined()
+    expect(state.suggestionStack).toEqual([])
+    expect(state.replyIdsByParent).toBeInstanceOf(Map)
+
+    expect(docxDocumentInstance._trackingState).toBe(state)
+  })
+
+  it('should return the existing _trackingState without modification if it already exists', () => {
+    const existingState = {
+      suggestionStack: [{ id: '1', type: 'insertion', hasResolvedStart: true }],
+      replyIdsByParent: new Map([['parent1', ['reply1']]]),
+    }
+    const docxDocumentInstance: any = {
+      _trackingState: existingState,
+    }
+
+    const state = ensureTrackingState(docxDocumentInstance)
+
+    expect(state).toBe(existingState)
+    expect(docxDocumentInstance._trackingState).toBe(existingState)
   })
 })
