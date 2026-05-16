@@ -203,12 +203,23 @@ export function resetAllocatedIds(): void {
   allocatedIds.clear()
 }
 
+/**
+ * Shared buffer for secure random generation to avoid allocating a new Uint32Array on every call.
+ */
+const randomBuffer = new Uint32Array(1)
+
 /** Generate a unique 8-char uppercase hex ID < 0x7FFFFFFF per OOXML spec. */
 export function generateHexId(): string {
   let id: string
 
   do {
-    const val = Math.floor(Math.random() * 0x7f_ff_ff_fe) + 1
+    globalThis.crypto.getRandomValues(randomBuffer)
+    // Mask to positive 32-bit signed integer (0 to 2147483647)
+    const val = randomBuffer[0] & 0x7f_ff_ff_ff
+    // Retry if value is 0 or 0x7f_ff_ff_ff to match OOXML range [1, 2147483646]
+    if (val === 0 || val === 0x7f_ff_ff_ff) {
+      continue
+    }
     id = val.toString(16).toUpperCase().padStart(8, '0')
   } while (allocatedIds.has(id))
 
