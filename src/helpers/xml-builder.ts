@@ -589,9 +589,9 @@ const buildRunsFromTextWithTokens = (
         docxDocumentInstance.ensureComment
       ) {
         // Find parent's paraId for threading
-        const parentComment = docxDocumentInstance.comments.find(
-          (c) => c.id === parentCommentId
-        )
+        const parentComment = docxDocumentInstance.commentsByNumericId
+          ? docxDocumentInstance.commentsByNumericId.get(parentCommentId)
+          : docxDocumentInstance.comments.find((c) => c.id === parentCommentId)
         const parentParaId = parentComment?.paraId
 
         data.replies.forEach((reply, idx) => {
@@ -866,10 +866,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.verticalAlign = style['vertical-align']
     }
 
-    if (
-      style['text-align'] &&
-      TEXT_ALIGN_VALUES.has(style['text-align'])
-    ) {
+    if (style['text-align'] && TEXT_ALIGN_VALUES.has(style['text-align'])) {
       modifiedAttributes.textAlign = style['text-align']
     }
 
@@ -1033,10 +1030,7 @@ const buildRun = async (
     return buildRunOrRuns(vNode as VNodeType, attributes, docxDocumentInstance)
   }
 
-  if (
-    isVNode(vNode) &&
-    RUN_TAGS.has((vNode as VNodeType).tagName || '')
-  ) {
+  if (isVNode(vNode) && RUN_TAGS.has((vNode as VNodeType).tagName || '')) {
     const runFragmentsArray: XMLBuilderType[] = []
 
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
@@ -1081,9 +1075,7 @@ const buildRun = async (
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
-        if (
-          TEMP_RUN_TAGS.has(tempVn.tagName || '')
-        ) {
+        if (TEMP_RUN_TAGS.has(tempVn.tagName || '')) {
           tempAttributes = {}
           switch (tempVn.tagName) {
             case 'strong':
@@ -1780,9 +1772,7 @@ const buildParagraph = async (
   }
   if (isVNode(vNode) && vNodeHasChildren(vNode as VNodeType)) {
     const vn = vNode as VNodeType
-    if (
-      PARAGRAPH_TAGS.has(vn.tagName || '')
-    ) {
+    if (PARAGRAPH_TAGS.has(vn.tagName || '')) {
       const runOrHyperlinkFragments = await buildRunOrHyperLink(
         vNode,
         modifiedAttributes,
