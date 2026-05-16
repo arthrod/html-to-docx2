@@ -203,14 +203,19 @@ export function resetAllocatedIds(): void {
   allocatedIds.clear()
 }
 
+const randomBuffer = new Uint32Array(1)
+
 /** Generate a unique 8-char uppercase hex ID < 0x7FFFFFFF per OOXML spec. */
 export function generateHexId(): string {
-  let id: string
+  let id: string | undefined
 
   do {
-    const val = Math.floor(Math.random() * 0x7f_ff_ff_fe) + 1
-    id = val.toString(16).toUpperCase().padStart(8, '0')
-  } while (allocatedIds.has(id))
+    globalThis.crypto.getRandomValues(randomBuffer)
+    const val = randomBuffer[0] & 0x7f_ff_ff_ff
+    if (val > 0 && val < 0x7f_ff_ff_ff) {
+      id = val.toString(16).toUpperCase().padStart(8, '0')
+    }
+  } while (!id || allocatedIds.has(id))
 
   allocatedIds.add(id)
 
