@@ -866,10 +866,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.verticalAlign = style['vertical-align']
     }
 
-    if (
-      style['text-align'] &&
-      TEXT_ALIGN_VALUES.has(style['text-align'])
-    ) {
+    if (style['text-align'] && TEXT_ALIGN_VALUES.has(style['text-align'])) {
       modifiedAttributes.textAlign = style['text-align']
     }
 
@@ -1033,10 +1030,7 @@ const buildRun = async (
     return buildRunOrRuns(vNode as VNodeType, attributes, docxDocumentInstance)
   }
 
-  if (
-    isVNode(vNode) &&
-    RUN_TAGS.has((vNode as VNodeType).tagName || '')
-  ) {
+  if (isVNode(vNode) && RUN_TAGS.has((vNode as VNodeType).tagName || '')) {
     const runFragmentsArray: XMLBuilderType[] = []
 
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
@@ -1081,9 +1075,7 @@ const buildRun = async (
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
-        if (
-          TEMP_RUN_TAGS.has(tempVn.tagName || '')
-        ) {
+        if (TEMP_RUN_TAGS.has(tempVn.tagName || '')) {
           tempAttributes = {}
           switch (tempVn.tagName) {
             case 'strong':
@@ -1279,24 +1271,22 @@ const buildRunOrRuns = async (
     let runFragments: XMLBuilderType[] = []
     const vn = vNode as VNodeType
 
-    /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
-    for (let index = 0; index < (vn.children || []).length; index++) {
-      const childVNode = (vn.children || [])[index]
+    const promises = (vn.children || []).map(async (childVNode) => {
       const modifiedAttributes = modifiedStyleAttributesBuilder(
         docxDocumentInstance,
         vNode,
         attributes
       )
-      const tempRunFragments = await buildRun(
-        childVNode,
-        modifiedAttributes,
-        docxDocumentInstance
-      )
+      return buildRun(childVNode, modifiedAttributes, docxDocumentInstance)
+    })
+
+    const results = await Promise.all(promises)
+    for (let index = 0; index < results.length; index++) {
+      const tempRunFragments = results[index]
       runFragments = runFragments.concat(
         Array.isArray(tempRunFragments) ? tempRunFragments : [tempRunFragments]
       )
     }
-    /* eslint-enable no-await-in-loop */
 
     return runFragments
   }
@@ -1780,9 +1770,7 @@ const buildParagraph = async (
   }
   if (isVNode(vNode) && vNodeHasChildren(vNode as VNodeType)) {
     const vn = vNode as VNodeType
-    if (
-      PARAGRAPH_TAGS.has(vn.tagName || '')
-    ) {
+    if (PARAGRAPH_TAGS.has(vn.tagName || '')) {
       const runOrHyperlinkFragments = await buildRunOrHyperLink(
         vNode,
         modifiedAttributes,
