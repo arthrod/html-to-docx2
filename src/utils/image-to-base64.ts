@@ -1,3 +1,4 @@
+import { isSSRFSafeURL } from './url'
 import { defaultDocumentOptions } from '../constants'
 
 type DownloadOptions = {
@@ -131,6 +132,10 @@ const downloadImage = async (
     throw new Error('Invalid URL')
   }
 
+  if (!isSSRFSafeURL(parsedUrl.href)) {
+    throw new Error('Invalid URL')
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -180,6 +185,10 @@ export async function imageToBase64(imageUrl: string): Promise<string> {
   // Validate URL
   const url = new URL(imageUrl)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('Invalid URL provided')
+  }
+
+  if (!isSSRFSafeURL(url.href)) {
     throw new Error('Invalid URL provided')
   }
 

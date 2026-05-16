@@ -241,5 +241,29 @@ describe('Image to base64 utilities', () => {
         'Invalid URL'
       )
     })
+
+    test('should reject SSRF payloads (localhost)', async () => {
+      await expect(imageToBase64('http://localhost:8080/admin')).rejects.toThrow('Invalid URL')
+    })
+
+    test('should reject SSRF payloads (127.0.0.1)', async () => {
+      await expect(imageToBase64('http://127.0.0.1/test')).rejects.toThrow('Invalid URL')
+    })
+
+    test('should reject SSRF payloads (AWS metadata)', async () => {
+      await expect(imageToBase64('http://169.254.169.254/latest/meta-data/')).rejects.toThrow('Invalid URL')
+    })
+
+    test('should reject SSRF payloads (nip.io bypass)', async () => {
+      await expect(imageToBase64('http://169.254.169.254.nip.io')).rejects.toThrow('Invalid URL')
+    })
+
+    test('should reject SSRF payloads (hex encoded IP)', async () => {
+      await expect(imageToBase64('http://0x7f000001/')).rejects.toThrow('Invalid URL')
+    })
+
+    test('should reject SSRF payloads (internal subdomains)', async () => {
+      await expect(imageToBase64('http://api.internal/')).rejects.toThrow('Invalid URL')
+    })
   })
 })
