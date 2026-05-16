@@ -1,3 +1,4 @@
+import { isLocalOrPrivateHost } from './url'
 import { defaultDocumentOptions } from '../constants'
 
 type DownloadOptions = {
@@ -127,6 +128,13 @@ const downloadImage = async (
     protocol !== 'https:' &&
     protocol !== 'data:' &&
     protocol !== 'blob:'
+  ) {
+    throw new Error('Invalid URL')
+  }
+
+  if (
+    (protocol === 'http:' || protocol === 'https:') &&
+    isLocalOrPrivateHost(parsedUrl.hostname)
   ) {
     throw new Error('Invalid URL')
   }
