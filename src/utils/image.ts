@@ -5,6 +5,7 @@ import {
   imageToBase64,
   parseDataUrl,
 } from './image-to-base64'
+import { isInternalUrl } from './url'
 
 type ImageMimeType =
   | 'image/bmp'
@@ -321,6 +322,10 @@ export const downloadImageToBase64 = async (
     protocol !== 'data:' &&
     protocol !== 'blob:'
   ) {
+    throw new Error('Invalid URL')
+  }
+
+  if (isInternalUrl(url)) {
     throw new Error('Invalid URL')
   }
 

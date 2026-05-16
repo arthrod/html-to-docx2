@@ -1,4 +1,5 @@
 import { defaultDocumentOptions } from '../constants'
+import { isInternalUrl } from './url'
 
 type DownloadOptions = {
   maxSize?: number
@@ -128,6 +129,10 @@ const downloadImage = async (
     protocol !== 'data:' &&
     protocol !== 'blob:'
   ) {
+    throw new Error('Invalid URL')
+  }
+
+  if (isInternalUrl(imageUrl)) {
     throw new Error('Invalid URL')
   }
 
