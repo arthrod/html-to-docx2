@@ -866,10 +866,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.verticalAlign = style['vertical-align']
     }
 
-    if (
-      style['text-align'] &&
-      TEXT_ALIGN_VALUES.has(style['text-align'])
-    ) {
+    if (style['text-align'] && TEXT_ALIGN_VALUES.has(style['text-align'])) {
       modifiedAttributes.textAlign = style['text-align']
     }
 
@@ -1033,10 +1030,7 @@ const buildRun = async (
     return buildRunOrRuns(vNode as VNodeType, attributes, docxDocumentInstance)
   }
 
-  if (
-    isVNode(vNode) &&
-    RUN_TAGS.has((vNode as VNodeType).tagName || '')
-  ) {
+  if (isVNode(vNode) && RUN_TAGS.has((vNode as VNodeType).tagName || '')) {
     const runFragmentsArray: XMLBuilderType[] = []
 
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
@@ -1081,9 +1075,7 @@ const buildRun = async (
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
-        if (
-          TEMP_RUN_TAGS.has(tempVn.tagName || '')
-        ) {
+        if (TEMP_RUN_TAGS.has(tempVn.tagName || '')) {
           tempAttributes = {}
           switch (tempVn.tagName) {
             case 'strong':
@@ -1780,9 +1772,7 @@ const buildParagraph = async (
   }
   if (isVNode(vNode) && vNodeHasChildren(vNode as VNodeType)) {
     const vn = vNode as VNodeType
-    if (
-      PARAGRAPH_TAGS.has(vn.tagName || '')
-    ) {
+    if (PARAGRAPH_TAGS.has(vn.tagName || '')) {
       const runOrHyperlinkFragments = await buildRunOrHyperLink(
         vNode,
         modifiedAttributes,
@@ -2444,26 +2434,27 @@ const buildTableRow = async (
   }).ele('@w', 'tr')
   const modifiedAttributes: TableRowAttributes = { ...attributes }
   if (isVNode(vNode) && vNode.properties) {
-    // FIXME: find a better way to get row height from cell style
-    const firstChild = (vNode.children || [])[0] as VNodeType | undefined
-    if (
-      vNode.properties.style?.height ||
-      (firstChild &&
-        isVNode(firstChild) &&
-        firstChild.properties?.style &&
-        firstChild.properties.style.height)
-    ) {
-      const heightValue =
-        vNode.properties.style?.height ||
-        (firstChild &&
-        isVNode(firstChild) &&
-        firstChild.properties?.style &&
-        firstChild.properties.style.height
-          ? firstChild.properties.style.height
-          : undefined)
-      if (heightValue) {
-        modifiedAttributes.tableRowHeight = fixupRowHeight(heightValue)
+    let maxRowHeight: number | undefined
+    if (vNode.properties.style?.height) {
+      maxRowHeight = fixupRowHeight(vNode.properties.style.height)
+    } else if (vNodeHasChildren(vNode)) {
+      const tableCells = (vNode.children || []).filter(
+        (child) => isVNode(child) && TABLE_CELL_TAGS.has(child.tagName || '')
+      ) as VNodeType[]
+
+      for (const cell of tableCells) {
+        if (cell.properties?.style?.height) {
+          const cellHeight = fixupRowHeight(cell.properties.style.height)
+          if (cellHeight !== undefined) {
+            maxRowHeight =
+              maxRowHeight === undefined ? cellHeight : Math.max(maxRowHeight, cellHeight)
+          }
+        }
       }
+    }
+
+    if (maxRowHeight !== undefined) {
+      modifiedAttributes.tableRowHeight = maxRowHeight
     }
     if (vNode.properties.style) {
       fixupTableCellBorder(vNode, modifiedAttributes as TableCellAttributes)
