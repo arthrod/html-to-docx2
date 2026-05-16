@@ -431,6 +431,7 @@ class DocxDocument {
   _trackingState?: TrackingState
   comments: StoredComment[]
   commentIdMap: Map<string, number>
+  numericCommentMap: Map<number, StoredComment>
   lastCommentId: number
   revisionIdMap: Map<string, number>
   lastRevisionId: number
@@ -504,6 +505,7 @@ class DocxDocument {
     // Initialize tracking support
     this.comments = []
     this.commentIdMap = new Map()
+    this.numericCommentMap = new Map()
     this.lastCommentId = 0
     this.revisionIdMap = new Map()
     this.lastRevisionId = 0
@@ -1124,7 +1126,7 @@ class DocxDocument {
       this.commentIdMap.set(commentId, numericId)
     }
 
-    const existing = this.comments.find((item) => item.id === numericId)
+    const existing = this.numericCommentMap.get(numericId)
     if (existing) {
       // Update missing fields
       if (!existing.authorName && authorName) {
@@ -1166,6 +1168,7 @@ class DocxDocument {
       text: text || 'Imported comment',
     }
     this.comments.push(entry)
+    this.numericCommentMap.set(numericId, entry)
 
     return numericId
   }
