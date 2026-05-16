@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { sanitizeSVGVNode, validateSVGString } from '../src/utils/svg-sanitizer'
 import { VNode } from '../src/vdom/index'
 
@@ -326,6 +327,20 @@ describe('SVG Sanitization - Security Tests', () => {
       expect(result.warnings).toContain('Contains <script> tag')
     })
 
+    it('should detect case-insensitive and spaced <script> tags', () => {
+      const payloads = [
+        '<svg><ScRiPt>alert("XSS")</ScRiPt></svg>',
+        '<svg><script >alert("XSS")</script></svg>',
+        '<svg><script\n>alert("XSS")</script></svg>',
+        '<svg><script\t>alert("XSS")</script></svg>'
+      ]
+      for (const payload of payloads) {
+        const result = validateSVGString(payload)
+        expect(result.valid).toBe(false)
+        expect(result.warnings).toContain('Contains <script> tag')
+      }
+    })
+
     it('should detect event handlers in SVG string', () => {
       const maliciousSVG =
         '<svg onclick="alert(\'XSS\')"><circle cx="50" cy="50" r="40"/></svg>'
@@ -336,9 +351,33 @@ describe('SVG Sanitization - Security Tests', () => {
       )
     })
 
+    it('should detect case-insensitive and spaced event handlers', () => {
+      const payloads = [
+        '<svg oNcLiCk="alert(1)"></svg>',
+        '<svg onload  ="alert(1)"></svg>',
+        '<svg onmouseover=\'alert(1)\'></svg>',
+        '<svg\nonerror="alert(1)"></svg>'
+      ]
+      for (const payload of payloads) {
+        const result = validateSVGString(payload)
+        expect(result.valid).toBe(false)
+        expect(result.warnings).toContain(
+          'Contains event handler attributes (onclick, onload, etc.)'
+        )
+      }
+    })
+
     it('should detect javascript: protocol', () => {
       const maliciousSVG =
         '<svg><a href="javascript:alert(\'XSS\')"><text>Click</text></a></svg>'
+      const result = validateSVGString(maliciousSVG)
+      expect(result.valid).toBe(false)
+      expect(result.warnings).toContain('Contains javascript: protocol')
+    })
+
+    it('should detect case-insensitive javascript: protocol', () => {
+      const maliciousSVG =
+        '<svg><a href="jAvAsCrIpT:alert(\'XSS\')"><text>Click</text></a></svg>'
       const result = validateSVGString(maliciousSVG)
       expect(result.valid).toBe(false)
       expect(result.warnings).toContain('Contains javascript: protocol')
@@ -352,9 +391,31 @@ describe('SVG Sanitization - Security Tests', () => {
       expect(result.warnings).toContain('Contains <foreignObject> element')
     })
 
+    it('should detect case-insensitive <foreignObject> elements', () => {
+      const payloads = [
+        '<svg><fOrEiGnObJeCt></fOrEiGnObJeCt></svg>',
+        '<svg><foreignObject >'
+      ]
+      for (const payload of payloads) {
+        const result = validateSVGString(payload)
+        expect(result.valid).toBe(false)
+        expect(result.warnings).toContain('Contains <foreignObject> element')
+      }
+    })
+
     it('should detect data:text/html URIs', () => {
       const maliciousSVG =
         '<svg><image href="data:text/html,<script>alert(\'XSS\')</script>"/></svg>'
+      const result = validateSVGString(maliciousSVG)
+      expect(result.valid).toBe(false)
+      expect(result.warnings).toContain(
+        'Contains data:text/html URI (potential XSS vector)'
+      )
+    })
+
+    it('should detect case-insensitive data:text/html URIs', () => {
+      const maliciousSVG =
+        '<svg><image href="DaTa:TeXt/HtMl,<script>alert(\'XSS\')</script>"/></svg>'
       const result = validateSVGString(maliciousSVG)
       expect(result.valid).toBe(false)
       expect(result.warnings).toContain(
