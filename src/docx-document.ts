@@ -241,10 +241,7 @@ function generateContentTypesFragments(
   if (objects && Array.isArray(objects)) {
     objects.forEach((object) => {
       // Use 'in' operator to discriminate the type without unsafe assertions
-      const id =
-        'headerId' in object
-          ? object.headerId
-          : object.footerId
+      const id = 'headerId' in object ? object.headerId : object.footerId
       const contentTypesFragment = fragment({
         defaultNamespace: { ele: namespaces.contentTypes },
       })
@@ -335,7 +332,9 @@ async function generateSectionXML(
 
   const firstNode = XMLFragment.first().node
   const isElementNode = (node: unknown): node is { tagName: string } => {
-    return typeof node === 'object' && node !== null && 'nodeType' in node && node.nodeType === 1
+    return (
+      typeof node === 'object' && node !== null && 'nodeType' in node && node.nodeType === 1
+    )
   }
 
   if (
@@ -370,6 +369,94 @@ async function generateSectionXML(
     footerId: this.lastFooterId,
     footerXML: sectionXML,
   } as FooterResult
+}
+
+function fixNamespacePrefixes(xmlString: string): string {
+  let result = xmlString
+  const wpElements = [
+    'inline',
+    'anchor',
+    'simplePos',
+    'positionH',
+    'positionV',
+    'posOffset',
+    'extent',
+    'effectExtent',
+    'wrapNone',
+    'wrapSquare',
+    'wrapTight',
+    'wrapThrough',
+    'docPr',
+  ]
+  wpElements.forEach((el) => {
+    result = result.replace(new RegExp(`<w:\${el}([ />])`, 'g'), `<wp:\${el}$1`)
+    result = result.replace(new RegExp(`</w:\${el}>`, 'g'), `</wp:\${el}>`)
+  })
+
+  const aElements = [
+    'graphic',
+    'graphicData',
+    'blip',
+    'srcRect',
+    'stretch',
+    'fillRect',
+    'xfrm',
+    'off',
+    'ext',
+    'prstGeom',
+  ]
+  aElements.forEach((el) => {
+    result = result.replace(new RegExp(`<w:\${el}([ />])`, 'g'), `<a:\${el}$1`)
+    result = result.replace(new RegExp(`</w:\${el}>`, 'g'), `</a:\${el}>`)
+  })
+
+  const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
+  picElements.forEach((el) => {
+    result = result.replace(new RegExp(`<w:\${el}([ />])`, 'g'), `<pic:\${el}$1`)
+    result = result.replace(new RegExp(`</w:\${el}>`, 'g'), `</pic:\${el}>`)
+  })
+
+  result = result
+    .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
+    .replace(/<\/w:svgBlip>/g, '</asvg:svgBlip>')
+
+  return result
+}
+
+function fixOOXMLSchemaOrder(xmlString: string): string {
+  let result = xmlString
+  // OOXML spec requires w:sectPr to be the LAST child of w:body.
+  result = result.replace(
+    /(<w:body>)\s*(<w:sectPr[\s\S]*?<\/w:sectPr>)([\s\S]*?)(<\/w:body>)/,
+    '$1$3$2$4'
+  )
+
+  // Move headerReference/footerReference elements before pgSz.
+  result = result.replace(
+    /(<w:sectPr[^>]*>)([\s\S]*?)(<\/w:sectPr>)/g,
+    (_match, open: string, inner: string, close: string) => {
+      const refs: string[] = []
+      const rest = inner.replace(
+        /<w:(header|footer)Reference[^/]*\/>/g,
+        (refMatch: string) => {
+          refs.push(refMatch)
+          return ''
+        }
+      )
+      return `${open}${refs.join('')}${rest}${close}`
+    }
+  )
+  return result
+}
+
+function checkDeadTrackingTokens(xmlString: string): void {
+  const deadTokens = findDocxTrackingTokens(xmlString)
+  if (deadTokens.length > 0) {
+    const uniqueTokens = Array.from(new Set(deadTokens))
+    const sample = uniqueTokens.slice(0, 3).join(', ')
+    const suffix = uniqueTokens.length > 3 ? ` (+${uniqueTokens.length - 3} more)` : ''
+    console.warn(`[docx] dead tracking tokens in document.xml: ${sample}${suffix}`)
+  }
 }
 
 class DocxDocument {
@@ -632,94 +719,9 @@ class DocxDocument {
 
     let xmlString = documentXML.toString({ prettyPrint: true })
 
-    // Fix namespace prefixes for drawing elements
-    // xmlbuilder2 doesn't correctly preserve namespace prefixes when importing fragments
-    // so we need to post-process the XML string to fix them
-
-    // wp: (wordprocessingDrawing) elements
-    const wpElements = [
-      'inline',
-      'anchor',
-      'simplePos',
-      'positionH',
-      'positionV',
-      'posOffset',
-      'extent',
-      'effectExtent',
-      'wrapNone',
-      'wrapSquare',
-      'wrapTight',
-      'wrapThrough',
-      'docPr',
-    ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
-
-    // a: (drawingML main) elements
-    const aElements = [
-      'graphic',
-      'graphicData',
-      'blip',
-      'srcRect',
-      'stretch',
-      'fillRect',
-      'xfrm',
-      'off',
-      'ext',
-      'prstGeom',
-    ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
-
-    // pic: (picture) elements
-    const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
-
-    xmlString = xmlString
-      .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
-      .replace(/<\/w:svgBlip>/g, '</asvg:svgBlip>')
-
-    // OOXML spec requires w:sectPr to be the LAST child of w:body.
-    // The template places it first so header/footer refs can target it positionally,
-    // but after content import the paragraphs end up after sectPr, violating the schema.
-    // Move sectPr to the end of body as a post-processing step.
-    xmlString = xmlString.replace(
-      /(<w:body>)\s*(<w:sectPr[\s\S]*?<\/w:sectPr>)([\s\S]*?)(<\/w:body>)/,
-      '$1$3$2$4'
-    )
-
-    // OOXML requires sectPr children in order: headerReference*, footerReference*,
-    // endnotePr, type, pgSz, pgMar, ...
-    // Move headerReference/footerReference elements before pgSz.
-    xmlString = xmlString.replace(
-      /(<w:sectPr[^>]*>)([\s\S]*?)(<\/w:sectPr>)/g,
-      (_match, open: string, inner: string, close: string) => {
-        const refs: string[] = []
-        const rest = inner.replace(
-          /<w:(header|footer)Reference[^/]*\/>/g,
-          (refMatch: string) => {
-            refs.push(refMatch)
-            return ''
-          }
-        )
-        return `${open}${refs.join('')}${rest}${close}`
-      }
-    )
-
-    const deadTokens = findDocxTrackingTokens(xmlString)
-    if (deadTokens.length > 0) {
-      const uniqueTokens = Array.from(new Set(deadTokens))
-      const sample = uniqueTokens.slice(0, 3).join(', ')
-      const suffix = uniqueTokens.length > 3 ? ` (+${uniqueTokens.length - 3} more)` : ''
-      console.warn(`[docx] dead tracking tokens in document.xml: ${sample}${suffix}`)
-    }
+    xmlString = fixNamespacePrefixes(xmlString)
+    xmlString = fixOOXMLSchemaOrder(xmlString)
+    checkDeadTrackingTokens(xmlString)
 
     return xmlString
   }
