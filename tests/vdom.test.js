@@ -220,6 +220,13 @@ describe('Type checking functions', () => {
       expect(isVNode(null)).toBeFalsy()
       expect(isVNode(undefined)).toBeFalsy()
     })
+
+    test('should return false for primitives and arrays', () => {
+      expect(isVNode('string')).toBe(false)
+      expect(isVNode(123)).toBe(false)
+      expect(isVNode(true)).toBe(false)
+      expect(isVNode([])).toBe(false)
+    })
   })
 
   describe('isVText', () => {
@@ -244,6 +251,13 @@ describe('Type checking functions', () => {
     test('should return falsy for null and undefined', () => {
       expect(isVText(null)).toBeFalsy()
       expect(isVText(undefined)).toBeFalsy()
+    })
+
+    test('should return false for primitives and arrays', () => {
+      expect(isVText('string')).toBe(false)
+      expect(isVText(123)).toBe(false)
+      expect(isVText(true)).toBe(false)
+      expect(isVText([])).toBe(false)
     })
   })
 })
