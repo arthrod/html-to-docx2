@@ -1,3 +1,4 @@
+import { isPrivateOrLocalHost } from './url'
 import { SVG_UNIT_TO_PIXEL_CONVERSIONS } from '../constants'
 import {
   downloadAndCacheImage,
@@ -321,6 +322,10 @@ export const downloadImageToBase64 = async (
     protocol !== 'data:' &&
     protocol !== 'blob:'
   ) {
+    throw new Error('Invalid URL')
+  }
+
+  if (isPrivateOrLocalHost(parsedUrl.hostname)) {
     throw new Error('Invalid URL')
   }
 

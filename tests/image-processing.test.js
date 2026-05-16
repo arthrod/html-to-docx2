@@ -1,3 +1,4 @@
+import { vi, describe, expect, test, beforeEach } from 'vitest'
 // Unit tests for image processing functionality
 // Tests image download, base64 conversion, dimension handling, and configuration options
 
@@ -19,15 +20,15 @@ import {
 import { parseDOCX } from './helpers/docx-assertions.js'
 
 // Helper to create a mock fetch response from a Buffer
- async function mockFetchResponse(data, status = 200) {
+async function mockFetchResponse(data, status = 200) {
   const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
   return Promise.resolve({
     ok: status >= 200 && status < 300,
     status,
     statusText: status === 200 ? 'OK' : status === 404 ? 'Not Found' : 'Error',
     headers: new Headers({ 'content-type': 'image/png' }),
-    arrayBuffer:  async () => Promise.resolve(arrayBuffer),
-    blob:  async () => Promise.resolve(new Blob([arrayBuffer])),
+    arrayBuffer: async () => Promise.resolve(arrayBuffer),
+    blob: async () => Promise.resolve(new Blob([arrayBuffer])),
   })
 }
 
@@ -500,7 +501,9 @@ describe('Image Processing', () => {
     })
 
     test('should download image and convert to base64', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+        mockFetchResponse(PNG_FIXTURE)
+      )
 
       const base64 = await downloadImageToBase64('https://example.com/image.png')
 
@@ -509,7 +512,9 @@ describe('Image Processing', () => {
     })
 
     test('should handle custom timeout', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+        mockFetchResponse(PNG_FIXTURE)
+      )
 
       await downloadImageToBase64('https://example.com/image.png', 3000)
 
@@ -517,7 +522,7 @@ describe('Image Processing', () => {
     })
 
     test('should throw error on timeout', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
         const error = new Error('The operation was aborted')
         error.name = 'AbortError'
         return Promise.reject(error)
@@ -529,7 +534,7 @@ describe('Image Processing', () => {
     })
 
     test('should throw error on HTTP error status', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
         Promise.resolve({
           ok: false,
           status: 404,
@@ -544,13 +549,13 @@ describe('Image Processing', () => {
     })
 
     test('should throw error on empty response', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
         Promise.resolve({
           ok: true,
           status: 200,
           statusText: 'OK',
           headers: new Headers({ 'content-type': 'image/png' }),
-          blob:  async () => Promise.resolve(new Blob([])),
+          blob: async () => Promise.resolve(new Blob([])),
         })
       )
 
@@ -593,7 +598,9 @@ describe('Image Processing', () => {
     })
 
     test('should download URL image and return properties', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+        mockFetchResponse(PNG_FIXTURE)
+      )
 
       const vNode = {
         properties: {
@@ -635,7 +642,7 @@ describe('Image Processing', () => {
     })
 
     test('should return null when download fails', async () => {
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () =>
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
         Promise.resolve({
           ok: false,
           status: 404,
@@ -757,7 +764,7 @@ describe('Image Processing', () => {
     test('should isolate cache between different document generations', async () => {
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const imageUrl = 'https://example.com/test-image.png'
       const htmlString1 = `<img src="${imageUrl}" />`
@@ -784,7 +791,7 @@ describe('Image Processing', () => {
     test('should maintain cache within same document generation', async () => {
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const imageUrl = 'https://example.com/repeated-image.png'
       // Same image used 3 times in one document
@@ -892,7 +899,7 @@ describe('Image Processing', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(htmlWithThreeImages, null, {
         imageProcessing: {
@@ -917,7 +924,7 @@ describe('Image Processing', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(htmlWithTwoImages, null, {
         imageProcessing: {
@@ -946,7 +953,7 @@ describe('Image Processing', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(htmlWithRepeatedImages, null, {
         imageProcessing: {
@@ -974,7 +981,7 @@ describe('Image Processing', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: {
@@ -998,7 +1005,7 @@ describe('Image Processing', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html)
       const parsed = await parseDOCX(docx)
@@ -1015,7 +1022,7 @@ describe('Image Processing', () => {
 
       const fetchSpy = vi
         .spyOn(globalThis, 'fetch')
-        .mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+        .mockImplementation(async () => mockFetchResponse(PNG_FIXTURE))
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: {
@@ -1040,7 +1047,9 @@ describe('Image Processing', () => {
     test('CSS style width/height should override HTML attribute width/height', async () => {
       const html = `<img src="https://example.com/test.png" width="100" height="100" style="width: 200px; height: 200px;" />`
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+        mockFetchResponse(PNG_FIXTURE)
+      )
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: { verboseLogging: false },
@@ -1070,7 +1079,9 @@ describe('Image Processing', () => {
     test('HTML attributes should apply when no CSS style is present', async () => {
       const html = `<img src="https://example.com/test.png" width="150" height="150" />`
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+        mockFetchResponse(PNG_FIXTURE)
+      )
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: { verboseLogging: false },
@@ -1099,7 +1110,9 @@ describe('Image Processing', () => {
     test('Partial CSS override: only width in style should override HTML width but keep HTML height', async () => {
       const html = `<img src="https://example.com/test.png" width="100" height="100" style="width: 300px;" />`
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation( async () => mockFetchResponse(PNG_FIXTURE))
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+        mockFetchResponse(PNG_FIXTURE)
+      )
 
       const docx = await HTMLtoDOCX(html, null, {
         imageProcessing: { verboseLogging: false },
