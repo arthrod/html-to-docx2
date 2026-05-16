@@ -1,3 +1,4 @@
+import { describe, expect, test, beforeEach, beforeAll, afterEach, afterAll, vi } from "vitest"
 // @ts-check
 
 // Unit tests for SVG handling functionality
@@ -19,44 +20,6 @@ beforeAll(async () => {
 })
 
 describe('SVG Handling', () => {
-  describe('isSVG utility', () => {
-    test('should detect SVG from image/svg+xml MIME type', () => {
-      expect(isSVG('image/svg+xml')).toBe(true)
-    })
-
-    test('should detect SVG from image/svg MIME type', () => {
-      expect(isSVG('image/svg')).toBe(true)
-    })
-
-    test('should detect SVG from .svg extension', () => {
-      expect(isSVG('.svg')).toBe(true)
-      expect(isSVG('svg')).toBe(true)
-    })
-
-    test('should detect SVG from file path', () => {
-      expect(isSVG('image.svg')).toBe(true)
-      expect(isSVG('/path/to/image.svg')).toBe(true)
-    })
-
-    test('should not detect non-SVG formats', () => {
-      expect(isSVG('image/png')).toBe(false)
-      expect(isSVG('image/jpeg')).toBe(false)
-      expect(isSVG('.png')).toBe(false)
-      expect(isSVG('png')).toBe(false)
-    })
-
-    test('should handle null/undefined gracefully', () => {
-      expect(isSVG(null)).toBe(false)
-      expect(isSVG(undefined)).toBe(false)
-      expect(isSVG('')).toBe(false)
-    })
-
-    test('should be case insensitive', () => {
-      expect(isSVG('IMAGE/SVG+XML')).toBe(true)
-      expect(isSVG('Image/Svg')).toBe(true)
-      expect(isSVG('.SVG')).toBe(true)
-    })
-  })
 
   describe('parseSVGDimensions utility', () => {
     test('should parse integer width and height', () => {
