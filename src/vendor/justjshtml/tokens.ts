@@ -7,7 +7,12 @@ export class Tag {
   name: string
   selfClosing: boolean
 
-  constructor(kind: number, name: string, attrs: Record<string, string | null> | null | undefined, selfClosing: boolean | undefined = false) {
+  constructor(
+    kind: number,
+    name: string,
+    attrs: Record<string, string | null> | null | undefined,
+    selfClosing: boolean | undefined = false
+  ) {
     this.kind = kind
     this.name = name
     this.attrs = attrs ?? {}
@@ -41,7 +46,12 @@ export class Doctype {
   name: string | null
   publicId: string | null
   systemId: string | null
-  constructor({ name = null, publicId = null, systemId = null, forceQuirks = false }: DoctypeOpts = {}) {
+  constructor({
+    name = null,
+    publicId = null,
+    systemId = null,
+    forceQuirks = false,
+  }: DoctypeOpts = {}) {
     this.name = name
     this.publicId = publicId
     this.systemId = systemId
@@ -74,7 +84,10 @@ export class ParseError {
   column: number | null
   line: number | null
   message: string | null
-  constructor(code: string, { line = null, column = null, message = null }: ParseErrorOpts = {}) {
+  constructor(
+    code: string,
+    { line = null, column = null, message = null }: ParseErrorOpts = {}
+  ) {
     this.code = code
     this.line = line
     this.column = column

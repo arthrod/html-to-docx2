@@ -84,6 +84,8 @@ import { vNodeHasChildren } from '../utils/vnode'
 import { buildImage, buildList } from './render-document-file'
 import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
 
+const BASE64_VALIDATION_REGEX = /^[A-Za-z0-9+/]+={0,2}$/
+
 const RUN_TAGS = new Set([
   'strong',
   'b',
@@ -866,10 +868,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.verticalAlign = style['vertical-align']
     }
 
-    if (
-      style['text-align'] &&
-      TEXT_ALIGN_VALUES.has(style['text-align'])
-    ) {
+    if (style['text-align'] && TEXT_ALIGN_VALUES.has(style['text-align'])) {
       modifiedAttributes.textAlign = style['text-align']
     }
 
@@ -1033,10 +1032,7 @@ const buildRun = async (
     return buildRunOrRuns(vNode as VNodeType, attributes, docxDocumentInstance)
   }
 
-  if (
-    isVNode(vNode) &&
-    RUN_TAGS.has((vNode as VNodeType).tagName || '')
-  ) {
+  if (isVNode(vNode) && RUN_TAGS.has((vNode as VNodeType).tagName || '')) {
     const runFragmentsArray: XMLBuilderType[] = []
 
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
@@ -1081,9 +1077,7 @@ const buildRun = async (
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
-        if (
-          TEMP_RUN_TAGS.has(tempVn.tagName || '')
-        ) {
+        if (TEMP_RUN_TAGS.has(tempVn.tagName || '')) {
           tempAttributes = {}
           switch (tempVn.tagName) {
             case 'strong':
@@ -1722,7 +1716,7 @@ const processImageSource = async (
   const isBase64 =
     normalizedBase64.length > 0 &&
     normalizedBase64.length % 4 === 0 &&
-    /^[A-Za-z0-9+/]+={0,2}$/.test(normalizedBase64)
+    BASE64_VALIDATION_REGEX.test(normalizedBase64)
   if (!isBase64) {
     return null
   }
@@ -1780,9 +1774,7 @@ const buildParagraph = async (
   }
   if (isVNode(vNode) && vNodeHasChildren(vNode as VNodeType)) {
     const vn = vNode as VNodeType
-    if (
-      PARAGRAPH_TAGS.has(vn.tagName || '')
-    ) {
+    if (PARAGRAPH_TAGS.has(vn.tagName || '')) {
       const runOrHyperlinkFragments = await buildRunOrHyperLink(
         vNode,
         modifiedAttributes,
