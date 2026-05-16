@@ -127,7 +127,7 @@ export class Node {
     return this.toHTML({ indent, indentSize, pretty })
   }
 
-  query(selector: any) {
+  query(selector: string) {
     return query(this, selector)
   }
 
