@@ -187,59 +187,88 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
   return false
 }
 
-const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
+const serializeVNodeToSVG = (
+  node: VNodeType | VTextType,
+  isRoot = false,
+  parts: string[] = []
+): string => {
+  const isOuter = parts.length === 0
   const textNode = asVText(node)
+
   if (textNode) {
-    return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    if (typeof textNode.text === 'string') {
+      parts.push(
+        textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      )
+    }
+    return isOuter ? parts.join('') : ''
   }
 
   const vNode = asVNode(node)
-  if (!vNode) {
-    return ''
-  }
-  if (!vNode.tagName) {
-    return ''
+  if (!vNode || !vNode.tagName) {
+    return isOuter ? parts.join('') : ''
   }
 
-  const attributes = vNode.properties?.attributes || {}
-  const style = vNode.properties?.style || {}
-  let svg = `<${vNode.tagName}`
+  const attributes = vNode.properties?.attributes
+  const style = vNode.properties?.style
 
-  if (isRoot && vNode.tagName === 'svg' && !attributes.xmlns) {
-    svg += ' xmlns="http://www.w3.org/2000/svg"'
+  parts.push('<', vNode.tagName)
+
+  if (isRoot && vNode.tagName === 'svg' && (!attributes || !attributes.xmlns)) {
+    parts.push(' xmlns="http://www.w3.org/2000/svg"')
   }
 
-  Object.entries(attributes).forEach(([key, value]) => {
-    if (value) {
-      const escapedValue = String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-      svg += ` ${key}="${escapedValue}"`
+  if (attributes) {
+    for (const key in attributes) {
+      if (Object.prototype.hasOwnProperty.call(attributes, key)) {
+        const value = attributes[key]
+        if (value !== undefined && value !== null) {
+          const escapedValue = String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+          parts.push(' ', key, '="', escapedValue, '"')
+        }
+      }
     }
-  })
-
-  if (Object.keys(style).length > 0) {
-    const styleString = Object.entries(style)
-      .map(([key, value]) => `${key}:${value}`)
-      .join(';')
-    svg += ` style="${styleString}"`
   }
 
-  const children = vNode.children || []
-  if (children.length === 0) {
-    svg += ' />'
-    return svg
+  if (style) {
+    let firstStyle = true
+    for (const key in style) {
+      if (Object.prototype.hasOwnProperty.call(style, key)) {
+        if (firstStyle) {
+          parts.push(' style="')
+          firstStyle = false
+        } else {
+          parts.push(';')
+        }
+        parts.push(key, ':', String(style[key]))
+      }
+    }
+    if (!firstStyle) {
+      parts.push('"')
+    }
   }
 
-  svg += '>'
-  children.forEach((child) => {
-    svg += serializeVNodeToSVG(child, false)
-  })
-  svg += `</${vNode.tagName}>`
+  const children = vNode.children
+  if (!children || children.length === 0) {
+    parts.push(' />')
+    return isOuter ? parts.join('') : ''
+  }
 
-  return svg
+  parts.push('>')
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    if (child) {
+      // @ts-expect-error typescript might complain but we handle both types inside
+      serializeVNodeToSVG(child, false, parts)
+    }
+  }
+  parts.push('</', vNode.tagName, '>')
+
+  return isOuter ? parts.join('') : ''
 }
 
 const convertHTML = createHTMLToVDOM()
