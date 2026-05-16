@@ -236,6 +236,25 @@ describe('Image to base64 utilities', () => {
       )
     })
 
+    test('should reject localhost', async () => {
+      await expect(imageToBase64('http://localhost/image.png')).rejects.toThrow(
+        'Invalid URL'
+      )
+    })
+
+    test('should reject internal metadata IP', async () => {
+      await expect(imageToBase64('http://169.254.169.254/latest/meta-data/')).rejects.toThrow(
+        'Invalid URL'
+      )
+    })
+
+    test('should reject octal/hex encoded loopback', async () => {
+      await expect(imageToBase64('http://0x7f000001/')).rejects.toThrow(
+        'Invalid URL'
+      )
+    })
+
+
     test('should reject data: URLs', async () => {
       await expect(imageToBase64('data:image/png;base64,abc')).rejects.toThrow(
         'Invalid URL'
