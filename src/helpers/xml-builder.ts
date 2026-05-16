@@ -1059,7 +1059,9 @@ const buildRun = async (
             docxDocumentInstance
           )
           if (trackingFragments) {
-            runFragmentsArray.push(...trackingFragments)
+            for (let i = 0; i < trackingFragments.length; i++) {
+              runFragmentsArray.push(trackingFragments[i])
+            }
             // re initialize temp run fragments with new fragment
             tempAttributes = cloneDeep(baseAttributes)
             tempRunFragment = fragment({
@@ -1137,7 +1139,9 @@ const buildRun = async (
           // if spanFragment is an array, we need to add each fragment to the runFragmentsArray. If the fragment is an array, perform a depth first search on the array to add each fragment to the runFragmentsArray
           if (Array.isArray(spanFragment)) {
             const flatSpanFragments = spanFragment.flat(Number.POSITIVE_INFINITY)
-            runFragmentsArray.push(...flatSpanFragments)
+            for (let i = 0; i < flatSpanFragments.length; i++) {
+              runFragmentsArray.push(flatSpanFragments[i])
+            }
           } else {
             runFragmentsArray.push(spanFragment)
           }
