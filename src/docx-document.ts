@@ -372,6 +372,14 @@ async function generateSectionXML(
   } as FooterResult
 }
 
+// Combine drawing elements into a single static regex for performance
+const DRAWING_ELEMENTS_REGEX = /<(/?)(?:w):(inline|anchor|simplePos|positionH|positionV|posOffset|extent|effectExtent|wrapNone|wrapSquare|wrapTight|wrapThrough|docPr|graphic|graphicData|blip|srcRect|stretch|fillRect|xfrm|off|ext|prstGeom|pic|nvPicPr|cNvPr|cNvPicPr|blipFill|spPr)([ />])/g
+const DRAWING_NAMESPACE_MAP: Record<string, string> = {
+  inline: 'wp', anchor: 'wp', simplePos: 'wp', positionH: 'wp', positionV: 'wp', posOffset: 'wp', extent: 'wp', effectExtent: 'wp', wrapNone: 'wp', wrapSquare: 'wp', wrapTight: 'wp', wrapThrough: 'wp', docPr: 'wp',
+  graphic: 'a', graphicData: 'a', blip: 'a', srcRect: 'a', stretch: 'a', fillRect: 'a', xfrm: 'a', off: 'a', ext: 'a', prstGeom: 'a',
+  pic: 'pic', nvPicPr: 'pic', cNvPr: 'pic', cNvPicPr: 'pic', blipFill: 'pic', spPr: 'pic'
+}
+
 class DocxDocument {
   availableDocumentSpace: number
   complexScriptFontSize: number
@@ -636,51 +644,7 @@ class DocxDocument {
     // xmlbuilder2 doesn't correctly preserve namespace prefixes when importing fragments
     // so we need to post-process the XML string to fix them
 
-    // wp: (wordprocessingDrawing) elements
-    const wpElements = [
-      'inline',
-      'anchor',
-      'simplePos',
-      'positionH',
-      'positionV',
-      'posOffset',
-      'extent',
-      'effectExtent',
-      'wrapNone',
-      'wrapSquare',
-      'wrapTight',
-      'wrapThrough',
-      'docPr',
-    ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
-
-    // a: (drawingML main) elements
-    const aElements = [
-      'graphic',
-      'graphicData',
-      'blip',
-      'srcRect',
-      'stretch',
-      'fillRect',
-      'xfrm',
-      'off',
-      'ext',
-      'prstGeom',
-    ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
-
-    // pic: (picture) elements
-    const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
+    xmlString = xmlString.replace(DRAWING_ELEMENTS_REGEX, (_, slash, el, char) => `<${slash}${DRAWING_NAMESPACE_MAP[el]}:${el}${char}`)
 
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
