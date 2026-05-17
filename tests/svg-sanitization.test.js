@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { sanitizeSVGVNode, validateSVGString } from '../src/utils/svg-sanitizer'
 import { VNode } from '../src/vdom/index'
 
@@ -147,6 +148,25 @@ describe('SVG Sanitization - Security Tests', () => {
       const result = sanitizeSVGVNode(safeVNode)
       expect(result).not.toBeNull()
       expect(result.properties.attributes['xlink:href']).toBe('#myGradient')
+    })
+
+    it('should block dangerous protocols in url() attributes', () => {
+      const vNode = new VNode('rect', {
+        attributes: {
+          fill: 'url(javascript:alert(1))',
+          style: 'background: url(javascript:alert(1)); filter: url(vbscript:foo)',
+          'clip-path': 'url(data:text/html,foo)',
+          mask: 'url("file:///etc/passwd")',
+          width: '100',
+        },
+      })
+      const result = sanitizeSVGVNode(vNode)
+      expect(result).not.toBeNull()
+      expect(result.properties.attributes.fill).toBeUndefined()
+      expect(result.properties.attributes.style).toBeUndefined()
+      expect(result.properties.attributes['clip-path']).toBeUndefined()
+      expect(result.properties.attributes.mask).toBeUndefined()
+      expect(result.properties.attributes.width).toBe('100')
     })
   })
 
