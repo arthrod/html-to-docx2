@@ -308,10 +308,34 @@ export const sanitizeSVGVNode = (
         return
       }
 
-      if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
-        hasDangerousProtocol(value)
-      ) {
+      const URL_ATTRIBUTES = new Set([
+        'href',
+        'xlink:href',
+        'fill',
+        'stroke',
+        'filter',
+        'clip-path',
+        'mask',
+        'style',
+      ])
+
+      let isDangerous = false
+      if (URL_ATTRIBUTES.has(lowerKey)) {
+        if (lowerKey === 'href' || lowerKey === 'xlink:href') {
+          isDangerous = hasDangerousProtocol(value)
+        } else if (typeof value === 'string') {
+          const URL_FUNCTION_REGEX = /url\s*\(\s*(['"]?)(.*?)\1\s*\)/gi
+          let match
+          while ((match = URL_FUNCTION_REGEX.exec(value)) !== null) {
+            if (hasDangerousProtocol(match[2])) {
+              isDangerous = true
+              break
+            }
+          }
+        }
+      }
+
+      if (isDangerous) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
