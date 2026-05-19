@@ -471,8 +471,8 @@ function isElementNode(node: any) {
 }
 
 class SelectorMatcher {
-  // @ts-expect-error TS(7023) FIXME: 'matches' implicitly has return type 'any' because... Remove this comment to see the full error message
-  matches(node: any, selector: any) {
+
+  matches(node: any, selector: any): boolean {
     if (selector instanceof SelectorList)
       return selector.selectors.some((sel: any) => this.matches(node, sel))
     if (selector instanceof ComplexSelector) return this._matchesComplex(node, selector)
@@ -535,8 +535,8 @@ class SelectorMatcher {
     return compound.selectors.every((simple: any) => this._matchesSimple(node, simple))
   }
 
-  // @ts-expect-error TS(7023) FIXME: '_matchesSimple' implicitly has return type 'any' ... Remove this comment to see the full error message
-  _matchesSimple(node: any, selector: any) {
+
+  _matchesSimple(node: any, selector: any): boolean {
     if (!isElementNode(node)) return false
 
     if (selector.type === SimpleSelector.TYPE_UNIVERSAL) return true
@@ -596,8 +596,8 @@ class SelectorMatcher {
     return false
   }
 
-  // @ts-expect-error TS(7023) FIXME: '_matchesPseudo' implicitly has return type 'any' ... Remove this comment to see the full error message
-  _matchesPseudo(node: any, selector: any) {
+
+  _matchesPseudo(node: any, selector: any): boolean {
     const name = String(selector.name || '').toLowerCase()
 
     if (name === 'first-child') return this._isFirstChild(node)
