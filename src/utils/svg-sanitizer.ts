@@ -198,6 +198,17 @@ const DISALLOWED_ELEMENTS = new Set([
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
 const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
 
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'xlink:href',
+  'fill',
+  'stroke',
+  'filter',
+  'clip-path',
+  'mask',
+  'style',
+])
+
 type SVGSanitizerOptions = {
   enabled?: boolean
   verboseLogging?: boolean
@@ -308,16 +319,29 @@ export const sanitizeSVGVNode = (
         return
       }
 
-      if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
-        hasDangerousProtocol(value)
-      ) {
-        if (verboseLogging) {
-          // eslint-disable-next-line no-console
-          console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
+      if (URL_ATTRIBUTES.has(lowerKey) && typeof value === 'string') {
+        let isDangerous = false
+        if (lowerKey === 'href' || lowerKey === 'xlink:href') {
+          isDangerous = hasDangerousProtocol(value)
+        } else {
+          const URL_REGEX = /url\(\s*['"]?(.*?)['"]?\s*\)/gis
+          let match
+          while ((match = URL_REGEX.exec(value)) !== null) {
+            if (hasDangerousProtocol(match[1])) {
+              isDangerous = true
+              break
+            }
+          }
         }
-        removedCount += 1
-        return
+
+        if (isDangerous) {
+          if (verboseLogging) {
+            // eslint-disable-next-line no-console
+            console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
+          }
+          removedCount += 1
+          return
+        }
       }
 
       if (

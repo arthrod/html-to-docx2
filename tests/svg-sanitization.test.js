@@ -301,6 +301,24 @@ describe('SVG Sanitization - Security Tests', () => {
       expect(result.properties.attributes['stroke-width']).toBe('2')
       expect(result.properties.attributes.transform).toBe('rotate(45)')
     })
+
+    it('should remove attributes using url() with dangerous protocols', () => {
+      const vNode = new VNode('circle', {
+        attributes: {
+          cx: '50',
+          fill: 'url(javascript:alert("XSS"))',
+          style: 'background: url("data:text/html,...")',
+          stroke: 'url(#safe-gradient)',
+        },
+      })
+
+      const result = sanitizeSVGVNode(vNode)
+      expect(result).not.toBeNull()
+      expect(result.properties.attributes.cx).toBe('50')
+      expect(result.properties.attributes.stroke).toBe('url(#safe-gradient)')
+      expect(result.properties.attributes.fill).toBeUndefined()
+      expect(result.properties.attributes.style).toBeUndefined()
+    })
   })
 
   describe('sanitizeSVGVNode - Sanitization Toggle', () => {
