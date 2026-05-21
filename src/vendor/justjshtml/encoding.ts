@@ -61,7 +61,12 @@ function indexOfSubarray(data: Uint8Array, pattern: Uint8Array, start: number) {
   return -1
 }
 
-function bytesEqualLower(data: Uint8Array, start: number, end: number, asciiLowerPattern: Uint8Array) {
+function bytesEqualLower(
+  data: Uint8Array,
+  start: number,
+  end: number,
+  asciiLowerPattern: Uint8Array
+) {
   const len = end - start
   if (len !== asciiLowerPattern.length) return false
   for (let i = 0; i < len; i += 1) {
@@ -126,11 +131,7 @@ function normalizeMetaDeclaredEncoding(label: string | null) {
   const enc = normalizeEncodingLabel(label)
   if (enc == null) return null
 
-  if (
-    enc === 'utf-16' ||
-    enc === 'utf-16le' ||
-    enc === 'utf-16be'
-  ) {
+  if (enc === 'utf-16' || enc === 'utf-16le' || enc === 'utf-16be') {
     return 'utf-8'
   }
 
@@ -375,7 +376,10 @@ function prescanForMetaCharset(data: Uint8Array) {
   return null
 }
 
-export function sniffHTMLEncoding(data: Uint8Array, { transportEncoding = null }: { transportEncoding?: string | null } = {}) {
+export function sniffHTMLEncoding(
+  data: Uint8Array,
+  { transportEncoding = null }: { transportEncoding?: string | null } = {}
+) {
   const transport = normalizeEncodingLabel(transportEncoding)
   if (transport) return { encoding: transport, bomLength: 0 }
 
@@ -388,7 +392,10 @@ export function sniffHTMLEncoding(data: Uint8Array, { transportEncoding = null }
   return { encoding: 'windows-1252', bomLength: 0 }
 }
 
-export function decodeHTML(data: Uint8Array, { transportEncoding = null }: { transportEncoding?: string | null } = {}) {
+export function decodeHTML(
+  data: Uint8Array,
+  { transportEncoding = null }: { transportEncoding?: string | null } = {}
+) {
   const { encoding, bomLength } = sniffHTMLEncoding(data, { transportEncoding })
 
   let enc = encoding

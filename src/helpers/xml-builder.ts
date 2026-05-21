@@ -3,7 +3,6 @@
 /* biome-ignore-all lint/performance/useTopLevelRegex: legacy code */
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
-import { cloneDeep } from 'es-toolkit/compat'
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
@@ -501,7 +500,7 @@ const buildTextRunFragment = (
   options?: { deleted?: boolean }
 ): XMLBuilderType => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  const runPropertiesFragment = buildRunProperties(attributes)
 
   runFragment.import(runPropertiesFragment)
   runFragment.import(
@@ -866,10 +865,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.verticalAlign = style['vertical-align']
     }
 
-    if (
-      style['text-align'] &&
-      TEXT_ALIGN_VALUES.has(style['text-align'])
-    ) {
+    if (style['text-align'] && TEXT_ALIGN_VALUES.has(style['text-align'])) {
       modifiedAttributes.textAlign = style['text-align']
     }
 
@@ -994,26 +990,29 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'rPr')
   if (attributes && attributes.constructor === Object) {
-    ;(Object.keys(attributes) as Array<keyof RunAttributes>).forEach((key) => {
-      const value = attributes[key]
+    for (const key in attributes) {
+      if (Object.prototype.hasOwnProperty.call(attributes, key)) {
+        const value = attributes[key as keyof RunAttributes]
 
-      // Skip undefined values to prevent default 'black' being applied
-      if (value === undefined) return
+        // Skip undefined values to prevent default 'black' being applied
+        if (value === undefined) continue
 
-      const options: FormattingOptions = {}
-      if (key === 'color' || key === 'backgroundColor' || key === 'highlightColor') {
-        options.color = value
+        const options: FormattingOptions = {}
+        if (key === 'color' || key === 'backgroundColor' || key === 'highlightColor') {
+          options.color = value as string
+        }
+
+        if (key === 'fontSize' || key === 'font') {
+          // @ts-ignore
+          options[key as keyof FormattingOptions] = value
+        }
+
+        const formattingFragment = buildFormatting(key, options)
+        if (formattingFragment) {
+          runPropertiesFragment.import(formattingFragment)
+        }
       }
-
-      if (key === 'fontSize' || key === 'font') {
-        options[key] = value
-      }
-
-      const formattingFragment = buildFormatting(key, options)
-      if (formattingFragment) {
-        runPropertiesFragment.import(formattingFragment)
-      }
-    })
+    }
   }
   runPropertiesFragment.up()
 
@@ -1026,23 +1025,20 @@ const buildRun = async (
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
+  const runPropertiesFragment = buildRunProperties(attributes)
 
   // case where we have recursive spans representing font changes
   if (isVNode(vNode) && (vNode as VNodeType).tagName === 'span') {
     return buildRunOrRuns(vNode as VNodeType, attributes, docxDocumentInstance)
   }
 
-  if (
-    isVNode(vNode) &&
-    RUN_TAGS.has((vNode as VNodeType).tagName || '')
-  ) {
+  if (isVNode(vNode) && RUN_TAGS.has((vNode as VNodeType).tagName || '')) {
     const runFragmentsArray: XMLBuilderType[] = []
 
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
     // create temp run fragments to split the paragraph into different runs
     let baseAttributes: ParagraphAttributes = attributes
-    let tempAttributes: RunAttributes = cloneDeep(baseAttributes)
+    let tempAttributes: RunAttributes = { ...baseAttributes }
     let tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     while (vNodes.length) {
@@ -1061,7 +1057,7 @@ const buildRun = async (
           if (trackingFragments) {
             runFragmentsArray.push(...trackingFragments)
             // re initialize temp run fragments with new fragment
-            tempAttributes = cloneDeep(baseAttributes)
+            tempAttributes = { ...baseAttributes }
             tempRunFragment = fragment({
               namespaceAlias: { w: namespaces.w },
             }).ele('@w', 'r')
@@ -1077,13 +1073,11 @@ const buildRun = async (
         runFragmentsArray.push(tempRunFragment)
 
         // re initialize temp run fragments with new fragment
-        tempAttributes = cloneDeep(baseAttributes)
+        tempAttributes = { ...baseAttributes }
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
-        if (
-          TEMP_RUN_TAGS.has(tempVn.tagName || '')
-        ) {
+        if (TEMP_RUN_TAGS.has(tempVn.tagName || '')) {
           tempAttributes = {}
           switch (tempVn.tagName) {
             case 'strong':
@@ -1780,9 +1774,7 @@ const buildParagraph = async (
   }
   if (isVNode(vNode) && vNodeHasChildren(vNode as VNodeType)) {
     const vn = vNode as VNodeType
-    if (
-      PARAGRAPH_TAGS.has(vn.tagName || '')
-    ) {
+    if (PARAGRAPH_TAGS.has(vn.tagName || '')) {
       const runOrHyperlinkFragments = await buildRunOrHyperLink(
         vNode,
         modifiedAttributes,
