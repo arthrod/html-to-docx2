@@ -195,8 +195,27 @@ const DISALLOWED_ELEMENTS = new Set([
   'frameset',
 ])
 
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'xlink:href',
+  'fill',
+  'stroke',
+  'filter',
+  'clip-path',
+  'mask',
+  'style',
+])
+
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
-const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
+const DANGEROUS_PROTOCOLS = /^\s*(javascript|vbscript|file|about):/i
+const SAFE_DATA_URI_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+])
+const URL_FUNCTION_REGEX = /url\(\s*['"]?(.*?)['"]?\s*\)/gi
 
 type SVGSanitizerOptions = {
   enabled?: boolean
@@ -235,21 +254,48 @@ const isSVGTextNode = (node: SVGChildNode | null): node is SVGTextNode =>
 const isSVGVNode = (node: SVGChildNode): node is SVGVNode =>
   typeof node === 'object' && node !== null && !isSVGTextNode(node)
 
+const isSafeDataURI = (value: string): boolean => {
+  const match = value.match(/^data:([^;]+);base64,/i)
+  if (!match) return false
+  return SAFE_DATA_URI_TYPES.has(match[1].toLowerCase())
+}
+
 const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): boolean => {
   if (typeof value !== 'string' || value.length === 0) {
     return false
   }
 
-  const trimmedValue = value.trim()
-  if (
-    trimmedValue.startsWith('#') ||
-    trimmedValue.startsWith('http://') ||
-    trimmedValue.startsWith('https://')
-  ) {
-    return false
+  const checkValue = (val: string): boolean => {
+    const trimmed = val.trim()
+    if (
+      trimmed.startsWith('#') ||
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://')
+    ) {
+      return false
+    }
+
+    if (/^\s*data:/i.test(trimmed)) {
+      return !isSafeDataURI(trimmed)
+    }
+
+    return DANGEROUS_PROTOCOLS.test(trimmed)
   }
 
-  return DANGEROUS_PROTOCOLS.test(trimmedValue)
+  if (checkValue(value)) {
+    return true
+  }
+
+  // Check inner URLs inside url(...) functional notation
+  URL_FUNCTION_REGEX.lastIndex = 0
+  let match
+  while ((match = URL_FUNCTION_REGEX.exec(value)) !== null) {
+    if (checkValue(match[1])) {
+      return true
+    }
+  }
+
+  return false
 }
 
 export const sanitizeSVGVNode = (
@@ -308,10 +354,7 @@ export const sanitizeSVGVNode = (
         return
       }
 
-      if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
-        hasDangerousProtocol(value)
-      ) {
+      if (URL_ATTRIBUTES.has(lowerKey) && hasDangerousProtocol(value)) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)

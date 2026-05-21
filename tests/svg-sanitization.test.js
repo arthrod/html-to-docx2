@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest"
 import { sanitizeSVGVNode, validateSVGString } from '../src/utils/svg-sanitizer'
 import { VNode } from '../src/vdom/index'
 
