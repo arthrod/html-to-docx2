@@ -198,6 +198,19 @@ describe('VText class', () => {
 
 describe('Type checking functions', () => {
   describe('isVNode', () => {
+    /**
+     * @description Tests type safety boundary conditions.
+     * Validates that `typeof` checks inside the type guard properly reject non-object primitives and arrays.
+     * This matters because primitive values can silently pass certain basic validation checks,
+     * leading to difficult-to-trace runtime errors down the virtual DOM parsing pipeline.
+     */
+    test('should return false for primitive values and arrays', () => {
+      expect(isVNode('string')).toBe(false)
+      expect(isVNode(123)).toBe(false)
+      expect(isVNode(true)).toBe(false)
+      expect(isVNode([])).toBe(false)
+    })
+
     test('should return true for VNode instances', () => {
       const vnode = new VNode('div')
 
@@ -223,6 +236,19 @@ describe('Type checking functions', () => {
   })
 
   describe('isVText', () => {
+    /**
+     * @description Tests type safety boundary conditions.
+     * Validates that `typeof` checks inside the type guard properly reject non-object primitives and arrays.
+     * This matters because primitive values can silently pass certain basic validation checks,
+     * leading to difficult-to-trace runtime errors down the virtual DOM parsing pipeline.
+     */
+    test('should return false for primitive values and arrays', () => {
+      expect(isVText('string')).toBe(false)
+      expect(isVText(123)).toBe(false)
+      expect(isVText(true)).toBe(false)
+      expect(isVText([])).toBe(false)
+    })
+
     test('should return true for VText instances', () => {
       const vtext = new VText('test')
 
