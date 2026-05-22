@@ -301,6 +301,31 @@ describe('SVG Sanitization - Security Tests', () => {
       expect(result.properties.attributes['stroke-width']).toBe('2')
       expect(result.properties.attributes.transform).toBe('rotate(45)')
     })
+
+    it('should strip malicious URLs within URL-supporting attributes', () => {
+      const vNode = new VNode('rect', {
+        attributes: {
+          fill: 'url(javascript:alert("XSS"))',
+          style: 'background: url("javascript:alert(1)")',
+          stroke: 'url(\'data:image/svg+xml;base64,123\')',
+          'clip-path': 'url( javascript:alert(1) )',
+          href: 'data:text/html,<script>alert(1)</script>',
+          'xlink:href': 'data:image/svg+xml;base64,PHN2Zz4=',
+          mask: 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")',
+        },
+      })
+
+      const result = sanitizeSVGVNode(vNode)
+      expect(result).not.toBeNull()
+      expect(result.properties.attributes.fill).toBeUndefined()
+      expect(result.properties.attributes.style).toBeUndefined()
+      expect(result.properties.attributes.stroke).toBeUndefined()
+      expect(result.properties.attributes['clip-path']).toBeUndefined()
+      expect(result.properties.attributes.href).toBeUndefined()
+      expect(result.properties.attributes['xlink:href']).toBeUndefined()
+      // The safe png data URI should be kept
+      expect(result.properties.attributes.mask).toBeDefined()
+    })
   })
 
   describe('sanitizeSVGVNode - Sanitization Toggle', () => {

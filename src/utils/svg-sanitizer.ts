@@ -198,6 +198,25 @@ const DISALLOWED_ELEMENTS = new Set([
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
 const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
 
+const ALLOWED_DATA_URI_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+])
+
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'xlink:href',
+  'fill',
+  'stroke',
+  'filter',
+  'clip-path',
+  'mask',
+  'style',
+])
+
 type SVGSanitizerOptions = {
   enabled?: boolean
   verboseLogging?: boolean
@@ -235,7 +254,7 @@ const isSVGTextNode = (node: SVGChildNode | null): node is SVGTextNode =>
 const isSVGVNode = (node: SVGChildNode): node is SVGVNode =>
   typeof node === 'object' && node !== null && !isSVGTextNode(node)
 
-const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): boolean => {
+const hasDangerousProtocol = (value: string | null | undefined): boolean => {
   if (typeof value !== 'string' || value.length === 0) {
     return false
   }
@@ -249,7 +268,37 @@ const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): bool
     return false
   }
 
+  if (/^\s*data:/i.test(trimmedValue)) {
+    const mimeTypeMatch = trimmedValue.match(/^\s*data:([^;]+);base64,/i)
+    if (mimeTypeMatch && ALLOWED_DATA_URI_MIME_TYPES.has(mimeTypeMatch[1].toLowerCase())) {
+      return false
+    }
+    return true
+  }
+
   return DANGEROUS_PROTOCOLS.test(trimmedValue)
+}
+
+const URL_REGEX = /url\(\s*(?:'|")?(.*?)(?:'|")?\s*\)/gi
+
+const hasDangerousURL = (value: SVGAttributeValue | null | undefined): boolean => {
+  if (typeof value !== 'string' || value.length === 0) {
+    return false
+  }
+
+  if (hasDangerousProtocol(value)) {
+    return true
+  }
+
+  let match
+  URL_REGEX.lastIndex = 0
+  while ((match = URL_REGEX.exec(value)) !== null) {
+    if (hasDangerousProtocol(match[1])) {
+      return true
+    }
+  }
+
+  return false
 }
 
 export const sanitizeSVGVNode = (
@@ -309,8 +358,8 @@ export const sanitizeSVGVNode = (
       }
 
       if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
-        hasDangerousProtocol(value)
+        URL_ATTRIBUTES.has(lowerKey) &&
+        hasDangerousURL(value)
       ) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
