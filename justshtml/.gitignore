@@ -1,0 +1,4 @@
+html5lib-tests/
+coverage/
+node_modules/
+dist/
