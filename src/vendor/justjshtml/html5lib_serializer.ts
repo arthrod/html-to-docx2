@@ -9,7 +9,10 @@ function attrListToDict(attrs: any) {
   for (const entry of attrs) {
     if (!entry || typeof entry !== 'object') continue
     const name = entry.name
-    if (name != null) out[String(name)] = Object.prototype.hasOwnProperty.call(entry, 'value') ? entry.value : null
+    if (name != null)
+      out[String(name)] = Object.prototype.hasOwnProperty.call(entry, 'value')
+        ? entry.value
+        : null
   }
   return out
 }
@@ -67,7 +70,12 @@ export interface HTML5LibSerializerOptions {
   quote_char?: string | null
 }
 
-function serializeStartTag(name: any, attrs: any, options: HTML5LibSerializerOptions, isVoid: any) {
+function serializeStartTag(
+  name: any,
+  attrs: any,
+  options: HTML5LibSerializerOptions,
+  isVoid: any
+) {
   const quoteAttrValues = Boolean(options.quote_attr_values)
   const minimizeBooleanAttributes =
     options.minimize_boolean_attributes === undefined
@@ -420,7 +428,10 @@ function shouldOmitEndTag(name: any, nextTok: any) {
   return false
 }
 
-export function serializeSerializerTokenStream(tokens: any, options: HTML5LibSerializerOptions = {}) {
+export function serializeSerializerTokenStream(
+  tokens: any,
+  options: HTML5LibSerializerOptions = {}
+) {
   if (!Array.isArray(tokens)) return null
 
   let tokenStream = tokens
