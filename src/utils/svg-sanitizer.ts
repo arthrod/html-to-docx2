@@ -198,6 +198,25 @@ const DISALLOWED_ELEMENTS = new Set([
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
 const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
 
+const SAFE_DATA_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+])
+
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'xlink:href',
+  'fill',
+  'stroke',
+  'filter',
+  'clip-path',
+  'mask',
+  'style',
+])
+
 type SVGSanitizerOptions = {
   enabled?: boolean
   verboseLogging?: boolean
@@ -240,16 +259,36 @@ const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): bool
     return false
   }
 
-  const trimmedValue = value.trim()
-  if (
-    trimmedValue.startsWith('#') ||
-    trimmedValue.startsWith('http://') ||
-    trimmedValue.startsWith('https://')
-  ) {
-    return false
+  const checkURI = (uri: string): boolean => {
+    const trimmed = uri.trim()
+    if (
+      trimmed.startsWith('#') ||
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://')
+    ) {
+      return false
+    }
+
+    if (/^data:/i.test(trimmed)) {
+      const mimeMatch = trimmed.match(/^data:([^;,]+)/i)
+      if (!mimeMatch || !SAFE_DATA_MIME_TYPES.has(mimeMatch[1].toLowerCase())) {
+        return true
+      }
+      return false
+    }
+
+    return DANGEROUS_PROTOCOLS.test(trimmed)
   }
 
-  return DANGEROUS_PROTOCOLS.test(trimmedValue)
+  if (checkURI(value)) return true
+
+  let match
+  const regex = /url\(\s*(['"]?)(.*?)\1\s*\)/gi
+  while ((match = regex.exec(value)) !== null) {
+    if (checkURI(match[2])) return true
+  }
+
+  return false
 }
 
 export const sanitizeSVGVNode = (
@@ -308,10 +347,7 @@ export const sanitizeSVGVNode = (
         return
       }
 
-      if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
-        hasDangerousProtocol(value)
-      ) {
+      if (URL_ATTRIBUTES.has(lowerKey) && hasDangerousProtocol(value)) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
