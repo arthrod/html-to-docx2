@@ -1,7 +1,7 @@
-## 2024-05-18 - [Typed JustHTML options objects]
+## 2024-05-31 - [Array Accumulation Types]
+**Learning:** Empty array initializations without explicit types (`const selectors = []`) often default to `never[]` or `any[]`, causing `TS(2345)` when pushed to or assigned later. The compiler doesn't perform multi-line backward type inference reliably for these assignments.
+**Action:** Always explicitly type arrays upon initialization (`const selectors: ComplexSelector[] = []`) to prevent these downstream assignment and method call errors.
 
-**Learning:** `JustHTML` and `parseDocument` options destructured default parameters like `options = {}` and used `@ts-expect-error` to suppress compiler warnings instead of explicitly typing the `options` signature.
-**Action:** Always define interfaces explicitly like `JustHTMLOptions` and `ParseDocumentOptions` for object parameters (even optional configuration ones), allowing the TS compiler to infer and match properties properly instead of suppressing the errors inside the function body.
-## 2024-05-18 - Type Lie Masked by Constructor Defaults
-**Learning:** When typing class properties converted from JS, explicitly check the constructor parameters and destructuring defaults. An optional constructor parameter that defaults to `null` means the class property must be typed as `T | null`, even if the intended type is `T` (e.g., `message: string | null` in `ParseError` when `message = null` is passed as a default option). Typing it strictly as `string` creates a type lie that compiles but could crash at runtime if the downstream consumers try to call string methods on a `null` value.
-**Action:** When migrating JS classes to TS, always examine the constructor default assignments. If a default is `null`, the corresponding property type must explicitly include `| null`.
+## 2024-05-31 - [Recursive Method Type Annotations]
+**Learning:** Methods that call themselves or call each other in a cycle (e.g., `matches` -> `_matchesComplex` -> `matches`) trigger `TS(7023)` implicit `any` return types because the TypeScript compiler abandons return type inference to avoid infinite loops.
+**Action:** When a method recurses, always add an explicit return type (e.g., `: boolean`) to break the inference cycle and provide the compiler a solid boundary.
