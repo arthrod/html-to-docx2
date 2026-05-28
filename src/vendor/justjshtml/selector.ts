@@ -23,9 +23,9 @@ const TokenType = {
 }
 
 class Token {
-  type: any
-  value: any
-  constructor(type: any, value = null) {
+  type: string
+  value: string | null
+  constructor(type: string, value: string | null = null) {
     this.type = type
     this.value = value
   }
@@ -140,7 +140,6 @@ class SelectorTokenizer {
       }
 
       if (pendingWhitespace && tokens.length && ch !== ',') {
-        // @ts-expect-error TS(2345) FIXME: Argument of type '" "' is not assignable to parame... Remove this comment to see the full error message
         tokens.push(new Token(TokenType.COMBINATOR, ' '))
       }
       pendingWhitespace = false
@@ -189,7 +188,6 @@ class SelectorTokenizer {
 
         if (ch2 === '=') {
           this.pos += 1
-          // @ts-expect-error TS(2345) FIXME: Argument of type '"="' is not assignable to parame... Remove this comment to see the full error message
           tokens.push(new Token(TokenType.ATTR_OP, '='))
         } else if ('~|^$*'.includes(ch2)) {
           const opChar = ch2
@@ -197,7 +195,6 @@ class SelectorTokenizer {
           if (this._peek() !== '=')
             throw new SelectorError(`Expected = after ${opChar} at position ${this.pos}`)
           this.pos += 1
-          // @ts-expect-error TS(2345) FIXME: Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
           tokens.push(new Token(TokenType.ATTR_OP, `${opChar}=`))
         } else {
           throw new SelectorError(
