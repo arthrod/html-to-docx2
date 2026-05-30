@@ -1,5 +1,5 @@
 export class SelectorError extends Error {
-  constructor(message: any) {
+  constructor(message: string) {
     super(message)
     this.name = 'SelectorError'
   }
@@ -23,9 +23,9 @@ const TokenType = {
 }
 
 class Token {
-  type: any
-  value: any
-  constructor(type: any, value = null) {
+  type: string
+  value: string | null
+  constructor(type: string, value: string | null = null) {
     this.type = type
     this.value = value
   }
@@ -36,10 +36,10 @@ class Token {
 }
 
 class SelectorTokenizer {
-  length: any
-  pos: any
-  selector: any
-  constructor(selector: any) {
+  length: number
+  pos: number
+  selector: string
+  constructor(selector: string) {
     this.selector = selector
     this.pos = 0
     this.length = selector.length
@@ -56,7 +56,7 @@ class SelectorTokenizer {
       this.pos += 1
   }
 
-  _isNameStart(ch: any) {
+  _isNameStart(ch: string) {
     if (!ch) return false
     const code = ch.codePointAt(0) ?? 0
     if (code > 127) return true
@@ -64,7 +64,7 @@ class SelectorTokenizer {
     return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')
   }
 
-  _isNameChar(ch: any) {
+  _isNameChar(ch: string) {
     if (this._isNameStart(ch)) return true
     return ch >= '0' && ch <= '9'
   }
@@ -76,7 +76,7 @@ class SelectorTokenizer {
     return this.selector.slice(start, this.pos)
   }
 
-  _readString(quote: any) {
+  _readString(quote: string) {
     this.pos += 1
     let start = this.pos
     const parts = []
@@ -289,15 +289,15 @@ class SimpleSelector {
   static TYPE_ATTR = 'attr'
   static TYPE_PSEUDO = 'pseudo'
 
-  arg: any
-  name: any
-  operator: any
-  type: any
-  value: any
+  arg: string | null
+  name: string | null
+  operator: string | null
+  type: string
+  value: string | null
 
   constructor(
-    selectorType: any,
-    { name = null, operator = null, value = null, arg = null } = {}
+    selectorType: string,
+    { name = null, operator = null, value = null, arg = null }: { name?: string | null, operator?: string | null, value?: string | null, arg?: string | null } = {}
   ) {
     this.type = selectorType
     this.name = name
@@ -322,16 +322,16 @@ class ComplexSelector {
 }
 
 class SelectorList {
-  selectors: any
-  constructor(selectors = []) {
+  selectors: (ComplexSelector | CompoundSelector | SimpleSelector)[]
+  constructor(selectors: (ComplexSelector | CompoundSelector | SimpleSelector)[] = []) {
     this.selectors = selectors
   }
 }
 
 class SelectorParser {
-  pos: any
-  tokens: any
-  constructor(tokens: any) {
+  pos: number
+  tokens: Token[]
+  constructor(tokens: Token[]) {
     this.tokens = tokens
     this.pos = 0
   }
@@ -347,7 +347,7 @@ class SelectorParser {
     return token
   }
 
-  _expect(tokenType: any) {
+  _expect(tokenType: string) {
     const token = this._peek()
     if (token.type !== tokenType)
       throw new SelectorError(`Expected ${tokenType}, got ${token.type}`)
@@ -471,8 +471,7 @@ function isElementNode(node: any) {
 }
 
 class SelectorMatcher {
-  // @ts-expect-error TS(7023) FIXME: 'matches' implicitly has return type 'any' because... Remove this comment to see the full error message
-  matches(node: any, selector: any) {
+  matches(node: any, selector: any): boolean {
     if (selector instanceof SelectorList)
       return selector.selectors.some((sel: any) => this.matches(node, sel))
     if (selector instanceof ComplexSelector) return this._matchesComplex(node, selector)
@@ -535,8 +534,7 @@ class SelectorMatcher {
     return compound.selectors.every((simple: any) => this._matchesSimple(node, simple))
   }
 
-  // @ts-expect-error TS(7023) FIXME: '_matchesSimple' implicitly has return type 'any' ... Remove this comment to see the full error message
-  _matchesSimple(node: any, selector: any) {
+  _matchesSimple(node: any, selector: any): boolean {
     if (!isElementNode(node)) return false
 
     if (selector.type === SimpleSelector.TYPE_UNIVERSAL) return true
@@ -596,8 +594,7 @@ class SelectorMatcher {
     return false
   }
 
-  // @ts-expect-error TS(7023) FIXME: '_matchesPseudo' implicitly has return type 'any' ... Remove this comment to see the full error message
-  _matchesPseudo(node: any, selector: any) {
+  _matchesPseudo(node: any, selector: any): boolean {
     const name = String(selector.name || '').toLowerCase()
 
     if (name === 'first-child') return this._isFirstChild(node)
