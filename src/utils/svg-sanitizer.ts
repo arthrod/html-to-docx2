@@ -196,7 +196,25 @@ const DISALLOWED_ELEMENTS = new Set([
 ])
 
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
-const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
+const DANGEROUS_PROTOCOLS = /^\s*(javascript|vbscript|file|about):/i
+const SAFE_DATA_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+])
+
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'xlink:href',
+  'fill',
+  'stroke',
+  'filter',
+  'clip-path',
+  'mask',
+  'style',
+])
 
 type SVGSanitizerOptions = {
   enabled?: boolean
@@ -246,6 +264,14 @@ const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): bool
     trimmedValue.startsWith('http://') ||
     trimmedValue.startsWith('https://')
   ) {
+    return false
+  }
+
+  if (trimmedValue.toLowerCase().startsWith('data:')) {
+    const mimeMatch = trimmedValue.match(/^data:([a-zA-Z0-9/+-]+)(;|,)/i)
+    if (!mimeMatch || !SAFE_DATA_MIME_TYPES.has(mimeMatch[1].toLowerCase())) {
+      return true
+    }
     return false
   }
 
@@ -308,10 +334,28 @@ export const sanitizeSVGVNode = (
         return
       }
 
-      if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
-        hasDangerousProtocol(value)
-      ) {
+      let hasDangerousUrl = false
+      if (URL_ATTRIBUTES.has(lowerKey)) {
+        if (typeof value === 'string') {
+          const urlRegex = /url\(\s*['"]?([\s\S]*?)['"]?(?:\s*\)|$)/gi
+          let match
+          while ((match = urlRegex.exec(value)) !== null) {
+            if (hasDangerousProtocol(match[1])) {
+              hasDangerousUrl = true
+              break
+            }
+          }
+        }
+        if (
+          !hasDangerousUrl &&
+          (lowerKey === 'href' || lowerKey === 'xlink:href') &&
+          hasDangerousProtocol(value)
+        ) {
+          hasDangerousUrl = true
+        }
+      }
+
+      if (hasDangerousUrl) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
