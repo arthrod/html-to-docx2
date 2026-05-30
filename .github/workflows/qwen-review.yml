@@ -93,9 +93,14 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     steps:
+      # opencode pulls the PR diff via the GitHub API, so it does not need a
+      # perfect working tree. Tolerate checkout failures (e.g. repos with a
+      # broken .gitmodules) so the LLM review still runs no matter what.
       - uses: actions/checkout@v6
+        continue-on-error: true
         with:
           fetch-depth: 1
+          submodules: false
           persist-credentials: false
 
       - name: Run opencode
