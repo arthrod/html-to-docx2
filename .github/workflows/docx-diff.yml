@@ -34,19 +34,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
-          cache-dependency-path: baseline/package-lock.json
+          cache: 'bun'
+          cache-dependency-path: baseline/bun.lock
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: npm ci
+        run: bun install --ignore-scripts
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
+          bun run test
           mv example-node.docx ../baseline.docx
 
       - name: Checkout PR branch
@@ -58,19 +58,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
-          cache-dependency-path: current/package-lock.json
+          cache: 'bun'
+          cache-dependency-path: current/bun.lock
 
       - name: Install dependencies (current)
         working-directory: current
-        run: npm ci
+        run: bun install --ignore-scripts
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
+          bun run test
           mv example-node.docx ../current.docx
 
       - name: Run TurboDocx DOCX diff analysis
