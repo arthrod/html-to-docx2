@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { sanitizeSVGVNode, validateSVGString } from '../src/utils/svg-sanitizer'
 import { VNode } from '../src/vdom/index'
 
@@ -147,6 +148,38 @@ describe('SVG Sanitization - Security Tests', () => {
       const result = sanitizeSVGVNode(safeVNode)
       expect(result).not.toBeNull()
       expect(result.properties.attributes['xlink:href']).toBe('#myGradient')
+    })
+
+    it('should block javascript: inside url() in style attribute', () => {
+      const maliciousVNode = new VNode('rect', {
+        attributes: {
+          style: 'fill: url(javascript:alert(1))',
+        },
+      })
+      const result = sanitizeSVGVNode(maliciousVNode)
+      expect(result.properties.attributes.style).toBeUndefined()
+    })
+
+    it('should block javascript: inside url() in fill attribute', () => {
+      const maliciousVNode = new VNode('rect', {
+        attributes: {
+          fill: 'url(javascript:alert(1))',
+        },
+      })
+      const result = sanitizeSVGVNode(maliciousVNode)
+      expect(result.properties.attributes.fill).toBeUndefined()
+    })
+
+    it('should allow data:image/png inside url() in style attribute', () => {
+      const safeVNode = new VNode('rect', {
+        attributes: {
+          style: 'fill: url(data:image/png;base64,iVBORw0K)',
+        },
+      })
+      const result = sanitizeSVGVNode(safeVNode)
+      expect(result.properties.attributes.style).toBe(
+        'fill: url(data:image/png;base64,iVBORw0K)'
+      )
     })
   })
 

@@ -196,7 +196,19 @@ const DISALLOWED_ELEMENTS = new Set([
 ])
 
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
-const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
+const DANGEROUS_PROTOCOLS = /^\s*(javascript|vbscript|file|about):/i
+const SAFE_DATA_URLS = /^\s*data:image\/(png|jpeg|gif|webp|bmp);base64,/i
+const URL_REGEX = /url\(\s*(['"]?)(.*?)\1\s*\)/gi
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'xlink:href',
+  'fill',
+  'stroke',
+  'filter',
+  'clip-path',
+  'mask',
+  'style',
+])
 
 type SVGSanitizerOptions = {
   enabled?: boolean
@@ -249,7 +261,36 @@ const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): bool
     return false
   }
 
-  return DANGEROUS_PROTOCOLS.test(trimmedValue)
+  if (trimmedValue.toLowerCase().startsWith('data:')) {
+    return !SAFE_DATA_URLS.test(trimmedValue)
+  }
+
+  let isDangerous = DANGEROUS_PROTOCOLS.test(trimmedValue)
+
+  if (!isDangerous) {
+    let match
+    URL_REGEX.lastIndex = 0
+    while ((match = URL_REGEX.exec(trimmedValue)) !== null) {
+      const innerUrl = match[2]
+      if (
+        !innerUrl.trim().startsWith('#') &&
+        !innerUrl.trim().startsWith('http://') &&
+        !innerUrl.trim().startsWith('https://')
+      ) {
+        if (innerUrl.trim().toLowerCase().startsWith('data:')) {
+          if (!SAFE_DATA_URLS.test(innerUrl.trim())) {
+            isDangerous = true
+            break
+          }
+        } else if (DANGEROUS_PROTOCOLS.test(innerUrl.trim())) {
+          isDangerous = true
+          break
+        }
+      }
+    }
+  }
+
+  return isDangerous
 }
 
 export const sanitizeSVGVNode = (
@@ -308,10 +349,18 @@ export const sanitizeSVGVNode = (
         return
       }
 
-      if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
-        hasDangerousProtocol(value)
-      ) {
+      const URL_ATTRIBUTES = new Set([
+        'href',
+        'xlink:href',
+        'fill',
+        'stroke',
+        'filter',
+        'clip-path',
+        'mask',
+        'style',
+      ])
+
+      if (URL_ATTRIBUTES.has(lowerKey) && hasDangerousProtocol(value)) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
