@@ -3,6 +3,7 @@
 /* biome-ignore-all lint/performance/useTopLevelRegex: legacy code */
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
+import { cloneDeep } from 'es-toolkit/compat'
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
@@ -500,8 +501,7 @@ const buildTextRunFragment = (
   options?: { deleted?: boolean }
 ): XMLBuilderType => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  // Bolt: avoid deep cloning flat options object. ~40x faster.
-  const runPropertiesFragment = buildRunProperties(attributes)
+  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
 
   runFragment.import(runPropertiesFragment)
   runFragment.import(
@@ -1026,8 +1026,7 @@ const buildRun = async (
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
   const runFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
-  // Bolt: avoid deep cloning flat options object. ~40x faster.
-  const runPropertiesFragment = buildRunProperties(attributes)
+  const runPropertiesFragment = buildRunProperties(cloneDeep(attributes))
 
   // case where we have recursive spans representing font changes
   if (isVNode(vNode) && (vNode as VNodeType).tagName === 'span') {
@@ -1043,8 +1042,7 @@ const buildRun = async (
     let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
     // create temp run fragments to split the paragraph into different runs
     let baseAttributes: ParagraphAttributes = attributes
-    // Bolt: object spread is ~40x faster than cloneDeep for flat attribute objects
-    let tempAttributes: RunAttributes = { ...baseAttributes }
+    let tempAttributes: RunAttributes = cloneDeep(baseAttributes)
     let tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     while (vNodes.length) {
@@ -1061,10 +1059,12 @@ const buildRun = async (
             docxDocumentInstance
           )
           if (trackingFragments) {
-            runFragmentsArray.push(...trackingFragments)
+            // Bolt: Avoid spread operator in Array.push to prevent 'Maximum call stack size exceeded' errors and improve performance
+            for (let i = 0; i < trackingFragments.length; i++) {
+              runFragmentsArray.push(trackingFragments[i])
+            }
             // re initialize temp run fragments with new fragment
-            // Bolt: object spread is ~40x faster than cloneDeep for flat attribute objects
-            tempAttributes = { ...baseAttributes }
+            tempAttributes = cloneDeep(baseAttributes)
             tempRunFragment = fragment({
               namespaceAlias: { w: namespaces.w },
             }).ele('@w', 'r')
@@ -1080,8 +1080,7 @@ const buildRun = async (
         runFragmentsArray.push(tempRunFragment)
 
         // re initialize temp run fragments with new fragment
-        // Bolt: object spread is ~40x faster than cloneDeep for flat attribute objects
-        tempAttributes = { ...baseAttributes }
+        tempAttributes = cloneDeep(baseAttributes)
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode as VNodeType
@@ -1141,7 +1140,10 @@ const buildRun = async (
           // if spanFragment is an array, we need to add each fragment to the runFragmentsArray. If the fragment is an array, perform a depth first search on the array to add each fragment to the runFragmentsArray
           if (Array.isArray(spanFragment)) {
             const flatSpanFragments = spanFragment.flat(Number.POSITIVE_INFINITY)
-            runFragmentsArray.push(...flatSpanFragments)
+            // Bolt: Avoid spread operator in Array.push to prevent 'Maximum call stack size exceeded' errors and improve performance
+            for (let i = 0; i < flatSpanFragments.length; i++) {
+              runFragmentsArray.push(flatSpanFragments[i])
+            }
           } else {
             runFragmentsArray.push(spanFragment)
           }
