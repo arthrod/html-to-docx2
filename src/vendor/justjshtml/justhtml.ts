@@ -29,6 +29,17 @@ export interface JustHTMLOptions {
   tokenizerOpts?: unknown
 }
 
+export interface ToTextOptions {
+  separator?: string
+  strip?: boolean
+}
+
+export interface ToHTMLOptions {
+  indent?: number
+  indentSize?: number
+  pretty?: boolean
+}
+
 export class JustHTML {
   collectErrors: boolean
   encoding: string | null
@@ -88,15 +99,15 @@ export class JustHTML {
     }
   }
 
-  toText(options: any) {
+  toText(options?: ToTextOptions) {
     return this.root.toText(options)
   }
 
-  to_text(options: any) {
+  to_text(options?: ToTextOptions) {
     return this.toText(options)
   }
 
-  toHTML(options: any) {
+  toHTML(options?: ToHTMLOptions) {
     return this.root.toHTML(options)
   }
 
@@ -104,7 +115,7 @@ export class JustHTML {
     return this.toHTML({ indent, indentSize, pretty })
   }
 
-  query(selector: any) {
+  query(selector: string) {
     return this.root.query(selector)
   }
 
