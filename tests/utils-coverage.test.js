@@ -3,7 +3,7 @@
 // Unit tests for utility modules with low coverage
 // Targets: url.ts, list.ts, font-family-conversion.ts, image-to-base64.ts
 
-import { isValidUrl } from '../src/utils/url'
+import { isValidUrl, isPrivateOrLocalHost } from '../src/utils/url'
 import ListStyleBuilder from '../src/utils/list'
 import {
   fontFamilyToTableObject,
@@ -16,6 +16,18 @@ import {
 } from '../src/utils/image-to-base64'
 
 describe('URL utilities', () => {
+  test('should reject private or local hosts', () => {
+    expect(isPrivateOrLocalHost('127.0.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('localhost')).toBe(true)
+    expect(isPrivateOrLocalHost('0x7f000001')).toBe(true)
+    expect(isPrivateOrLocalHost('017700000001')).toBe(true)
+    expect(isPrivateOrLocalHost('2130706433')).toBe(true)
+    expect(isPrivateOrLocalHost('169.254.169.254')).toBe(true)
+    expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
+    expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('google.com')).toBe(false)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
