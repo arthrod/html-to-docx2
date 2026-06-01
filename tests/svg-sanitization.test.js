@@ -170,6 +170,18 @@ describe('SVG Sanitization - Security Tests', () => {
       expect(result).not.toBeNull()
       expect(result.properties.attributes['xlink:href']).toBe('#myGradient')
     })
+
+    it('should allow data:image/png inside url() in style attribute', () => {
+      const safeVNode = new VNode('rect', {
+        attributes: {
+          style: 'fill: url(data:image/png;base64,iVBORw0K)',
+        },
+      })
+      const result = sanitizeSVGVNode(safeVNode)
+      expect(result.properties.attributes.style).toBe(
+        'fill: url(data:image/png;base64,iVBORw0K)'
+      )
+    })
   })
 
   describe('sanitizeSVGVNode - Preserving Safe Elements', () => {
