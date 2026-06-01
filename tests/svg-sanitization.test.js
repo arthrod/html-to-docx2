@@ -105,6 +105,28 @@ describe('SVG Sanitization - Security Tests', () => {
       expect(result.properties.attributes['xlink:href']).toBe('#safe')
     })
 
+    it('should block nested javascript: protocol in url()', () => {
+      const maliciousVNode = new VNode('rect', {
+        attributes: {
+          fill: "url(javascript:alert('XSS'))",
+        },
+      })
+      const result = sanitizeSVGVNode(maliciousVNode)
+      expect(result).not.toBeNull()
+      expect(result.properties.attributes.fill).toBeUndefined()
+    })
+
+    it('should block javascript: protocol inside url() string format', () => {
+      const maliciousVNode = new VNode('rect', {
+        attributes: {
+          style: "fill: url('javascript:alert(1)')",
+        },
+      })
+      const result = sanitizeSVGVNode(maliciousVNode)
+      expect(result).not.toBeNull()
+      expect(result.properties.attributes.style).toBeUndefined()
+    })
+
     it('should block vbscript: protocol in xlink:href', () => {
       const maliciousVNode = new VNode('use', {
         attributes: {
