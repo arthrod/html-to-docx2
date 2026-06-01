@@ -30,48 +30,44 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
 
-      - name: Setup Node.js for baseline
-        uses: actions/setup-node@v4
+      - name: Setup Bun for baseline
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
-          cache: 'npm'
-          cache-dependency-path: baseline/package-lock.json
+          bun-version: latest
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
-          mv example-node.docx ../baseline.docx
+          bun run test
+          mv tmp/example-node-node.docx ../baseline.docx
 
       - name: Checkout PR branch
         uses: actions/checkout@v6
         with:
           path: current
 
-      - name: Setup Node.js for current
-        uses: actions/setup-node@v4
+      - name: Setup Bun for current
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
-          cache: 'npm'
-          cache-dependency-path: current/package-lock.json
+          bun-version: latest
 
       - name: Install dependencies (current)
         working-directory: current
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
-          mv example-node.docx ../current.docx
+          bun run test
+          mv tmp/example-node-node.docx ../current.docx
 
       - name: Run TurboDocx DOCX diff analysis
         id: diff
