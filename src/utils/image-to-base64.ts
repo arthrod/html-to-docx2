@@ -111,6 +111,29 @@ export const guessMimeTypeFromBytes = (bytes: Uint8Array): string => {
   return 'image/jpeg'
 }
 
+
+const isPrivateIP = (ipString: string): boolean => {
+  if (ipString === 'localhost') return true
+
+  let ip = ipString
+  if (ip.startsWith('[') && ip.endsWith(']')) {
+    ip = ip.substring(1, ip.length - 1)
+  }
+
+  const ipv4Pattern = /^(?:127\.\d{1,3}\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}|0\.\d{1,3}\.\d{1,3}\.\d{1,3})$/
+
+  if (ipv4Pattern.test(ip)) return true
+
+  if (ip === '::1' || ip === '0:0:0:0:0:0:0:1') return true
+  if (/^fe[89ab][0-9a-f]:/i.test(ip)) return true
+  if (/^f[cd][0-9a-f]{2}:/i.test(ip)) return true
+  if (ip.toLowerCase().startsWith('::ffff:')) {
+     return ipv4Pattern.test(ip.substring(7))
+  }
+
+  return false
+}
+
 const downloadImage = async (
   imageUrl: string,
   { timeout = 5000, maxSize = 10 * 1024 * 1024 }: DownloadOptions = {}
@@ -129,6 +152,12 @@ const downloadImage = async (
     protocol !== 'blob:'
   ) {
     throw new Error('Invalid URL')
+  }
+
+  if (protocol === 'http:' || protocol === 'https:') {
+    if (isPrivateIP(parsedUrl.hostname)) {
+      throw new Error('Invalid URL')
+    }
   }
 
   const controller = new AbortController()

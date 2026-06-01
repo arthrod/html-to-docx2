@@ -1,5 +1,4 @@
-## 2024-05-15 - SSRF Vulnerability via Fetch
-
-**Vulnerability:** The application uses `fetch()` directly on user-provided URLs in `src/utils/image.ts`, `src/utils/image-to-base64.ts`, and `src/utils/image-browser.ts` without validating the URL protocol. This allows `file://` protocols, leading to Local File Inclusion (LFI).
-**Learning:** Naively passing strings to `fetch()` without a URL parse check enables unintended protocol resolution.
-**Prevention:** Always parse URLs and assert an explicit allowlist (like `http:`, `https:`, `data:`, `blob:`) before invoking fetch. In this codebase, to support relative URLs without breaking them, use `try...catch` block that parses with a dummy base URL fallback. Ensure the generic `new Error(Invalid URL)` is thrown on failure so existing caching tests do not break.
+## 2024-05-16 - 🛡️ Sentinel: [HIGH] Fix SSRF via image downloading
+**Vulnerability:** Server-Side Request Forgery (SSRF) in `imageToBase64`/`downloadImage` where unvalidated URL hostnames were fetched via `fetch(imageUrl)`. Attackers could provide `http://169.254.169.254` or `http://localhost/` to access internal metadata services or internal loopback interfaces.
+**Learning:** `fetch` does not intrinsically block loopback or link-local IPs. Because the script runs in both node and browser contexts, standard DNS lookup modules (`node:dns`) can cause cross-platform module resolution errors if imported statically.
+**Prevention:** Always validate parsed URL `hostname` against a regex of private, link-local, and loopback IP addresses (both IPv4 and IPv6) before passing user-supplied URLs to `fetch`. Octal and hex encoded IPs (e.g., `0x7f000001`) are automatically parsed and translated into decimal octets by the standard `URL` object API, making string matching on `parsedUrl.hostname` effective.
