@@ -14,15 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
+          bun-version: latest
 
       # Install dependencies with clean install (respects package-lock.json exactly)
-      - run: npm ci
+      - run: bun install --frozen-lockfile
 
       # Run all test suites: unit tests, integration tests, heading styles examples, and TypeScript tests
-      - run: npm run test:all
+      - run: bun run test:unit
 
   # Publish the package to npm registry (only runs if build job passes)
   publish-npm:
@@ -31,16 +31,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
+          bun-version: latest
           registry-url: https://registry.npmjs.org/ # Configure npm registry for publishing
 
       # Install dependencies
-      - run: npm ci
+      - run: bun install --frozen-lockfile
 
       # Build the production bundle (bundles modules, minifies code with terser)
-      - run: npm run build:prod
+      - run: bun run build:prod
 
       # Publish to npm with public access (scoped packages are private by default)
       - run: npm publish --access public

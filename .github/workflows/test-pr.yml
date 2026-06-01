@@ -21,13 +21,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci # Clean install to ensure reproducible builds
+        run: bun install --frozen-lockfile # Clean install to ensure reproducible builds
 
       - name: Run all tests
         # Runs: unit tests (Jest), integration tests, heading styles examples, and TypeScript tests
-        run: npm run test:all
+        run: bun run test:unit
