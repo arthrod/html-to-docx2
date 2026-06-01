@@ -31,22 +31,22 @@ jobs:
           path: baseline
 
       - name: Setup Node.js for baseline
-        uses: actions/setup-node@v4
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
+          bun-version: latest
           cache: 'npm'
           cache-dependency-path: baseline/package-lock.json
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
+          bun test
           mv example-node.docx ../baseline.docx
 
       - name: Checkout PR branch
@@ -55,22 +55,22 @@ jobs:
           path: current
 
       - name: Setup Node.js for current
-        uses: actions/setup-node@v4
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 18
+          bun-version: latest
           cache: 'npm'
           cache-dependency-path: current/package-lock.json
 
       - name: Install dependencies (current)
         working-directory: current
-        run: npm ci
+        run: bun install --frozen-lockfile
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
         env:
           DETERMINISTIC_IDS: 'true'
         run: |
-          npm test
+          bun test
           mv example-node.docx ../current.docx
 
       - name: Run TurboDocx DOCX diff analysis

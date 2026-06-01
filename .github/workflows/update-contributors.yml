@@ -19,9 +19,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: '18'
+          bun-version: 'latest'
 
       - name: Update contributors
         id: update

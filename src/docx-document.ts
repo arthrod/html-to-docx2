@@ -61,6 +61,52 @@ import { fontFamilyToTableObject } from './utils/font-family-conversion'
 import { convertSVGtoPNG, isSVG, parseDataUrl, parseSVGDimensions } from './utils/image'
 import ListStyleBuilder, { type ListStyleDefaults, type ListStyleType } from './utils/list'
 
+const wpElements = [
+  'inline',
+  'anchor',
+  'simplePos',
+  'positionH',
+  'positionV',
+  'posOffset',
+  'extent',
+  'effectExtent',
+  'wrapNone',
+  'wrapSquare',
+  'wrapTight',
+  'wrapThrough',
+  'docPr',
+]
+const aElements = [
+  'graphic',
+  'graphicData',
+  'blip',
+  'srcRect',
+  'stretch',
+  'fillRect',
+  'xfrm',
+  'off',
+  'ext',
+  'prstGeom',
+]
+const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
+const allDrawingElements = [...wpElements, ...aElements, ...picElements]
+
+const DRAWING_ELEMENTS_REGEX = new RegExp(
+  `(<w:|</w:)(${allDrawingElements.join('|')})([ />])`,
+  'g'
+)
+
+const DRAWING_NAMESPACE_MAP: Record<string, string> = {}
+wpElements.forEach((el) => {
+  DRAWING_NAMESPACE_MAP[el] = 'wp'
+})
+aElements.forEach((el) => {
+  DRAWING_NAMESPACE_MAP[el] = 'a'
+})
+picElements.forEach((el) => {
+  DRAWING_NAMESPACE_MAP[el] = 'pic'
+})
+
 /** Virtual DOM tree node */
 type VTreePropertyValue =
   | string
@@ -636,51 +682,13 @@ class DocxDocument {
     // xmlbuilder2 doesn't correctly preserve namespace prefixes when importing fragments
     // so we need to post-process the XML string to fix them
 
-    // wp: (wordprocessingDrawing) elements
-    const wpElements = [
-      'inline',
-      'anchor',
-      'simplePos',
-      'positionH',
-      'positionV',
-      'posOffset',
-      'extent',
-      'effectExtent',
-      'wrapNone',
-      'wrapSquare',
-      'wrapTight',
-      'wrapThrough',
-      'docPr',
-    ]
-    wpElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<wp:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</wp:${el}>`)
-    })
-
-    // a: (drawingML main) elements
-    const aElements = [
-      'graphic',
-      'graphicData',
-      'blip',
-      'srcRect',
-      'stretch',
-      'fillRect',
-      'xfrm',
-      'off',
-      'ext',
-      'prstGeom',
-    ]
-    aElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<a:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</a:${el}>`)
-    })
-
-    // pic: (picture) elements
-    const picElements = ['pic', 'nvPicPr', 'cNvPr', 'cNvPicPr', 'blipFill', 'spPr']
-    picElements.forEach((el) => {
-      xmlString = xmlString.replace(new RegExp(`<w:${el}([ />])`, 'g'), `<pic:${el}$1`)
-      xmlString = xmlString.replace(new RegExp(`</w:${el}>`, 'g'), `</pic:${el}>`)
-    })
+    xmlString = xmlString.replace(
+      DRAWING_ELEMENTS_REGEX,
+      (match, prefix, el, suffix) => {
+        const isEnd = prefix.length === 4 // </w:
+        return `${isEnd ? '</' : '<'}${DRAWING_NAMESPACE_MAP[el]}:${el}${suffix}`
+      }
+    )
 
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
