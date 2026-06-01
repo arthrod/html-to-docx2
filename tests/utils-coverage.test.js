@@ -3,7 +3,7 @@
 // Unit tests for utility modules with low coverage
 // Targets: url.ts, list.ts, font-family-conversion.ts, image-to-base64.ts
 
-import { isValidUrl } from '../src/utils/url'
+import { isValidUrl, isLocalOrPrivateHost } from '../src/utils/url'
 import ListStyleBuilder from '../src/utils/list'
 import {
   fontFamilyToTableObject,
@@ -171,6 +171,52 @@ describe('Font family conversion', () => {
   })
 })
 
+describe('SSRF Protection (isLocalOrPrivateHost)', () => {
+  test('should detect local IPv4 addresses', () => {
+    expect(isLocalOrPrivateHost('127.0.0.1')).toBe(true)
+    expect(isLocalOrPrivateHost('127.255.255.255')).toBe(true)
+  })
+
+  test('should detect private IPv4 addresses', () => {
+    expect(isLocalOrPrivateHost('10.0.0.1')).toBe(true)
+    expect(isLocalOrPrivateHost('172.16.0.1')).toBe(true)
+    expect(isLocalOrPrivateHost('172.31.255.255')).toBe(true)
+    expect(isLocalOrPrivateHost('192.168.1.1')).toBe(true)
+  })
+
+  test('should detect link-local IPv4 addresses', () => {
+    expect(isLocalOrPrivateHost('169.254.169.254')).toBe(true)
+  })
+
+  test('should detect current network addresses', () => {
+    expect(isLocalOrPrivateHost('0.0.0.0')).toBe(true)
+  })
+
+  test('should detect localhost names', () => {
+    expect(isLocalOrPrivateHost('localhost')).toBe(true)
+    expect(isLocalOrPrivateHost('test.localhost')).toBe(true)
+    expect(isLocalOrPrivateHost('localhost.localdomain')).toBe(true)
+  })
+
+  test('should detect IPv6 local addresses', () => {
+    expect(isLocalOrPrivateHost('::1')).toBe(true)
+    expect(isLocalOrPrivateHost('[::1]')).toBe(true)
+  })
+
+  test('should detect IPv4-mapped IPv6 local/private addresses', () => {
+    // 127.0.0.1
+    expect(isLocalOrPrivateHost('[::ffff:7f00:1]')).toBe(true)
+    // 10.0.0.1
+    expect(isLocalOrPrivateHost('[::ffff:a00:1]')).toBe(true)
+  })
+
+  test('should allow safe public addresses', () => {
+    expect(isLocalOrPrivateHost('8.8.8.8')).toBe(false)
+    expect(isLocalOrPrivateHost('example.com')).toBe(false)
+    expect(isLocalOrPrivateHost('1.1.1.1')).toBe(false)
+  })
+})
+
 describe('Image to base64 utilities', () => {
   describe('guessMimeTypeFromBytes', () => {
     test('should detect JPEG', () => {
@@ -240,6 +286,18 @@ describe('Image to base64 utilities', () => {
       await expect(imageToBase64('data:image/png;base64,abc')).rejects.toThrow(
         'Invalid URL'
       )
+    })
+
+    test('should reject local or private networks (SSRF protection)', async () => {
+      await expect(imageToBase64('http://localhost:3000/image.png')).rejects.toThrow(
+        'Invalid URL'
+      )
+      await expect(imageToBase64('http://127.0.0.1/image.png')).rejects.toThrow(
+        'Invalid URL'
+      )
+      await expect(
+        imageToBase64('http://169.254.169.254/latest/meta-data/')
+      ).rejects.toThrow('Invalid URL')
     })
   })
 })
