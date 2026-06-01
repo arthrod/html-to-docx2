@@ -30,16 +30,12 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
 
-      - name: Setup Node.js for baseline
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-          cache-dependency-path: baseline/package-lock.json
+      - name: Setup Bun for baseline
+        uses: oven-sh/setup-bun@v1
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: npm ci
+        run: bun install
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
@@ -54,16 +50,12 @@ jobs:
         with:
           path: current
 
-      - name: Setup Node.js for current
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-          cache-dependency-path: current/package-lock.json
+      - name: Setup Bun for current
+        uses: oven-sh/setup-bun@v1
 
       - name: Install dependencies (current)
         working-directory: current
-        run: npm ci
+        run: bun install
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current

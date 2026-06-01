@@ -195,8 +195,21 @@ const DISALLOWED_ELEMENTS = new Set([
   'frameset',
 ])
 
+const URL_ATTRIBUTES = new Set([
+  'href',
+  'xlink:href',
+  'fill',
+  'stroke',
+  'filter',
+  'clip-path',
+  'mask',
+  'style'
+])
+
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
 const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
+const SAFE_DATA_URI_REGEX = /^data:image\/(png|jpeg|gif|webp|bmp);base64,/i
+const URL_REGEX = /url\(\s*['"]?(.*?)['"]?\s*\)/gi
 
 type SVGSanitizerOptions = {
   enabled?: boolean
@@ -235,21 +248,41 @@ const isSVGTextNode = (node: SVGChildNode | null): node is SVGTextNode =>
 const isSVGVNode = (node: SVGChildNode): node is SVGVNode =>
   typeof node === 'object' && node !== null && !isSVGTextNode(node)
 
+const isDangerousURI = (uri: string): boolean => {
+  const trimmed = uri.trim()
+  if (
+    trimmed.startsWith('#') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://')
+  ) {
+    return false
+  }
+
+  if (/^data:/i.test(trimmed)) {
+    return !SAFE_DATA_URI_REGEX.test(trimmed)
+  }
+
+  return DANGEROUS_PROTOCOLS.test(trimmed)
+}
+
 const hasDangerousProtocol = (value: SVGAttributeValue | null | undefined): boolean => {
   if (typeof value !== 'string' || value.length === 0) {
     return false
   }
 
-  const trimmedValue = value.trim()
-  if (
-    trimmedValue.startsWith('#') ||
-    trimmedValue.startsWith('http://') ||
-    trimmedValue.startsWith('https://')
-  ) {
-    return false
+  if (isDangerousURI(value)) {
+    return true
   }
 
-  return DANGEROUS_PROTOCOLS.test(trimmedValue)
+  let match
+  URL_REGEX.lastIndex = 0
+  while ((match = URL_REGEX.exec(value)) !== null) {
+    if (isDangerousURI(match[1])) {
+      return true
+    }
+  }
+
+  return false
 }
 
 export const sanitizeSVGVNode = (
@@ -309,7 +342,7 @@ export const sanitizeSVGVNode = (
       }
 
       if (
-        (lowerKey === 'href' || lowerKey === 'xlink:href') &&
+        URL_ATTRIBUTES.has(lowerKey) &&
         hasDangerousProtocol(value)
       ) {
         if (verboseLogging) {
