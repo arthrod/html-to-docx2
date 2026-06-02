@@ -15,3 +15,9 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2024-05-31 - SVG URL Protocol Bypass via Newlines in url() Notation
+
+**Vulnerability:** The regex used to extract URLs from SVG styling and properties (`/url\(\s*['"]?(.*?)['"]?\s*\)/gi`) failed to match inputs containing newline characters (since `.*?` strictly matches non-newline characters). This enabled an attacker to bypass the protocol validation by injecting a newline character inside the payload (e.g. `url(&#10;javascript:alert(1))`).
+**Learning:** Naively using `.` within regexes meant to extract potentially multiline functional arguments is risky. Browsers generously ignore whitespace and newlines before parsing schemes in `url()`, which leads to a parser differential bypass when the extraction regex is too strict.
+**Prevention:** Replace `.*?` with `[\s\S]*?` combined with optional but strongly grouped string quote delimiters (e.g., `(?:['"]?)`) to guarantee newline coverage inside functional CSS notation like `url(...)` before applying the protocol validator.
