@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          submodules: true
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -26,7 +28,7 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile # Clean install to ensure reproducible builds
+        run: bun install --ignore-scripts --frozen-lockfile # Clean install to ensure reproducible builds
 
       - name: Run all tests
         # Runs: unit tests (Jest), integration tests, heading styles examples, and TypeScript tests
