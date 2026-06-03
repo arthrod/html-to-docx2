@@ -209,7 +209,7 @@ const URL_ATTRIBUTES = new Set([
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
 const DANGEROUS_PROTOCOLS = /^\s*(javascript|data|vbscript|file|about):/i
 const SAFE_DATA_URI_REGEX = /^data:image\/(png|jpeg|gif|webp|bmp);base64,/i
-const URL_REGEX = /url\(\s*['"]?(.*?)['"]?\s*\)/gi
+const URL_REGEX = /url\(\s*(?:['"]?)([\s\S]*?)(?:['"]?)\s*\)/gi
 
 type SVGSanitizerOptions = {
   enabled?: boolean
