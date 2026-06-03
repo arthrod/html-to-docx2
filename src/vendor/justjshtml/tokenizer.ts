@@ -1,7 +1,6 @@
 import { decodeEntitiesInText } from './entities.js'
 import {
   CharacterToken,
-  ParseError,
   CommentToken,
   Doctype,
   DoctypeToken,

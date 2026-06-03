@@ -24,7 +24,6 @@ import { FragmentContext } from './context.js'
 import { Node } from './node.js'
 import {
   CharacterToken,
-  ParseError,
   CommentToken,
   DoctypeToken,
   EOFToken,
