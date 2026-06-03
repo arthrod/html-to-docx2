@@ -9,3 +9,7 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+
+## 2024-06-03 - Reuse optimized `escapeXml` utility
+**Learning:** The codebase already includes an optimized `escapeXml` utility in `src/utils/xml-escape.ts` that uses a fast, single-pass loop. Other parts of the code, such as `src/helpers/render-document-file.ts`, were using slow, chained regex `.replace()` calls for the exact same XML/SVG escaping purpose.
+**Action:** Always check `src/utils/` for existing optimized utility functions before writing new ones, and replace duplicated, slow regex chains with these shared utilities (like `escapeXml`).
