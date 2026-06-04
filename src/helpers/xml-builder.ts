@@ -1006,8 +1006,10 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
           options.color = value as string
         }
 
-        if (typedKey === 'fontSize' || typedKey === 'font') {
-          options[typedKey] = value as any
+        if (typedKey === 'fontSize') {
+          options[typedKey] = value as number
+        } else if (typedKey === 'font') {
+          options[typedKey] = value as string
         }
 
         const formattingFragment = buildFormatting(typedKey, options)
