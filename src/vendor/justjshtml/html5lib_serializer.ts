@@ -1,6 +1,8 @@
 import { VOID_ELEMENTS } from './constants.js'
 
-function attrListToDict(attrs: any) {
+function attrListToDict(
+  attrs: Array<{ name?: unknown; value?: unknown }> | Record<string, string | null> | null | undefined
+): Record<string, string | null> {
   if (!attrs) return {}
   if (!Array.isArray(attrs) && typeof attrs === 'object') return attrs
   if (!Array.isArray(attrs)) return {}
