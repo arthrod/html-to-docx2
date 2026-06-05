@@ -13,7 +13,7 @@ import namespaces from '../namespaces'
 import { getImageDimensions } from '../utils/image-dimensions'
 import { downloadAndCacheImage } from '../utils/image-to-base64'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
-import { vNodeHasChildren } from '../utils/vnode'
+import { vNodeHasChildren } from '../utils/vnode';
 import { escapeXml } from '../utils/xml-escape'
 import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
 // FIXME: remove the cyclic dependency
