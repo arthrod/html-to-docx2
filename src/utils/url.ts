@@ -15,19 +15,30 @@ const isValidUrl = (urlString: string | null | undefined): boolean => {
 }
 
 const isPrivateOrLocalHost = (hostname: string): boolean => {
+  const lowerHostname = hostname.toLowerCase()
+
   if (
-    hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname === '[::1]' ||
-    hostname === '0.0.0.0'
+    lowerHostname === 'localhost' ||
+    lowerHostname === '127.0.0.1' ||
+    lowerHostname === '[::1]' ||
+    lowerHostname === '[::]' ||
+    lowerHostname === '0.0.0.0'
   ) {
     return true
   }
 
-  if (hostname.endsWith('.localhost')) return true
+  if (lowerHostname.endsWith('.localhost')) return true
+
+  if (lowerHostname.startsWith('[fe80:')) return true
+  if (lowerHostname.startsWith('[fc') || lowerHostname.startsWith('[fd')) return true
+
+  if (lowerHostname.startsWith('[::ffff:')) {
+    const inner = lowerHostname.slice(8, -1)
+    return isPrivateOrLocalHost(inner)
+  }
 
   let parts: number[] = []
-  const stringParts = hostname.split('.')
+  const stringParts = lowerHostname.split('.')
   if (stringParts.length <= 4 && stringParts.length > 0) {
     parts = stringParts.map((p) => {
       if (p.startsWith('0x') || p.startsWith('0X')) return Number.parseInt(p, 16)
