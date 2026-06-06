@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: bun install --frozen-lockfile
+        run: bun install --ignore-scripts
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
@@ -59,7 +59,7 @@ jobs:
 
       - name: Install dependencies (current)
         working-directory: current
-        run: bun install --frozen-lockfile
+        run: bun install --ignore-scripts
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
