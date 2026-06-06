@@ -16,7 +16,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.14
 
       # Install dependencies with clean install (respects bun.lock exactly)
       - run: bun install --frozen-lockfile
@@ -33,7 +33,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2.14
           registry-url: https://registry.npmjs.org/ # Configure npm registry for publishing
 
       # Install dependencies
