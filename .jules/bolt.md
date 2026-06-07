@@ -9,3 +9,7 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+
+## 2026-05-31 - Reuse existing fast-path escape functions in hot paths
+**Learning:** The `escapeXml` function in `src/utils/xml-escape.ts` implements a highly optimized single-pass string concatenation for XML escaping. Reduplicating chained `.replace()` regex calls in `src/helpers/render-document-file.ts` for escaping strings (like inside `serializeVNodeToSVG`) misses out on this performance improvement.
+**Action:** Always reuse the optimized `escapeXml` utility function when escaping XML/SVG content instead of manually chaining `.replace()` calls to ensure consistent performance gains.
