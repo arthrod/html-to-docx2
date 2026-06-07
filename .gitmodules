@@ -1,0 +1,6 @@
+[submodule "integrate_parser_ts/justjshtml"]
+	path = integrate_parser_ts/justjshtml
+	url = https://github.com/arthrod/justjshtml.git
+[submodule "integrate_parser_ts/justshtml"]
+	path = integrate_parser_ts/justshtml
+	url = https://github.com/arthrod/justjshtml.git
