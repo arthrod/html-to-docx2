@@ -9,3 +9,6 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+## 2026-06-09 - Do not replace sequential await with Promise.all in XML builder loops
+**Learning:** In `src/helpers/xml-builder.ts`, do NOT replace sequential `await` calls inside `for` loops with concurrent `Promise.all` arrays (e.g., in `buildRunOrRuns`). While `Promise.all` preserves returned array order, it destroys the execution order of asynchronous side effects (like generating IDs, cache operations, or shared state), causing race conditions and non-deterministic, corrupted documents.
+**Action:** Avoid generic 'concurrent array processing' optimizations in document/XML generators where asynchronous execution order defines side-effect sequences.
