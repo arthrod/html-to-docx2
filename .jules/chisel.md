@@ -13,6 +13,6 @@
 **Learning:** In legacy JS codebases migrated to TS, default parameters like `value = null` or `array = []` cause TypeScript to incorrectly infer the types as strictly `null` or `never[]`. This leads to `TS(2345)` errors down the line when the actual values (e.g., strings or populated arrays) are pushed or assigned.
 **Action:** Always explicitly annotate default parameters and array initializations (e.g., `value: any = null`, `array: Type[] = []`) to prevent overly narrow type inference and safely remove `@ts-expect-error`s.
 
-## 2024-05-18 - Replacing `as any` in Dynamic Property Assignments
-**Learning:** When dealing with dynamic property assignments on objects (like `options[typedKey] = value`) where `typedKey` is a union type (e.g., `'fontSize' | 'font'`) and `value` could be multiple types, TypeScript cannot safely infer the assignment, often leading to `as any` fallbacks.
-**Action:** Instead of forcing the assignment with `as any`, break the union into specific `if`/`else if` checks for each possible key. This allows TypeScript to narrow the key and value types, safely eliminating the need for `any`.
+## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
+**Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
+**Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
