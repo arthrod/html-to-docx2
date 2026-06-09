@@ -12,14 +12,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       # Install dependencies with clean install (respects bun.lock exactly)
-      - run: bun install --ignore-scripts
+      - run: bun install --frozen-lockfile
 
       # Run all test suites: unit tests, integration tests, heading styles examples, and TypeScript tests
       - run: bun run test
@@ -29,7 +29,7 @@ jobs:
     needs: build # Wait for tests to pass before publishing
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -37,7 +37,7 @@ jobs:
           registry-url: https://registry.npmjs.org/ # Configure npm registry for publishing
 
       # Install dependencies
-      - run: bun install --ignore-scripts
+      - run: bun install --frozen-lockfile
 
       # Build the production bundle (bundles modules, minifies code with terser)
       - run: bun run build:prod

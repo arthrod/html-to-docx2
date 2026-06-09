@@ -86,7 +86,7 @@ type DocxDocumentInstance = {
   createFont: (fontFamily: string) => string
   createMediaFile: (base64Uri: string) => Promise<MediaFileResponse>
   createNumbering: (type: 'ol' | 'ul', properties?: VNodeProperties) => number
-  htmlString: string
+  htmlString: string | null
   imageProcessing?: typeof defaultDocumentOptions.imageProcessing
   relationshipFilename: string
   unmappedTypeHandling?: UnmappedTypeHandling
@@ -1100,7 +1100,7 @@ async function renderDocumentFile(
     }
   }
 
-  const vTree = convertHTML(docxDocumentInstance.htmlString)
+  const vTree = convertHTML(docxDocumentInstance.htmlString || '')
 
   const xmlFragment = fragment({ namespaceAlias: { w: namespaces.w } })
 

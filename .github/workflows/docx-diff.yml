@@ -25,7 +25,7 @@ jobs:
           echo "head_ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
 
       - name: Checkout base branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: bun install --ignore-scripts
+        run: bun install --frozen-lockfile
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
@@ -48,7 +48,7 @@ jobs:
           mv tmp/example-node-node.docx ../baseline.docx
 
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: current
 
@@ -59,7 +59,7 @@ jobs:
 
       - name: Install dependencies (current)
         working-directory: current
-        run: bun install --ignore-scripts
+        run: bun install --frozen-lockfile
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
