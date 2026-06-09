@@ -19,12 +19,26 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname === '[::1]' ||
+    hostname === '[::]' ||
     hostname === '0.0.0.0'
   ) {
     return true
   }
 
   if (hostname.endsWith('.localhost')) return true
+
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    const inner = hostname.slice(1, -1).toLowerCase()
+
+    if (inner === '::' || inner === '::1') return true
+    if (inner.startsWith('fe8') || inner.startsWith('fe9') || inner.startsWith('fea') || inner.startsWith('feb')) return true
+    if (inner.startsWith('fc') || inner.startsWith('fd')) return true
+
+    if (inner.startsWith('::ffff:')) {
+      const ipv4 = inner.slice(7)
+      return isPrivateOrLocalHost(ipv4)
+    }
+  }
 
   let parts: number[] = []
   const stringParts = hostname.split('.')
