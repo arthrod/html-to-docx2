@@ -376,7 +376,6 @@ async function generateSectionXML(
   }).ele('@w', type === 'header' ? 'hdr' : 'ftr')
 
   const XMLFragment = fragment()
-  // @ts-expect-error - DocxDocument implements DocxDocumentInstance with slight variations
   await convertVTreeToXML(this, vTree, XMLFragment)
 
   const firstNode = XMLFragment.first().node
