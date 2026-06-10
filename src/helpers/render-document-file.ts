@@ -14,6 +14,7 @@ import { getImageDimensions } from '../utils/image-dimensions'
 import { downloadAndCacheImage } from '../utils/image-to-base64'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
 import { vNodeHasChildren } from '../utils/vnode'
+import { escapeXml } from '../utils/xml-escape'
 import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
 // FIXME: remove the cyclic dependency
 // eslint-disable-next-line import/no-cycle -- FIXME: known cyclic dependency
@@ -190,7 +191,9 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
 const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
   const textNode = asVText(node)
   if (textNode) {
-    return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // Note: escapeXml also escapes quotes, which wasn't done before for text nodes,
+    // but escaping them in SVG text nodes is completely safe and correct.
+    return escapeXml(textNode.text)
   }
 
   const vNode = asVNode(node)
@@ -211,11 +214,7 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
 
   Object.entries(attributes).forEach(([key, value]) => {
     if (value) {
-      const escapedValue = String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+      const escapedValue = escapeXml(String(value))
       svg += ` ${key}="${escapedValue}"`
     }
   })
