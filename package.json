@@ -184,7 +184,7 @@
   },
   "dependencies": {
     "color-name": "2.1.0",
-    "es-toolkit": "^1.47.0",
+    "es-toolkit": "^1.45.1",
     "html-entities": "^2.3.3",
     "jszip": "^3.7.1",
     "nanoid": "5.1.6",
