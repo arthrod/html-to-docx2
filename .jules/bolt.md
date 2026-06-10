@@ -9,3 +9,6 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+## 2025-02-18 - Replacing chained string replace with single-pass character array loop for XML escaping
+**Learning:** Reusing an existing utility like `escapeXml` (which uses a single-pass `charCodeAt` loop) instead of chained `.replace()` calls for escaping strings prevents intermediate string allocations and greatly improves serialization speed. When replacing these chained calls for text content, remember that `escapeXml` might also escape quotation marks, which is technically safe and valid for XML text nodes, even if previous regexes did not escape them.
+**Action:** Always prefer existing, highly optimized single-pass string manipulation utilities for generic tasks like XML escaping over inline chained `.replace()` calls, especially in hot paths like VNode serialization.
