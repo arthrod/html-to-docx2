@@ -73,7 +73,7 @@ jobs:
         id: diff
         working-directory: current
         run: |
-          node scripts/diff-docx.js ../baseline.docx ../current.docx --output ../diff-report.md || echo "diff_failed=true" >> $GITHUB_OUTPUT
+          node scripts/diff-docx.cjs ../baseline.docx ../current.docx --output ../diff-report.md || echo "diff_failed=true" >> $GITHUB_OUTPUT
 
       - name: Read TurboDocx diff report
         id: report
