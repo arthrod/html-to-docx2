@@ -9,3 +9,6 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+## 2024-06-11 - Avoid array spread operator when normalizing nodes
+**Learning:** Using the spread operator for array merging (`normalizedNodes.push(...items)`) in the HTML parser causes 'Maximum call stack size exceeded' errors when parsing very large HTML documents and incurs a noticeable performance overhead in V8/Bun.
+**Action:** Replace spread operations with a standard `for` loop to push items individually.
