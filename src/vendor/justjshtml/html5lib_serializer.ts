@@ -428,7 +428,10 @@ function shouldOmitEndTag(name: any, nextTok: any) {
   return false
 }
 
-export function serializeSerializerTokenStream(tokens: any, options: HTML5LibSerializerOptions = {}) {
+export function serializeSerializerTokenStream(
+  tokens: any,
+  options: HTML5LibSerializerOptions = {}
+) {
   if (!Array.isArray(tokens)) return null
 
   let tokenStream = tokens
