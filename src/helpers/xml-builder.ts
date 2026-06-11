@@ -1264,9 +1264,9 @@ const buildRunOrRuns = async (
     isVNode(vNode) &&
     (vNode).properties &&
     (vNode).properties.attributes &&
-    (vNode).properties.attributes!['data-equation-omml']
+    (vNode).properties.attributes['data-equation-omml']
   ) {
-    const ommlString = (vNode).properties.attributes!['data-equation-omml']
+    const ommlString = (vNode).properties.attributes['data-equation-omml']
     try {
       // Parse the OMML string and create a fragment
       const ommlFragment = fragment().ele(ommlString)
