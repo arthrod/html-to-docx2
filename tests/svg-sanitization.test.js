@@ -1,4 +1,3 @@
-import { vi } from 'vitest'
 import { sanitizeSVGVNode, validateSVGString } from '../src/utils/svg-sanitizer'
 import { VNode } from '../src/vdom/index'
 
