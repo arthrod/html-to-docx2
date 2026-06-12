@@ -25,7 +25,7 @@ jobs:
           echo "head_ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
 
       - name: Checkout base branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
@@ -48,7 +48,7 @@ jobs:
           mv tmp/example-node-node.docx ../baseline.docx
 
       - name: Checkout PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           path: current
 
@@ -73,7 +73,7 @@ jobs:
         id: diff
         working-directory: current
         run: |
-          node scripts/diff-docx.js ../baseline.docx ../current.docx --output ../diff-report.md || echo "diff_failed=true" >> $GITHUB_OUTPUT
+          node scripts/diff-docx.cjs ../baseline.docx ../current.docx --output ../diff-report.md || echo "diff_failed=true" >> $GITHUB_OUTPUT
 
       - name: Read TurboDocx diff report
         id: report

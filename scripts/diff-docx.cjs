@@ -14,7 +14,7 @@ const {
   categorizeDifference,
   filesAreIdentical,
   isXMLFile,
-} = require('./diff-utils')
+} = require('./diff-utils.cjs')
 
 /**
  * @typedef {import('diff').Change} DiffChange
@@ -52,7 +52,7 @@ const {
 
 /**
  * Main diff script for comparing two DOCX files
- * Usage: node scripts/diff-docx.js <baseline.docx> <current.docx> [--output <report.md>]
+ * Usage: node scripts/diff-docx.cjs <baseline.docx> <current.docx> [--output <report.md>]
  */
 
 async function main() {
@@ -60,7 +60,7 @@ async function main() {
 
   if (args.length < 2) {
     console.error(
-      'Usage: node scripts/diff-docx.js <baseline.docx> <current.docx> [--output <report.md>]'
+      'Usage: node scripts/diff-docx.cjs <baseline.docx> <current.docx> [--output <report.md>]'
     )
     process.exit(1)
   }

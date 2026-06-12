@@ -1,6 +1,9 @@
 import { VOID_ELEMENTS } from './constants.js'
 
-function attrListToDict(attrs: any) {
+export type TokenAttribute = { name?: string | null; value?: string | null } | null | undefined;
+export type TokenAttributeList = TokenAttribute[] | Record<string, string | null>;
+
+function attrListToDict(attrs?: TokenAttributeList | null) {
   if (!attrs) return {}
   if (!Array.isArray(attrs) && typeof attrs === 'object') return attrs
   if (!Array.isArray(attrs)) return {}
@@ -11,7 +14,7 @@ function attrListToDict(attrs: any) {
     const name = entry.name
     if (name != null)
       out[String(name)] = Object.prototype.hasOwnProperty.call(entry, 'value')
-        ? entry.value
+        ? entry.value ?? null
         : null
   }
   return out
