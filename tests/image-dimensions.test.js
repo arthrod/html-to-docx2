@@ -194,5 +194,137 @@ describe('Image Dimensions', () => {
       const result = getImageDimensions(pngBuffer)
       expect(result).toEqual({ width: 32, height: 32, type: 'png' })
     })
+
+    it('should parse JPEG dimensions (64x64)', () => {
+      // JPEG requires SOF0 (0xC0), SOF1 (0xC1), or SOF2 (0xC2)
+      const jpeg = new Uint8Array([
+        0xff, 0xd8, 0xff,
+        0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
+        0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x40, 0x00, 0x40, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01,
+        0xff, 0xd9
+      ]);
+      const result = getImageDimensions(jpeg)
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    it('should parse BMP dimensions (48x48)', () => {
+      const bmp = new Uint8Array(26);
+      bmp[0] = 0x42; bmp[1] = 0x4d;
+      bmp[18] = 48; bmp[19] = 0; bmp[20] = 0; bmp[21] = 0;
+      bmp[22] = 48; bmp[23] = 0; bmp[24] = 0; bmp[25] = 0;
+      const result = getImageDimensions(bmp)
+      expect(result).toEqual({ width: 48, height: 48, type: 'bmp' })
+    })
+
+    it('should parse WebP VP8 dimensions (24x24)', () => {
+      const webpVP8 = new Uint8Array(30)
+      webpVP8.set([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+        0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20
+      ])
+      webpVP8[26] = 24; webpVP8[27] = 0;
+      webpVP8[28] = 24; webpVP8[29] = 0;
+      const result = getImageDimensions(webpVP8)
+      expect(result).toEqual({ width: 24, height: 24, type: 'webp' })
+    })
+
+    it('should fallback for malformed JPEG', () => {
+      const malformedJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0x00, 0x00])
+      const result = getImageDimensions(malformedJpeg)
+      expect(result).toEqual({ width: 100, height: 100, type: 'jpg' })
+    })
+
+    it('should fallback for malformed WebP', () => {
+      const malformedWebP = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+        0x57, 0x45, 0x42, 0x50, 0x00, 0x00, 0x00, 0x00
+      ])
+      const result = getImageDimensions(malformedWebP)
+      expect(result).toEqual({ width: 100, height: 100, type: 'webp' })
+    })
+
+    it('should skip non-0xFF markers in JPEG', () => {
+      // Simulate a malformed jpeg with padding (0x00) before a valid marker
+      const jpeg = new Uint8Array([
+        0xff, 0xd8, 0xff,
+        0x00, 0x00, 0x00, // padding
+        0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x40, 0x00, 0x40, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01
+      ]);
+      const result = getImageDimensions(jpeg)
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    it('should handle Uint8Array input without recreation', () => {
+      const buf = new Uint8Array([0x00]);
+      expect(getImageDimensions(buf)).toEqual({ width: 100, height: 100, type: 'unknown' });
+    })
+
+    it('should parse JPEG dimensions from SOF1 (64x64)', () => {
+      const jpeg = new Uint8Array([
+        0xff, 0xd8, 0xff,
+        0xc1, 0x00, 0x11, 0x08, 0x00, 0x40, 0x00, 0x40, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01
+      ]);
+      const result = getImageDimensions(jpeg)
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    it('should parse JPEG dimensions from SOF2 (64x64)', () => {
+      const jpeg = new Uint8Array([
+        0xff, 0xd8, 0xff,
+        0xc2, 0x00, 0x11, 0x08, 0x00, 0x40, 0x00, 0x40, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01
+      ]);
+      const result = getImageDimensions(jpeg)
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    it('should fallback for malformed WebP missing VP8/VP8L chunk', () => {
+      const webp = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+        0x57, 0x45, 0x42, 0x50, 0x58, 0x58, 0x58, 0x58
+      ]);
+      const result = getImageDimensions(webp)
+      expect(result).toEqual({ width: 100, height: 100, type: 'webp' })
+    })
+
+    it('should parse WebP VP8L dimensions (24x24)', () => {
+      const webpVP8L = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+        0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x4c,
+        0x00, 0x00, 0x00, 0x00, 0x2f, 0x17, 0x17, 0x00, 0x00
+      ])
+      webpVP8L[21] = 0x17;
+      webpVP8L[22] = 0xc0;
+      webpVP8L[23] = 0x05;
+      webpVP8L[24] = 0x00;
+      const result = getImageDimensions(webpVP8L)
+      expect(result).toEqual({ width: 24, height: 24, type: 'webp' })
+    })
+
+    it('should skip to next marker correctly in JPEG', () => {
+      // Create a JPEG where we have a marker that we skip, and then SOF0
+      const jpeg = new Uint8Array([
+        0xff, 0xd8, 0xff,
+        0xe0, 0x00, 0x04, 0x00, 0x00, // APP0 marker length 4 (2 + 2 bytes skipped)
+        0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x40, 0x00, 0x40, 0x03, 0x01, 0x11, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01
+      ]);
+      const result = getImageDimensions(jpeg)
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    it('should fallback for malformed WebP when missing VP8 or VP8L marker entirely', () => {
+      const webp = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+        0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x58
+      ]);
+      const result = getImageDimensions(webp)
+      expect(result).toEqual({ width: 100, height: 100, type: 'webp' })
+    })
+
+    it('should fallback for truncated JPEG', () => {
+      // JPEG that ends prematurely before reaching a valid marker
+      const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00]);
+      const result = getImageDimensions(jpeg)
+      expect(result).toEqual({ width: 100, height: 100, type: 'jpg' })
+    })
   })
 })
