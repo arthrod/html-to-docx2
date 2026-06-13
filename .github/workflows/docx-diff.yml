@@ -29,6 +29,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
+          submodules: false
 
       - name: Setup Bun for baseline
         uses: oven-sh/setup-bun@v2
@@ -37,7 +38,7 @@ jobs:
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
@@ -51,6 +52,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: current
+          submodules: false
 
       - name: Setup Bun for current
         uses: oven-sh/setup-bun@v2
@@ -59,7 +61,7 @@ jobs:
 
       - name: Install dependencies (current)
         working-directory: current
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current
