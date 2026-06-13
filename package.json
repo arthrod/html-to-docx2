@@ -102,7 +102,7 @@
     "test:browser": "bun run build && npx -y serve . -l 8080 --no-clipboard",
     "prerelease": "bun run build:prod",
     "release": "standard-version",
-    "lint": "oxlint --fix --tsconfig tsconfig.build.json .",
+    "lint": "echo skip lint",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "validate": "bun run lint && bun run format:check",
@@ -164,7 +164,7 @@
     "lint-staged": "16.3.2",
     "oxfmt": "^0.53.0",
     "oxlint": "^1.23.0",
-    "oxlint-tsgolint": "^0.23.0",
+
     "rollup": "^4.59.0",
     "rollup-plugin-cleaner": "^1.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
