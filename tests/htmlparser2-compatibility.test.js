@@ -12,20 +12,20 @@ import { fileURLToPath } from 'node:url'
 import createHTMLtoVDOM from '../src/helpers/html-parser'
 
 /**
- * @typedef {import('../src/utils/vnode').VNode} ParsedVNode
+ * @typedef {import('../src/utils/vnode').VNode} VNode
  */
 
 /**
  * @param {string} html
- * @returns {ParsedVNode | ParsedVNode[]}
+ * @returns {VNode | VNode[]}
  */
 function convertTypedHTML(html) {
-  return /** @type {ParsedVNode | ParsedVNode[]} */ (convertHTML(html))
+  return /** @type {VNode | VNode[]} */ (convertHTML(html))
 }
 
 /**
- * @param {ParsedVNode | ParsedVNode[]} value
- * @returns {ParsedVNode}
+ * @param {VNode | VNode[]} value
+ * @returns {VNode}
  */
 function asSingleVNode(value) {
   if (Array.isArray(value)) {
@@ -35,8 +35,8 @@ function asSingleVNode(value) {
 }
 
 /**
- * @param {ParsedVNode | ParsedVNode[]} value
- * @returns {ParsedVNode[]}
+ * @param {VNode | VNode[]} value
+ * @returns {VNode[]}
  */
 function asVNodeArray(value) {
   return Array.isArray(value) ? value : [value]
