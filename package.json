@@ -102,6 +102,10 @@
     "test:browser": "bun run build && npx -y serve . -l 8080 --no-clipboard",
     "prerelease": "bun run build:prod",
     "release": "standard-version",
+    "lint": "oxlint --fix --tsconfig tsconfig.build.json .",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "validate": "bun run lint && bun run format:check",
     "build": "tsdown",
     "build:dev": "NODE_ENV=development tsdown",
     "build:prod": "NODE_ENV=production tsdown",
@@ -158,6 +162,9 @@
     "diff": "8.0.3",
     "lefthook": "^1.11.13",
     "lint-staged": "16.3.2",
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.23.0",
+    "oxlint-tsgolint": "^0.23.0",
     "rollup": "^4.59.0",
     "rollup-plugin-cleaner": "^1.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
@@ -190,5 +197,13 @@
   "resolutions": {
     "bl": "^1.2.3",
     "semver": "^7.6.0"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}": [
+      "oxfmt --write"
+    ],
+    "**/*.{ts,tsx,js,mjs,cjs}": [
+      "oxlint --fix --tsconfig=tsconfig.build.json"
+    ]
   }
 }
