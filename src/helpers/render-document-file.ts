@@ -420,7 +420,7 @@ export const buildList = async (
       const tempVNodeObjects: VNodeObject[] = []
       for (const childVNode of tempNode.children) {
         const childNode = childVNode as VNode
-        if (['ul', 'ol'].includes(childNode.tagName || '')) {
+        if (isVNode(childNode) && ['ul', 'ol'].includes(childNode.tagName || '')) {
           tempVNodeObjects.push({
             node: childVNode,
             level: tempVNodeObject.level + 1,
@@ -437,7 +437,7 @@ export const buildList = async (
             (tempVNodeObjects[tempVNodeObjects.length - 1].node as VNode).tagName || ''
           ).toLowerCase() === 'p' &&
           // Don't append <li> elements to paragraphs - they need separate processing
-          (childNode.tagName || '').toLowerCase() !== 'li'
+          (isVNode(childNode) && (childNode.tagName || '').toLowerCase() !== 'li')
         ) {
           const lastNode = tempVNodeObjects[tempVNodeObjects.length - 1].node as VNode
           if (lastNode.children) {
