@@ -46,11 +46,11 @@ function createMinimalJPEG(width = 64, height = 64) {
   const dv = new DataView(sof0Data.buffer)
 
   // SOI marker
-  dv.setUint16(0, 0xFFD8, false)
+  dv.setUint16(0, 0xffd8, false)
   // APP0 (JFIF)
-  dv.setUint16(2, 0xFFE0, false)
+  dv.setUint16(2, 0xffe0, false)
   dv.setUint16(4, 16, false) // length
-  dv.setUint32(6, 0x4A464946, false) // 'JFIF'
+  dv.setUint32(6, 0x4a464946, false) // 'JFIF'
   dv.setUint8(10, 0) // '\0'
   dv.setUint8(11, 1) // version major
   dv.setUint8(12, 1) // version minor
@@ -63,7 +63,7 @@ function createMinimalJPEG(width = 64, height = 64) {
   // SOF0 marker
   const sof0 = new Uint8Array(17)
   const sof0Dv = new DataView(sof0.buffer)
-  sof0Dv.setUint16(0, 0xFFC0, false) // SOF0
+  sof0Dv.setUint16(0, 0xffc0, false) // SOF0
   sof0Dv.setUint16(2, 15, false) // length (8 + components*3)
   sof0Dv.setUint8(4, 8) // precision
   sof0Dv.setUint16(5, height, false) // height
@@ -81,7 +81,7 @@ function createMinimalJPEG(width = 64, height = 64) {
   sof0Dv.setUint8(16, 3) // component ID
 
   // EOI marker
-  const eoi = new Uint8Array([0xFF, 0xD9])
+  const eoi = new Uint8Array([0xff, 0xd9])
 
   const result = new Uint8Array(sof0Data.length + sof0.length + eoi.length)
   result.set(sof0Data)
@@ -107,7 +107,7 @@ function createMinimalGIF(width = 16, height = 16) {
   dv.setUint8(12, 0) // pixel aspect ratio
 
   // Trailer (for minimal valid file)
-  dv.setUint8(13, 0x3B) // ';'
+  dv.setUint8(13, 0x3b) // ';'
 
   return data.slice(0, 14)
 }
@@ -123,15 +123,15 @@ function createMinimalWebP(width = 24, height = 24) {
   dv.setUint32(8, 0x57454250, false) // 'WEBP'
 
   // VP8L chunk
-  dv.setUint32(12, 0x5650384C, false) // 'VP8L'
+  dv.setUint32(12, 0x5650384c, false) // 'VP8L'
   dv.setUint32(16, 10, true) // chunk size
 
   // VP8L signature byte
-  dv.setUint8(20, 0x2F) // signature
+  dv.setUint8(20, 0x2f) // signature
 
   // VP8L image data: 14 bits for width-1, 14 bits for height-1, little-endian
   const imageBits = BigInt((width - 1) | ((height - 1) << 14))
-  dv.setUint32(21, Number(imageBits & 0xFFFFFFFFn), true)
+  dv.setUint32(21, Number(imageBits & 0xffffffffn), true)
 
   return data.slice(0, 25)
 }
@@ -156,9 +156,9 @@ function createMinimalWebPLossy(width = 24, height = 24) {
   dv.setUint8(20, 0x00) // keyframe tag
   dv.setUint8(21, 0x00)
   dv.setUint8(22, 0x00)
-  dv.setUint8(23, 0x9D) // start code
+  dv.setUint8(23, 0x9d) // start code
   dv.setUint8(24, 0x01)
-  dv.setUint8(25, 0x2A)
+  dv.setUint8(25, 0x2a)
 
   // Width (14 bits) and horizontal scale (2 bits)
   dv.setUint16(26, width, true)
@@ -173,7 +173,7 @@ function createMinimalBMP(width = 48, height = 48) {
   const dv = new DataView(data.buffer)
 
   // BMP header
-  dv.setUint16(0, 0x4D42, true) // 'BM'
+  dv.setUint16(0, 0x4d42, true) // 'BM'
   dv.setUint32(2, 26, true) // file size
   dv.setUint32(6, 0, true) // reserved
   dv.setUint32(10, 26, true) // pixel data offset
@@ -226,34 +226,40 @@ describe('Image Dimensions', () => {
       expect(result).toEqual({ width: 24, height: 24, type: 'webp' })
     })
 
-
     it('should parse JPEG dimensions (64x64)', () => {
       const result = getImageDimensions(createMinimalJPEG(64, 64))
       expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
     })
 
     it('should handle malformed JPEG gracefully', () => {
-      const malformedJpeg = new Uint8Array([0xFF, 0xD8, 0xFF, 0x00, 0x01, 0x02])
+      const malformedJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0x00, 0x01, 0x02])
       const result = getImageDimensions(malformedJpeg)
       expect(result).toEqual({ width: 100, height: 100, type: 'jpg' })
     })
 
     it('should skip to next marker correctly in JPEG', () => {
       const data = new Uint8Array([
-        0xFF, 0xD8, 0xFF, // SOI & initial parser bytes
-        0xE0,             // Marker (APP0)
-        0x00, 0x04,       // Length (4)
-        0x00, 0x00,       // Payload
-        0x00,             // Extra byte to trigger uint8[offset] !== 0xff -> offset++
-        0xFF,             // Found FF
-        0xC0,             // SOF0 Marker
-        0x00, 0x11,       // Length
-        0x08,             // Precision
-        0x00, 0x40,       // Height
-        0x00, 0x40        // Width
-      ]);
-      const result = getImageDimensions(data);
-      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' });
+        0xff,
+        0xd8,
+        0xff, // SOI & initial parser bytes
+        0xe0, // Marker (APP0)
+        0x00,
+        0x04, // Length (4)
+        0x00,
+        0x00, // Payload
+        0x00, // Extra byte to trigger uint8[offset] !== 0xff -> offset++
+        0xff, // Found FF
+        0xc0, // SOF0 Marker
+        0x00,
+        0x11, // Length
+        0x08, // Precision
+        0x00,
+        0x40, // Height
+        0x00,
+        0x40, // Width
+      ])
+      const result = getImageDimensions(data)
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
     })
 
     it('should parse BMP dimensions (48x48)', () => {
@@ -268,7 +274,10 @@ describe('Image Dimensions', () => {
 
     it('should handle malformed WebP gracefully', () => {
       // Missing VP8/VP8L chunk
-      const malformedWebP = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x00, 0x00, 0x00, 0x00])
+      const malformedWebP = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x00, 0x00,
+        0x00, 0x00,
+      ])
       const result = getImageDimensions(malformedWebP)
       expect(result).toEqual({ width: 100, height: 100, type: 'webp' })
     })
