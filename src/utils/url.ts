@@ -15,16 +15,30 @@ const isValidUrl = (urlString: string | null | undefined): boolean => {
 }
 
 const isPrivateOrLocalHost = (hostname: string): boolean => {
+  const normalized = hostname.toLowerCase()
+
   if (
-    hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname === '[::1]' ||
-    hostname === '0.0.0.0'
+    normalized === 'localhost' ||
+    normalized === '127.0.0.1' ||
+    normalized === '[::1]' ||
+    normalized === '0.0.0.0' ||
+    normalized === '[::]'
   ) {
     return true
   }
 
-  if (hostname.endsWith('.localhost')) return true
+  if (normalized.endsWith('.localhost')) return true
+
+  // IPv6 link-local
+  if (/^\[fe[89ab][0-9a-f]:/i.test(normalized)) return true
+  // IPv6 unique-local (fc00::/7)
+  if (/^\[f[cd][0-9a-f]{2}:/i.test(normalized)) return true
+
+  // IPv4-mapped IPv6 address
+  const ipv4MappedMatch = normalized.match(/^\[::ffff:(.+)\]$/)
+  if (ipv4MappedMatch) {
+    return isPrivateOrLocalHost(ipv4MappedMatch[1])
+  }
 
   let parts: number[] = []
   const stringParts = hostname.split('.')
