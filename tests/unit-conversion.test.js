@@ -32,7 +32,7 @@ import {
   EIPToPoint,
   pointToEIP,
   pixelToEIP,
-  EIPToPixel,
+  EIPToPixel
 } from '../src/utils/unit-conversion'
 
 describe('Unit Conversion utilities', () => {

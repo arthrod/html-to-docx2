@@ -111,7 +111,7 @@ jobs:
         with:
           model: dashscope/qwen3.6-plus
           use_github_token: true
-          share: 'false'
+          share: "false"
           prompt: |
             Review this pull request as a senior engineer. Be concise and specific.
             - Flag correctness bugs, security issues, and data-loss risks first.
