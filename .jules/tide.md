@@ -1,3 +1,6 @@
 ## 2024-05-24 - Unit Conversion Pure Functions
 **Learning:** Pure functions like the unit conversion utilities in `src/utils/unit-conversion.ts` are ideal for Tier 1 testing. They require zero mocking, run extremely fast, and are fundamental for preventing downstream regressions in complex calculations (like line heights or image dimensions).
 **Action:** Always prioritize finding and testing pure, math-heavy utilities before tackling complex, mock-heavy UI or network interactions, as they offer the highest signal-to-noise ratio in tests.
+## 2024-05-24 - BMP and JPEG Test Mocking Formats
+**Learning:** When synthetically mocking BMP binary headers for image parsing tests, you must strictly use a 40-byte `BITMAPINFOHEADER` (total size 54 bytes) rather than a 12-byte `BITMAPCOREHEADER`. The `getImageDimensions` parser expects 32-bit width/height fields specifically at offsets 18 and 22, which aligns only with `BITMAPINFOHEADER`. Additionally, JPEG parsers skip over non-0xFF padding bytes, so test mocks evaluating edge cases should include valid segments (`APP0`, padding, `SOF0`) to ensure realistic coverage.
+**Action:** Always verify the precise byte offsets expected by the parser in source code before constructing synthetic binary fixtures in memory, and ensure the mock correctly simulates the required header variant (e.g., info headers over core headers).
