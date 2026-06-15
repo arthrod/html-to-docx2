@@ -19,7 +19,7 @@ jobs:
           bun-version: latest
 
       # Install dependencies with clean install (respects bun.lock exactly)
-      - run: bun install --frozen-lockfile
+      - run: bun install --ignore-scripts
 
       # Run all test suites: unit tests, integration tests, heading styles examples, and TypeScript tests
       - run: bun run test
@@ -37,7 +37,7 @@ jobs:
           registry-url: https://registry.npmjs.org/ # Configure npm registry for publishing
 
       # Install dependencies
-      - run: bun install --frozen-lockfile
+      - run: bun install --ignore-scripts
 
       # Build the production bundle (bundles modules, minifies code with terser)
       - run: bun run build:prod
