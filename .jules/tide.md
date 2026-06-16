@@ -7,3 +7,7 @@
 
 **Learning:** Pure functions like color conversions can be tested with full branch coverage natively without mocks, providing 100% reliability for mapping HTML formats to DOCX formats.
 **Action:** Always favor writing simple input/output tests for utility/conversion files as they are extremely fast and completely stateless.
+
+## 2025-02-28 - Testing Pure Functions
+**Learning:** Pure functions like color conversions can be tested with full branch coverage natively without mocks, providing 100% reliability for mapping HTML formats to DOCX formats.
+**Action:** Always favor writing simple input/output tests for utility/conversion files as they are extremely fast and completely stateless.
