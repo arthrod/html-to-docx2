@@ -26,6 +26,16 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
+
+    // IPv6 checks
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:127.0.0.1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:7f00:1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:192.168.1.1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:c0a8:101]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:8.8.8.8]')).toBe(false)
   })
 
   test('should validate http URLs', () => {
