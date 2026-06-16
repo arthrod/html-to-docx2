@@ -9,3 +9,7 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+
+## 2024-06-16 - Do not upgrade dependencies when formatting
+**Learning:** Running `bun install` before running tests and lint checks without `--ignore-scripts` may inadvertently upgrade numerous core dependencies in `bun.lock`, which is a risky breaking change when the goal is a minor optimization. Also, formatting the whole codebase creates massive unrelated PR noise.
+**Action:** Only format the specific file that was modified (or skip global formatting if the linter passes on the modified lines) and always `git restore bun.lock` to ensure the PR is strictly scoped to the optimization.
