@@ -5,7 +5,7 @@
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
-import { isVNode, isVText } from '../vdom/index'
+import { isVNode, isVText, VNode, VText } from '../vdom/index'
 
 type XMLBuilderType = XMLBuilder
 
@@ -155,15 +155,9 @@ type VNodeProperties = {
   style?: Record<string, string>
 }
 
-type VNodeType = {
-  children?: (VNodeType | VTextType)[]
-  properties?: VNodeProperties
-  tagName?: string
-}
+type VNodeType = VNode
 
-type VTextType = {
-  text: string
-}
+type VTextType = VText
 
 // Types for DocxDocumentInstance
 type MediaFileResponse = {
