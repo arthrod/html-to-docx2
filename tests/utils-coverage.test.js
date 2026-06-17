@@ -46,6 +46,15 @@ describe('URL utilities', () => {
     expect(isValidUrl(null)).toBe(false)
     expect(isValidUrl(undefined)).toBe(false)
   })
+
+  /**
+   * WHAT: Tests the error path inside `isValidUrl` where `new URL()` fails to parse the string.
+   * WHY: Ensures that completely malformed strings which cause URL parsing exceptions
+   * are safely caught and rejected (returning false), preventing unhandled runtime exceptions.
+   */
+  test('should catch and reject URL parsing errors', () => {
+    expect(isValidUrl('not-a-url')).toBe(false)
+  })
 })
 
 describe('ListStyleBuilder', () => {
