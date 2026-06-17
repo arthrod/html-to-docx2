@@ -155,8 +155,8 @@ const asVText = (node: VNodeType | VTextType): VTextType | null => {
 const isInlineElement = (node: VNodeType | VTextType): boolean =>
   isVText(node) || INLINE_ELEMENTS.includes(asVNode(node)?.tagName ?? '')
 
-const LIST_TAGS = new Set(['ul', 'ol', 'li'])
-const LIST_CONTAINER_TAGS = new Set(['ul', 'ol'])
+const LIST_TAGS = new Set(['ul', 'ol', 'li']);
+const LIST_CONTAINER_TAGS = new Set(['ul', 'ol']);
 
 // Elements that need special handling and should not be wrapped in inline grouping
 const SPECIAL_BLOCK_ELEMENTS = [
