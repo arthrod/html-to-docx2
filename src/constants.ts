@@ -383,7 +383,7 @@ const paragraphBordersObject: ParagraphBorders = {
     spacing: 3,
   },
 }
-const colorlessColors: ReadonlyArray<string> = ['transparent', 'auto']
+const colorlessColors: ReadonlySet<string> = new Set(['transparent', 'auto'])
 const verticalAlignValues: ReadonlyArray<VerticalAlign> = ['top', 'middle', 'bottom']
 
 export {
