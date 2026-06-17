@@ -9,3 +9,6 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+## 2025-02-14 - Optimized XML Escaping in Render Document File
+**Learning:** Sequential `.replace()` with Regex is significantly slower and highly allocative in V8 compared to a manual `charCodeAt` iterative loop, especially in a heavily-executed DOM rendering sequence.
+**Action:** Reused the Bolt-optimized `escapeXml` from `src/utils/xml-escape.ts` in `src/helpers/render-document-file.ts` to escape strings and attributes in SVG generation, saving computation time in hot paths.
