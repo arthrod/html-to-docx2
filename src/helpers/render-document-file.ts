@@ -119,6 +119,9 @@ type DocxDocumentInstance = {
 const MARGIN_NUMBER_REGEX = /(\d+)/
 
 // Inline elements that should be grouped into a single paragraph
+const LIST_TAGS = new Set(['ul', 'ol'])
+const LIST_AND_ITEM_TAGS = new Set(['ul', 'ol', 'li'])
+
 const INLINE_ELEMENTS = [
   'span',
   'strong',
@@ -410,7 +413,7 @@ export const buildList = async (
     if (
       isVText(tempVNodeObject.node) ||
       (isVNode(tempVNodeObject.node) &&
-        !['ul', 'ol', 'li'].includes((tempVNodeObject.node as VNodeType).tagName || ''))
+        !LIST_AND_ITEM_TAGS.has((tempVNodeObject.node as VNodeType).tagName || ''))
     ) {
       const paragraphFragment = await xmlBuilder.buildParagraph(
         tempVNodeObject.node,
@@ -430,12 +433,12 @@ export const buildList = async (
     if (
       tempNode.children &&
       tempNode.children.length &&
-      ['ul', 'ol', 'li'].includes(tempNode.tagName || '')
+      LIST_AND_ITEM_TAGS.has(tempNode.tagName || '')
     ) {
       const tempVNodeObjects: VNodeObject[] = []
       for (const childVNode of tempNode.children) {
         const childNode = childVNode as VNodeType
-        if (['ul', 'ol'].includes(childNode.tagName || '')) {
+        if (LIST_TAGS.has(childNode.tagName || '')) {
           tempVNodeObjects.push({
             node: childVNode,
             level: tempVNodeObject.level + 1,
@@ -505,7 +508,7 @@ async function findXMLEquivalent(
   const hasListChildren =
     vNodeHasChildren(vNode) &&
     (vNode.children || []).some(
-      (child) => isVNode(child) && ['ul', 'ol'].includes((child as VNodeType).tagName || '')
+      (child) => isVNode(child) && LIST_TAGS.has((child as VNodeType).tagName || '')
     )
 
   // Reset list tracking for non-list elements to break consecutive list sequences
@@ -722,14 +725,12 @@ async function findXMLEquivalent(
       // If so, process them separately as lists
       if (vNodeHasChildren(vNode)) {
         const listChildren = (vNode.children || []).filter(
-          (child) =>
-            isVNode(child) && ['ul', 'ol'].includes((child as VNodeType).tagName || '')
+          (child) => isVNode(child) && LIST_TAGS.has((child as VNodeType).tagName || '')
         )
         if (listChildren.length > 0) {
           // Process non-list children as paragraph content first
           const nonListChildren = (vNode.children || []).filter(
-            (child) =>
-              !isVNode(child) || !['ul', 'ol'].includes((child as VNodeType).tagName || '')
+            (child) => !isVNode(child) || !LIST_TAGS.has((child as VNodeType).tagName || '')
           )
           if (nonListChildren.length > 0) {
             const modifiedVNode = new VNode(

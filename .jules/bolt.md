@@ -9,3 +9,6 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+## 2025-02-28 - Use Set instead of Array.includes for list children checking
+**Optimization:** Replaced `['ul', 'ol', 'li'].includes(...)` with `LIST_AND_ITEM_TAGS.has(...)` where `LIST_AND_ITEM_TAGS` is a `Set`.
+**Learning:** Checking for elements in a small fixed list in a hot path like DOM traversal in V8 can be optimized using `Set.has()` instead of repeatedly creating arrays inline and using `.includes()`. Although the speedup on such small sets isn't huge per call (approx 1.02x in simplistic loops, though higher when avoiding inline array allocations on every call), it reduces memory allocation pressure.
