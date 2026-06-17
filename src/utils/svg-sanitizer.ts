@@ -203,7 +203,7 @@ const URL_ATTRIBUTES = new Set([
   'filter',
   'clip-path',
   'mask',
-  'style'
+  'style',
 ])
 
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
@@ -327,7 +327,6 @@ export const sanitizeSVGVNode = (
   if (vNode.properties) {
     const attributes = vNode.properties.attributes || {}
     const sanitizedAttributes: SVGAttributes = {}
-    let removedCount = 0
 
     Object.entries(attributes).forEach(([key, value]) => {
       const lowerKey = key.toLowerCase()
@@ -337,19 +336,14 @@ export const sanitizeSVGVNode = (
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Removed event handler: ${key}="${value}"`)
         }
-        removedCount += 1
         return
       }
 
-      if (
-        URL_ATTRIBUTES.has(lowerKey) &&
-        hasDangerousProtocol(value)
-      ) {
+      if (URL_ATTRIBUTES.has(lowerKey) && hasDangerousProtocol(value)) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
         }
-        removedCount += 1
         return
       }
 
@@ -366,20 +360,12 @@ export const sanitizeSVGVNode = (
             `[SVG SANITIZER] Removed non-whitelisted attribute: ${key}="${value}"`
           )
         }
-        removedCount += 1
       }
     })
 
     sanitizedVNode.properties = {
       ...sanitizedVNode.properties,
       attributes: sanitizedAttributes,
-    }
-
-    if (removedCount > 0 && verboseLogging) {
-      // eslint-disable-next-line no-console
-      console.log(
-        `[SVG SANITIZER] Removed ${removedCount} unsafe attribute(s) from <${tagName}>`
-      )
     }
   }
 
@@ -397,12 +383,6 @@ export const sanitizeSVGVNode = (
       .filter((child): child is SVGChildNode => child !== null)
 
     sanitizedVNode.children = sanitizedChildren
-
-    if (sanitizedChildren.length < vNode.children.length && verboseLogging) {
-      const removed = vNode.children.length - sanitizedChildren.length
-      // eslint-disable-next-line no-console
-      console.log(`[SVG SANITIZER] Removed ${removed} child element(s) from <${tagName}>`)
-    }
   }
 
   return sanitizedVNode
