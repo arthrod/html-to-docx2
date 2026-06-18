@@ -34,7 +34,7 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
   // IPv4-mapped IPv6 address recursive validation
   const ipv4MappedMatch = hostname.match(/^\[::ffff:(.+)\]$/i)
   if (ipv4MappedMatch) {
-    return isPrivateOrLocalHost(ipv4MappedMatch[1])
+    return isPrivateOrLocalHost(ipv4MappedMatch[1] as string)
   }
 
   let parts: number[] = []
