@@ -141,7 +141,7 @@ const NUMERIC_REPLACEMENTS = new Map([
   [0x9f, '\u0178'],
 ])
 
-export function decodeNumericEntity(text: any, { isHex = false } = {}) {
+export function decodeNumericEntity(text: string, { isHex = false } = {}) {
   const base = isHex ? 16 : 10
   const codepoint = Number.parseInt(text, base)
 
@@ -154,21 +154,21 @@ export function decodeNumericEntity(text: any, { isHex = false } = {}) {
   return String.fromCodePoint(codepoint)
 }
 
-function isAsciiAlpha(ch: any) {
+function isAsciiAlpha(ch: string) {
   const c = ch.charCodeAt(0)
   return (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a)
 }
 
-function isAsciiDigit(ch: any) {
+function isAsciiDigit(ch: string) {
   const c = ch.charCodeAt(0)
   return c >= 0x30 && c <= 0x39
 }
 
-function isAsciiAlnum(ch: any) {
+function isAsciiAlnum(ch: string) {
   return isAsciiAlpha(ch) || isAsciiDigit(ch)
 }
 
-export function decodeEntitiesInText(text: any, { inAttribute = false } = {}) {
+export function decodeEntitiesInText(text: string, { inAttribute = false } = {}) {
   const result = []
   let i = 0
   const length = text.length
