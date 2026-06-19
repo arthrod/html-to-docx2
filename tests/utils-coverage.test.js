@@ -16,6 +16,29 @@ import {
 } from '../src/utils/image-to-base64'
 
 describe('URL utilities', () => {
+  /**
+   * 🧪 WHAT: Verifies SSRF protection correctly blocks various integer-encoded formats of private IP addresses.
+   * 🎯 WHY: Attackers often encode internal IP addresses (like 10.0.0.1 or 192.168.1.1) as single 32-bit integers to bypass naive string-matching SSRF filters. Without this check, the server could be tricked into requesting internal resources.
+   */
+  test('should reject integer-encoded private IP addresses', () => {
+    // 10.0.0.1
+    expect(isPrivateOrLocalHost('167772161')).toBe(true)
+    // 169.254.169.254
+    expect(isPrivateOrLocalHost('2852039166')).toBe(true)
+    // 192.168.1.1
+    expect(isPrivateOrLocalHost('3232235777')).toBe(true)
+    // 172.16.0.1
+    expect(isPrivateOrLocalHost('2886729729')).toBe(true)
+    // 0.0.0.0
+    expect(isPrivateOrLocalHost('0')).toBe(true)
+  })
+
+  test('should reject remaining private network IP string variants', () => {
+    expect(isPrivateOrLocalHost('172.16.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('172.31.255.255')).toBe(true)
+    expect(isPrivateOrLocalHost('0.0.0.0')).toBe(true)
+  })
+
   test('should reject private or local hosts', () => {
     expect(isPrivateOrLocalHost('127.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('localhost')).toBe(true)

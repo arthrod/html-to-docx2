@@ -1,3 +1,6 @@
 ## 2024-05-24 - Unit Conversion Pure Functions
 **Learning:** Pure functions like the unit conversion utilities in `src/utils/unit-conversion.ts` are ideal for Tier 1 testing. They require zero mocking, run extremely fast, and are fundamental for preventing downstream regressions in complex calculations (like line heights or image dimensions).
 **Action:** Always prioritize finding and testing pure, math-heavy utilities before tackling complex, mock-heavy UI or network interactions, as they offer the highest signal-to-noise ratio in tests.
+## 2024-06-19 - JavaScript Bitwise Operator SSRF Bypass
+**Learning:** In JavaScript, bitwise operators (`>>>`, `&`, etc.) strictly operate on 32-bit signed integers. When testing SSRF logic (like `isPrivateOrLocalHost`) for IPv4 addresses encoded as single integers, addresses like 169.254.169.254 result in negative signed integers (e.g. -1442971650), while addresses like 10.0.0.1 (167772161) remain positive. Using `>>>` (zero-fill right shift) properly extracts octets from negative integer representations, but test fixtures MUST use the correct integer representations for the math to work.
+**Action:** When writing tests that verify raw IP address decoding and bit manipulation, double-check test fixtures against the language's native bitwise limits to avoid writing false-negative tests.
