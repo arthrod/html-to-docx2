@@ -10,6 +10,7 @@ type XMLBuilderType = XMLBuilder
 
 import { defaultDocumentOptions, imageType, internalRelationship } from '../constants'
 import namespaces from '../namespaces'
+import { escapeXml } from '../utils/xml-escape'
 import { getImageDimensions } from '../utils/image-dimensions'
 import { downloadAndCacheImage } from '../utils/image-to-base64'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
@@ -190,7 +191,8 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
 const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
   const textNode = asVText(node)
   if (textNode) {
-    return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // ⚡ Bolt: Use highly-optimized single pass char code loop
+    return escapeXml(textNode.text)
   }
 
   const vNode = asVNode(node)
@@ -211,11 +213,8 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
 
   Object.entries(attributes).forEach(([key, value]) => {
     if (value) {
-      const escapedValue = String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+      // ⚡ Bolt: Use highly-optimized single pass char code loop
+      const escapedValue = escapeXml(String(value))
       svg += ` ${key}="${escapedValue}"`
     }
   })
