@@ -19,12 +19,21 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname === '[::1]' ||
+    hostname === '[::]' ||
     hostname === '0.0.0.0'
   ) {
     return true
   }
 
   if (hostname.endsWith('.localhost')) return true
+
+  if (/^\[fe[89ab][0-9a-f]:/i.test(hostname)) return true
+  if (/^\[f[cd][0-9a-f]{2}:/i.test(hostname)) return true
+
+  const ipv4MappedMatch = /^\[::ffff:(.+)\]$/i.exec(hostname)
+  if (ipv4MappedMatch && ipv4MappedMatch[1]) {
+    return isPrivateOrLocalHost(ipv4MappedMatch[1])
+  }
 
   let parts: number[] = []
   const stringParts = hostname.split('.')
@@ -37,7 +46,7 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
   }
 
   if (parts.length === 1 && !isNaN(parts[0])) {
-    const val = parts[0]
+    const val = parts[0] >>> 0
     const octet1 = (val >>> 24) & 255
     const octet2 = (val >>> 16) & 255
     if (octet1 === 127) return true

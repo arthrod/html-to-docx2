@@ -28,6 +28,23 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  test('should reject IPv6 SSRF bypasses', () => {
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fd12:3456::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:127.0.0.1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:169.254.169.254]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:8.8.8.8]')).toBe(false)
+  })
+
+  test('should reject negative integer SSRF bypasses', () => {
+    // -1062731519 is 192.168.1.1
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true)
+    // -1442971138 is 169.254.169.254
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
