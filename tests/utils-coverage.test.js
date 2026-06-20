@@ -28,6 +28,29 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  /**
+   * WHAT: Tests that SSRF prevention handles IPv4 addresses encoded as single integers.
+   * WHY: Bitwise operations in JS (`>>>`) operate on 32-bit signed integers. High IPs
+   * (like 192.168.1.1) result in negative numbers (e.g. -1062731519). If we don't test
+   * these signed edge cases, SSRF protections could silently fail on valid attack vectors.
+   */
+  test('should reject private or local hosts represented as single integers', () => {
+    // 0.0.0.0
+    expect(isPrivateOrLocalHost('0')).toBe(true)
+    // 10.0.0.1
+    expect(isPrivateOrLocalHost('167772161')).toBe(true)
+    // 127.0.0.1 (Loopback)
+    expect(isPrivateOrLocalHost('2130706433')).toBe(true)
+    // 169.254.169.254 (Link-local/Cloud Metadata) - tests the bitwise math for negative signed integers
+    expect(isPrivateOrLocalHost('2852039166')).toBe(true)
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true)
+    // 172.16.0.1 (Private Class B)
+    expect(isPrivateOrLocalHost('2886729729')).toBe(true)
+    // 192.168.1.1 (Private Class C)
+    expect(isPrivateOrLocalHost('3232235777')).toBe(true)
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)

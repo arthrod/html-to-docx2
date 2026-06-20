@@ -37,6 +37,9 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
   }
 
   if (parts.length === 1 && !isNaN(parts[0])) {
+    // Note: val could be negative due to signed 32-bit int representation
+    // of large IP addresses (e.g. 192.168.1.1 or 169.254.169.254).
+    // The >>> operator converts it to an unsigned 32-bit integer for shifting.
     const val = parts[0]
     const octet1 = (val >>> 24) & 255
     const octet2 = (val >>> 16) & 255
