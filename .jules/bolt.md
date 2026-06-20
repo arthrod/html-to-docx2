@@ -9,3 +9,7 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+
+## 2024-06-20 - GitHub Actions CI Failure on bun install
+**Learning:** In GitHub Actions CI with Bun v1.3+, `bun install --frozen-lockfile` may fail with "Integrity check failed for tarball" if `bun.lock` was previously stripped or out-of-sync with platform-specific dependencies like `@oxfmt/binding-linux-x64-gnu`.
+**Action:** When CI fails due to tarball integrity issues during `bun install`, changing `--frozen-lockfile` to just `bun install` allows Bun to resolve and generate the correct platform bindings in CI environments without enforcing strict lockfile matches.
