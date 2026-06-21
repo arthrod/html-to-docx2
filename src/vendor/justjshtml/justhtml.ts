@@ -13,8 +13,8 @@ export interface JustHTMLOptions {
 }
 
 export class StrictModeError extends SyntaxError {
-  error: any
-  constructor(error: any) {
+  error: (Error & { code?: string }) | { message?: string, code?: string } | null | undefined
+  constructor(error: (Error & { code?: string }) | { message?: string, code?: string } | null | undefined) {
     super(error?.message || String(error?.code || 'parse-error'))
     this.error = error
   }
@@ -43,10 +43,10 @@ export interface ToHTMLOptions {
 export class JustHTML {
   collectErrors: boolean
   encoding: string | null
-  errors: any[]
+  errors: (Error | { code: string; message: string; offset: number; line: number; col: number; state?: number | string })[]
   fragmentContext: unknown
   iframeSrcdoc: boolean
-  root: any
+  root: import("./node.js").Node
   strict: boolean
   constructor(input: string | ArrayBuffer | Uint8Array, options: JustHTMLOptions = {}) {
     const {
