@@ -3,7 +3,7 @@
 /* biome-ignore-all lint/nursery/useMaxParams: legacy code */
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
-import { isVNode, isVText, VNode } from '../vdom/index'
+import { isVNode, isVText, VNode, VText } from '../vdom/index'
 import createHTMLToVDOM from './html-parser'
 
 type XMLBuilderType = XMLBuilder
