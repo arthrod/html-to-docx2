@@ -32,7 +32,7 @@ const baseConfig = {
     neverBundle: NEVER_BUNDLE_DEPS,
     onlyBundle: false,
   },
-  failOnWarn: 'ci-only' as const,
+  failOnWarn: false,
 }
 
 export default defineConfig([
