@@ -5,7 +5,7 @@
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
-import { isVNode, isVText, VNode, VText } from '../vdom/index'
+import { isVNode, isVText, type VNode, type VText } from '../vdom/index'
 
 type XMLBuilderType = XMLBuilder
 
