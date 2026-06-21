@@ -16,3 +16,7 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+
+## 2026-06-21 - [TypeScript Strategy] Intersecting Error Types
+**Learning:** When typing an `error` object parameter or property that accesses non-standard properties (e.g., `error?.code`), and unioning it with the standard `Error` interface, you must intersect `Error` with the custom properties (e.g., `(Error & { code?: string })`). Otherwise, TypeScript will throw an error because the custom property does not exist on the standard `Error` type.
+**Action:** Use intersection types instead of unions when extending standard types to prevent breaking existing property access patterns.
