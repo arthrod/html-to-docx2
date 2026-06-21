@@ -155,10 +155,6 @@ type VNodeProperties = {
   style?: Record<string, string>
 }
 
-
-
-
-
 // Types for DocxDocumentInstance
 type MediaFileResponse = {
   fileContent: string
@@ -835,11 +831,7 @@ const modifiedStyleAttributesBuilder = (
   const modifiedAttributes: ParagraphAttributes = { ...attributes }
 
   // styles
-  if (
-    isVNode(vNode) &&
-    vNode.properties &&
-    vNode.properties.style
-  ) {
+  if (isVNode(vNode) && vNode.properties && vNode.properties.style) {
     const vn = vNode
     const style = vn.properties.style!
 
@@ -859,10 +851,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.verticalAlign = style['vertical-align']
     }
 
-    if (
-      style['text-align'] &&
-      TEXT_ALIGN_VALUES.has(style['text-align'])
-    ) {
+    if (style['text-align'] && TEXT_ALIGN_VALUES.has(style['text-align'])) {
       modifiedAttributes.textAlign = style['text-align']
     }
 
@@ -996,7 +985,11 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
         if (value === undefined) continue
 
         const options: FormattingOptions = {}
-        if (typedKey === 'color' || typedKey === 'backgroundColor' || typedKey === 'highlightColor') {
+        if (
+          typedKey === 'color' ||
+          typedKey === 'backgroundColor' ||
+          typedKey === 'highlightColor'
+        ) {
           options.color = value as string
         }
 
@@ -1031,10 +1024,7 @@ const buildRun = async (
     return buildRunOrRuns(vNode, attributes, docxDocumentInstance)
   }
 
-  if (
-    isVNode(vNode) &&
-    RUN_TAGS.has(vNode.tagName || '')
-  ) {
+  if (isVNode(vNode) && RUN_TAGS.has(vNode.tagName || '')) {
     const runFragmentsArray: XMLBuilderType[] = []
 
     let vNodes: (VNode | VText)[] = [vNode]
@@ -1082,9 +1072,7 @@ const buildRun = async (
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
         const tempVn = tempVNode
-        if (
-          TEMP_RUN_TAGS.has(tempVn.tagName || '')
-        ) {
+        if (TEMP_RUN_TAGS.has(tempVn.tagName || '')) {
           tempAttributes = {}
           switch (tempVn.tagName) {
             case 'strong':
@@ -1784,9 +1772,7 @@ const buildParagraph = async (
   }
   if (isVNode(vNode) && vNodeHasChildren(vNode)) {
     const vn = vNode
-    if (
-      PARAGRAPH_TAGS.has(vn.tagName || '')
-    ) {
+    if (PARAGRAPH_TAGS.has(vn.tagName || '')) {
       const runOrHyperlinkFragments = await buildRunOrHyperLink(
         vNode,
         modifiedAttributes,
@@ -2288,10 +2274,7 @@ const buildTableCell = async (
             }
           }
         }
-      } else if (
-        isVNode(childVNode) &&
-        LIST_TAGS.has(childVNode.tagName || '')
-      ) {
+      } else if (isVNode(childVNode) && LIST_TAGS.has(childVNode.tagName || '')) {
         // render list in table
         const listVn = childVNode
         if (vNodeHasChildren(listVn)) {
@@ -2312,10 +2295,7 @@ const buildTableCell = async (
               if (imageFragment) {
                 tableCellFragment.import(imageFragment)
               }
-            } else if (
-              isVNode(divChild) &&
-              LIST_TAGS.has(divChild.tagName || '')
-            ) {
+            } else if (isVNode(divChild) && LIST_TAGS.has(divChild.tagName || '')) {
               const listVn = divChild
               if (vNodeHasChildren(listVn)) {
                 await buildList(listVn, docxDocumentInstance, tableCellFragment)

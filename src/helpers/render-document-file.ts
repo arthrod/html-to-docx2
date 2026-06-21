@@ -31,10 +31,6 @@ type VNodeProperties = {
   style?: Record<string, string>
 }
 
-
-
-
-
 type VTree = VNode | VText | (VNode | VText)[]
 
 const base64ToUint8Array = (base64: string): Uint8Array => {
@@ -395,7 +391,7 @@ export const buildList = async (
     if (
       isVText(tempVNodeObject.node) ||
       (isVNode(tempVNodeObject.node) &&
-        !['ul', 'ol', 'li'].includes((tempVNodeObject.node).tagName || ''))
+        !['ul', 'ol', 'li'].includes(tempVNodeObject.node.tagName || ''))
     ) {
       const paragraphFragment = await xmlBuilder.buildParagraph(
         tempVNodeObject.node,
@@ -490,7 +486,7 @@ async function findXMLEquivalent(
   const hasListChildren =
     vNodeHasChildren(vNode) &&
     (vNode.children || []).some(
-      (child) => isVNode(child) && ['ul', 'ol'].includes((child).tagName || '')
+      (child) => isVNode(child) && ['ul', 'ol'].includes(child.tagName || '')
     )
 
   // Reset list tracking for non-list elements to break consecutive list sequences
@@ -707,14 +703,12 @@ async function findXMLEquivalent(
       // If so, process them separately as lists
       if (vNodeHasChildren(vNode)) {
         const listChildren = (vNode.children || []).filter(
-          (child) =>
-            isVNode(child) && ['ul', 'ol'].includes((child).tagName || '')
+          (child) => isVNode(child) && ['ul', 'ol'].includes(child.tagName || '')
         )
         if (listChildren.length > 0) {
           // Process non-list children as paragraph content first
           const nonListChildren = (vNode.children || []).filter(
-            (child) =>
-              !isVNode(child) || !['ul', 'ol'].includes((child).tagName || '')
+            (child) => !isVNode(child) || !['ul', 'ol'].includes(child.tagName || '')
           )
           if (nonListChildren.length > 0) {
             const modifiedVNode = new VNode(
@@ -989,10 +983,7 @@ let _lastListType: string | null = null
 let _lastIndentLevel = 0
 
 // Helper to extract indent level from vNode or parent paragraph
-function getIndentLevel(
-  vNode: VNode | null,
-  parentVNode: VNode | null = null
-): number {
+function getIndentLevel(vNode: VNode | null, parentVNode: VNode | null = null): number {
   // Check margin-left style which indicates indent level
   const marginLeft =
     vNode?.properties?.style?.['margin-left'] ||
