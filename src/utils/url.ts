@@ -19,12 +19,23 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname === '[::1]' ||
-    hostname === '0.0.0.0'
+    hostname === '0.0.0.0' ||
+    hostname === '[::]' // Unspecified address
   ) {
     return true
   }
 
   if (hostname.endsWith('.localhost')) return true
+
+  // IPv6 link-local
+  if (/^\[fe[89ab][0-9a-f]:/i.test(hostname)) return true
+  // IPv6 unique-local
+  if (/^\[f[cd][0-9a-f]{2}:/i.test(hostname)) return true
+  // IPv4-mapped IPv6
+  const ipv4MappedMatch = hostname.match(/^\[::ffff:([0-9.]+)\]$/i)
+  if (ipv4MappedMatch && ipv4MappedMatch[1]) {
+    return isPrivateOrLocalHost(ipv4MappedMatch[1])
+  }
 
   let parts: number[] = []
   const stringParts = hostname.split('.')

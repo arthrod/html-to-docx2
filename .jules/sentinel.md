@@ -15,3 +15,8 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2024-05-24 - SSRF Bypass via IPv6 Variations
+**Vulnerability:** `isPrivateOrLocalHost` missed IPv6 variations of local/private addresses, such as the unspecified address `[::]`, link-local `[fe80::1]`, unique-local `[fc00::1]`, and IPv4-mapped IPv6 `[::ffff:127.0.0.1]`. This allowed SSRF bypasses.
+**Learning:** Checking for standard IPv4/IPv6 private/localhost addresses is insufficient, as network interfaces typically resolve varied IPv6 formats identically to `localhost` or private blocks.
+**Prevention:** Implement strict regex and format checks for full IPv6 private network spaces, extract nested IPv4 segments from IPv4-mapped addresses, and test specifically against alternative IP encoding bypasses.

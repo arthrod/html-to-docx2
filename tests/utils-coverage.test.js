@@ -25,6 +25,10 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('169.254.169.254')).toBe(true)
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:127.0.0.1]')).toBe(true)
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
