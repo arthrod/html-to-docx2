@@ -19,6 +19,7 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname === '[::1]' ||
+    hostname === '[::]' ||
     hostname === '0.0.0.0'
   ) {
     return true
@@ -26,10 +27,27 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
 
   if (hostname.endsWith('.localhost')) return true
 
+  // IPv6 link-local
+  if (/^\[fe[89ab][0-9a-f]:/i.test(hostname)) return true
+  // IPv6 unique-local
+  if (/^\[f[cd][0-9a-f]{2}:/i.test(hostname)) return true
+
+  // IPv4-mapped IPv6
+  const mappedIpv4Match = /^\[::ffff:(\d+\.\d+\.\d+\.\d+)\]$/i.exec(hostname)
+  if (mappedIpv4Match) {
+    return isPrivateOrLocalHost(mappedIpv4Match[1])
+  }
+
   let parts: number[] = []
   const stringParts = hostname.split('.')
   if (stringParts.length <= 4 && stringParts.length > 0) {
     parts = stringParts.map((p) => {
+      // Handle signed negative values like -1062731519 for 192.168.1.1
+      if (p.startsWith('-')) {
+        const num = Number.parseInt(p, 10)
+        // Convert to unsigned 32-bit integer representation
+        return num >>> 0
+      }
       if (p.startsWith('0x') || p.startsWith('0X')) return Number.parseInt(p, 16)
       if (p.startsWith('0') && p.length > 1) return Number.parseInt(p, 8)
       return Number.parseInt(p, 10)
