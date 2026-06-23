@@ -2,6 +2,7 @@
 /* biome-ignore-all lint/style/useForOf: legacy code */
 /* biome-ignore-all lint/nursery/useMaxParams: legacy code */
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
+import { sanitizeOmml } from '../utils/omml-sanitizer'
 
 import { isVNode, isVText, VNode } from '../vdom/index'
 import createHTMLToVDOM from './html-parser'
@@ -563,7 +564,9 @@ async function findXMLEquivalent(
         .up()
         .up()
       // Parse and import the OMML
-      const ommlFragment = fragment().ele(ommlString)
+      const sanitizedOmml = sanitizeOmml(ommlString)
+      if (!sanitizedOmml) throw new Error("Invalid or unsafe OMML")
+      const ommlFragment = fragment().ele(sanitizedOmml)
       paragraphFragment.first().import(ommlFragment)
       paragraphFragment.first().up()
 

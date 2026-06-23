@@ -4,6 +4,7 @@
 /* biome-ignore-all lint/style/noParameterAssign: legacy code */
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
+import { sanitizeOmml } from '../utils/omml-sanitizer'
 
 import { isVNode, isVText } from '../vdom/index'
 
@@ -1277,7 +1278,9 @@ const buildRunOrRuns = async (
     const ommlString = (vNode as VNodeType).properties!.attributes!['data-equation-omml']
     try {
       // Parse the OMML string and create a fragment
-      const ommlFragment = fragment().ele(ommlString)
+      const sanitizedOmml = sanitizeOmml(ommlString)
+      if (!sanitizedOmml) throw new Error("Invalid or unsafe OMML")
+      const ommlFragment = fragment().ele(sanitizedOmml)
       return ommlFragment
     } catch {
       // If parsing fails, fall through to normal text handling

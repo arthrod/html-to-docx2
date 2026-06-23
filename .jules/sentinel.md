@@ -15,3 +15,7 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+## 2025-05-14 - Insecure XML external entity injection via OMML
+**Vulnerability:** The `fragment().ele(ommlString)` function was parsing unsanitized OMML strings directly from DOM attributes, which could lead to XXE attacks.
+**Learning:** XML parsers, even if used for fragments, may still process DTDs and external entities if not properly configured or if the input is not sanitized. In this case, `xmlbuilder2` was used to parse arbitrary strings.
+**Prevention:** Always sanitize XML strings before parsing by removing or rejecting `<!DOCTYPE` and `<!ENTITY` declarations. Stripping XML declarations and processing instructions also reduces the attack surface.
