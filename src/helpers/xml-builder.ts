@@ -5,6 +5,7 @@
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
+import { validateOMMLString } from '../utils/omml-sanitizer'
 import { isVNode, isVText } from '../vdom/index'
 
 type XMLBuilderType = XMLBuilder
@@ -1275,6 +1276,10 @@ const buildRunOrRuns = async (
     (vNode as VNodeType).properties!.attributes!['data-equation-omml']
   ) {
     const ommlString = (vNode as VNodeType).properties!.attributes!['data-equation-omml']
+    if (!validateOMMLString(ommlString)) {
+      console.warn('Invalid or dangerous OMML detected for inline equation')
+      return []
+    }
     try {
       // Parse the OMML string and create a fragment
       const ommlFragment = fragment().ele(ommlString)

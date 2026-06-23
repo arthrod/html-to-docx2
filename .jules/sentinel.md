@@ -15,3 +15,8 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2026-06-23 - Insecure XML Parsing in OMML Equation Blocks
+**Vulnerability:** Insecure XML parsing of the `data-equation-omml` attribute, leading to potential XML External Entity (XXE) and XML injection attacks.
+**Learning:** Raw XML strings from data attributes were passed directly to the XML builder's `ele()` method without validation or sanitization, assuming the input was safe.
+**Prevention:** Always validate or sanitize XML strings from untrusted sources (like HTML attributes) before parsing. Implement a strict validator that blocks dangerous constructs such as `DOCTYPE`, `ENTITY`, and `CDATA` sections, and verifies expected content patterns.

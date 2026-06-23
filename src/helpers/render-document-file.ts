@@ -13,6 +13,7 @@ import namespaces from '../namespaces'
 import { getImageDimensions } from '../utils/image-dimensions'
 import { downloadAndCacheImage } from '../utils/image-to-base64'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
+import { validateOMMLString } from '../utils/omml-sanitizer'
 import { vNodeHasChildren } from '../utils/vnode'
 import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
 // FIXME: remove the cyclic dependency
@@ -551,6 +552,10 @@ async function findXMLEquivalent(
     vNode.properties.attributes['data-equation-omml']
   ) {
     const ommlString = vNode.properties.attributes['data-equation-omml']
+    if (!validateOMMLString(ommlString)) {
+      console.warn('Invalid or dangerous OMML detected for block equation')
+      return
+    }
     try {
       // Create a paragraph containing the OMML
       const paragraphFragment = fragment({
