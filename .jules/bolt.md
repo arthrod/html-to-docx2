@@ -10,6 +10,6 @@
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
 
-## 2026-06-03 - Chunked String.fromCharCode.apply Outperforms Byte-by-byte String Concatenation
+## 2026-06-24 - Chunked String.fromCharCode.apply Outperforms Byte-by-byte String Concatenation
 **Learning:** In V8/Bun, when converting large `Uint8Array` to a binary string for `btoa`, manual byte-by-byte string concatenation (`binary += String.fromCharCode(bytes[i])`) is extremely slow for large inputs. Using `String.fromCharCode.apply(null, chunk)` with a chunk size of `0x8000` is significantly faster (8-10x) and avoids "Maximum call stack size exceeded" errors that occur if `apply` is used on a very large array directly.
 **Action:** Use chunked `String.fromCharCode.apply` when converting large binary buffers to strings in environments where `Buffer` is not available.
