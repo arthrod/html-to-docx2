@@ -26,6 +26,20 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
+
+    // IPv6 variations
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fd12::1]')).toBe(true)
+
+    // IPv4-mapped IPv6
+    expect(isPrivateOrLocalHost('[::ffff:127.0.0.1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:192.168.1.1]')).toBe(true)
+
+    // Signed integer representations
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true) // 169.254.169.254
   })
 
   test('should validate http URLs', () => {
