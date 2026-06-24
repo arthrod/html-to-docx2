@@ -42,28 +42,30 @@ function createMinimalPNG(width = 32, height = 32) {
 
 // Minimal valid JPEG (64x64) using SOF0 marker
 function createMinimalJPEG(width = 64, height = 64) {
-  const sof0Data = new Uint8Array(19)
+  const sof0Data = new Uint8Array(20)
   const dv = new DataView(sof0Data.buffer)
 
   // SOI marker
-  dv.setUint16(0, 0xFFD8, false)
-  // APP0 (JFIF)
-  dv.setUint16(2, 0xFFE0, false)
+  dv.setUint16(0, 0xffd8, false)
+
+  // APP0 marker
+  dv.setUint16(2, 0xffe0, false)
   dv.setUint16(4, 16, false) // length
-  dv.setUint32(6, 0x4A464946, false) // 'JFIF\0'
-  dv.setUint8(10, 0) // version major
-  dv.setUint8(11, 1) // version minor
-  dv.setUint8(12, 0) // units
-  dv.setUint16(13, 1, false) // X density
-  dv.setUint16(15, 1, false) // Y density
-  dv.setUint8(17, 0) // thumbnail width
-  dv.setUint8(18, 0) // thumbnail height
+  dv.setUint32(6, 0x4a464946, false) // 'JFIF'
+  dv.setUint8(10, 0) // '\0'
+  dv.setUint8(11, 1) // version major
+  dv.setUint8(12, 1) // version minor
+  dv.setUint8(13, 0) // units
+  dv.setUint16(14, 1, false) // X density
+  dv.setUint16(16, 1, false) // Y density
+  dv.setUint8(18, 0) // thumbnail width
+  dv.setUint8(19, 0) // thumbnail height
 
   // SOF0 marker
-  const sof0 = new Uint8Array(15)
+  const sof0 = new Uint8Array(17)
   const sof0Dv = new DataView(sof0.buffer)
-  sof0Dv.setUint16(0, 0xFFC0, false) // SOF0
-  sof0Dv.setUint16(2, 11, false) // length (8 + components*3)
+  sof0Dv.setUint16(0, 0xffc0, false) // SOF0
+  sof0Dv.setUint16(2, 15, false) // length
   sof0Dv.setUint8(4, 8) // precision
   sof0Dv.setUint16(5, height, false) // height
   sof0Dv.setUint16(7, width, false) // width
@@ -73,9 +75,11 @@ function createMinimalJPEG(width = 64, height = 64) {
   sof0Dv.setUint8(12, 0) // quantization table
   sof0Dv.setUint8(13, 1) // component ID
   sof0Dv.setUint8(14, 0x11) // sampling
+  sof0Dv.setUint8(15, 2) // component ID
+  sof0Dv.setUint8(16, 0x11) // sampling
 
   // EOI marker
-  const eoi = new Uint8Array([0xFF, 0xD9])
+  const eoi = new Uint8Array([0xff, 0xd9])
 
   const result = new Uint8Array(sof0Data.length + sof0.length + eoi.length)
   result.set(sof0Data)
@@ -101,9 +105,40 @@ function createMinimalGIF(width = 16, height = 16) {
   dv.setUint8(12, 0) // pixel aspect ratio
 
   // Trailer (for minimal valid file)
-  dv.setUint8(13, 0x3B) // ';'
+  dv.setUint8(13, 0x3b) // ';'
 
   return data.slice(0, 14)
+}
+
+// Minimal valid WebP (24x24) - VP8 format (lossy)
+function createMinimalWebPVP8(width = 24, height = 24) {
+  const data = new Uint8Array(40)
+  const dv = new DataView(data.buffer)
+
+  // RIFF header
+  dv.setUint32(0, 0x52494646, false) // 'RIFF'
+  dv.setUint32(4, 32, true) // file size - 8 (little-endian)
+  dv.setUint32(8, 0x57454250, false) // 'WEBP'
+
+  // VP8 chunk
+  dv.setUint32(12, 0x56503820, false) // 'VP8 '
+  dv.setUint32(16, 10, true) // chunk size
+
+  // VP8 image data
+  dv.setUint8(20, 0) // frame tag
+  dv.setUint8(21, 0)
+  dv.setUint8(22, 0)
+
+  // start code
+  dv.setUint8(23, 0x9d)
+  dv.setUint8(24, 0x01)
+  dv.setUint8(25, 0x2a)
+
+  // width and height (14 bits each, little-endian)
+  dv.setUint16(26, width & 0x3fff, true)
+  dv.setUint16(28, height & 0x3fff, true)
+
+  return data.slice(0, 30)
 }
 
 // Minimal valid WebP (24x24) - VP8L format
@@ -117,38 +152,47 @@ function createMinimalWebP(width = 24, height = 24) {
   dv.setUint32(8, 0x57454250, false) // 'WEBP'
 
   // VP8L chunk
-  dv.setUint32(12, 0x5650384C, false) // 'VP8L'
+  dv.setUint32(12, 0x5650384c, false) // 'VP8L'
   dv.setUint32(16, 10, true) // chunk size
 
   // VP8L signature byte
-  dv.setUint8(20, 0x2F) // signature
+  dv.setUint8(20, 0x2f) // signature
 
   // VP8L image data: 14 bits for width-1, 14 bits for height-1, little-endian
   const imageBits = BigInt((width - 1) | ((height - 1) << 14))
-  dv.setUint32(21, Number(imageBits & 0xFFFFFFFFn), true)
+  dv.setUint32(21, Number(imageBits & 0xffffffffn), true)
 
   return data.slice(0, 25)
 }
 
 // Minimal valid BMP (48x48)
 function createMinimalBMP(width = 48, height = 48) {
-  const data = new Uint8Array(26)
+  const data = new Uint8Array(54) // 54 bytes total
   const dv = new DataView(data.buffer)
 
-  // BMP header
-  dv.setUint16(0, 0x4D42, true) // 'BM'
-  dv.setUint32(2, 26, true) // file size
+  // BMP header (14 bytes)
+  dv.setUint16(0, 0x4d42, false) // 'BM' big-endian (data[0]=0x42, data[1]=0x4D)
+  dv.setUint32(2, 54, true) // file size
   dv.setUint32(6, 0, true) // reserved
-  dv.setUint32(10, 26, true) // pixel data offset
+  dv.setUint32(10, 54, true) // pixel data offset
 
-  // DIB header (BITMAPCOREHEADER)
-  dv.setUint32(14, 12, true) // header size
-  dv.setUint16(18, width, true) // width
-  dv.setUint16(20, height, true) // height
-  dv.setUint16(22, 1, true) // planes
-  dv.setUint16(24, 24, true) // bit count
+  // DIB header (BITMAPINFOHEADER) (40 bytes)
+  dv.setUint32(14, 40, true) // header size
+  dv.setUint32(18, width, true) // width (32-bit)
+  dv.setUint32(22, height, true) // height (32-bit)
+  dv.setUint16(26, 1, true) // planes
+  dv.setUint16(28, 24, true) // bit count
+  dv.setUint32(30, 0, true) // compression
+  dv.setUint32(34, 0, true) // image size
+  dv.setUint32(38, 0, true) // x pixels per meter
+  dv.setUint32(42, 0, true) // y pixels per meter
+  dv.setUint32(46, 0, true) // colors used
+  dv.setUint32(50, 0, true) // colors important
 
-  return data.slice(0, 26)
+  data[0] = 0x42
+  data[1] = 0x4d
+
+  return data
 }
 
 describe('Image Dimensions', () => {
@@ -184,9 +228,51 @@ describe('Image Dimensions', () => {
       expect(result).toEqual({ width: 16, height: 16, type: 'gif' })
     })
 
-    it('should parse WebP dimensions (24x24)', () => {
+    it('should parse JPEG dimensions (64x64)', () => {
+      const result = getImageDimensions(createMinimalJPEG(64, 64))
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    it('should return default dimensions for malformed JPEG', () => {
+      const malformed = new Uint8Array([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00,
+      ])
+      const result = getImageDimensions(malformed)
+      expect(result).toEqual({ width: 100, height: 100, type: 'jpg' })
+    })
+
+    it('should skip non-marker bytes in JPEG', () => {
+      // SOI, APP0 marker with length 2, then a non-marker byte, then SOF0
+      const buffer = new Uint8Array([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x02, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x40,
+        0x00, 0x40,
+      ])
+      const result = getImageDimensions(buffer)
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    it('should parse BMP dimensions (48x48)', () => {
+      const result = getImageDimensions(createMinimalBMP(48, 48))
+      expect(result).toEqual({ width: 48, height: 48, type: 'bmp' })
+    })
+
+    it('should parse WebP (VP8L) dimensions (24x24)', () => {
       const result = getImageDimensions(createMinimalWebP(24, 24))
       expect(result).toEqual({ width: 24, height: 24, type: 'webp' })
+    })
+
+    it('should parse WebP (VP8 lossy) dimensions (24x24)', () => {
+      const result = getImageDimensions(createMinimalWebPVP8(24, 24))
+      expect(result).toEqual({ width: 24, height: 24, type: 'webp' })
+    })
+
+    it('should return default dimensions for malformed WebP', () => {
+      const malformed = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      ])
+      const result = getImageDimensions(malformed)
+      expect(result).toEqual({ width: 100, height: 100, type: 'webp' })
     })
 
     it('should handle Buffer (Node.js) input', () => {

@@ -1,3 +1,6 @@
 ## 2024-05-24 - Unit Conversion Pure Functions
 **Learning:** Pure functions like the unit conversion utilities in `src/utils/unit-conversion.ts` are ideal for Tier 1 testing. They require zero mocking, run extremely fast, and are fundamental for preventing downstream regressions in complex calculations (like line heights or image dimensions).
 **Action:** Always prioritize finding and testing pure, math-heavy utilities before tackling complex, mock-heavy UI or network interactions, as they offer the highest signal-to-noise ratio in tests.
+## 2024-06-24 - Synthetically mocking image dimensions in Tier 1 tests
+**Learning:** Testing binary parsers like `getImageDimensions` using carefully constructed `Uint8Array` fixtures avoids the need for massive binary files and perfectly demonstrates the "Tier 1: Pure Function" testing approach. Creating minimal valid headers for BMP requires correctly tracking header sizes (e.g. 54 byte total with 40-byte BITMAPINFOHEADER), and testing JPEGs must include testing for non-marker byte skipping, verifying robustness without mock dependencies.
+**Action:** When testing binary manipulation functions, prefer building inline binary buffers mimicking expected protocols over maintaining external `fixtures/` folders. This makes tests fully self-contained and exceptionally fast.
