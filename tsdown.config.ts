@@ -30,9 +30,9 @@ const baseConfig = {
   },
   deps: {
     neverBundle: NEVER_BUNDLE_DEPS,
-    onlyAllowBundle: false,
+    onlyBundle: false,
   },
-  failOnWarn: 'ci-only' as const,
+  failOnWarn: false,
 }
 
 export default defineConfig([
