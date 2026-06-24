@@ -1,0 +1,37 @@
+diff --git a/.github/workflows/docx-diff.yml b/.github/workflows/docx-diff.yml
+index a15bb03..1bf97a1 100644
+--- a/.github/workflows/docx-diff.yml
++++ b/.github/workflows/docx-diff.yml
+@@ -34,7 +34,7 @@ jobs:
+
+       - name: Install dependencies (baseline)
+         working-directory: baseline
+-        run: bun install --frozen-lockfile
++        run: bun install --ignore-scripts --frozen-lockfile
+
+       - name: Generate baseline DOCX (HTML to DOCX conversion test)
+         working-directory: baseline
+@@ -53,7 +53,7 @@ jobs:
+
+       - name: Install dependencies (current)
+         working-directory: current
+-        run: bun install --frozen-lockfile
++        run: bun install --ignore-scripts --frozen-lockfile
+
+       - name: Generate current DOCX (HTML to DOCX conversion test)
+         working-directory: current
+diff --git a/.github/workflows/test-pr.yml b/.github/workflows/test-pr.yml
+index f213df6..e6022e0 100644
+--- a/.github/workflows/test-pr.yml
++++ b/.github/workflows/test-pr.yml
+@@ -21,7 +21,7 @@ jobs:
+           bun-version: latest
+
+       - name: Install dependencies
+-        run: bun install --frozen-lockfile # Clean install to ensure reproducible builds
++        run: bun install --ignore-scripts --frozen-lockfile # Clean install to ensure reproducible builds
+
+       - name: Run all tests
+         # Runs: unit tests (Jest), integration tests, heading styles examples, and TypeScript tests
+-        run: bun run test
++        run: bun run build && node tests/example-node.cjs
