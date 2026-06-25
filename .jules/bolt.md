@@ -9,3 +9,7 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+
+## YYYY-MM-DD - Optimized SVG Rendering by Avoiding Regex
+**Learning:** Reusing the single-pass string concatenation utility `escapeXml` instead of chained `.replace()` regexes provides a large performance boost in the SVG serialization hot path, especially for strings with no special characters. Chained regex evaluations create intermediate allocations and evaluate multiple patterns, whereas the single-pass ASCII charCodeAt loop avoids these entirely.
+**Action:** Always prefer the optimized `escapeXml` utility over manual regex chaining (`.replace(/&/g, '&amp;').replace(/</g, '&lt;')...`) across the codebase when converting strings to XML/SVG.
