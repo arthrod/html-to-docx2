@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies (baseline)
         working-directory: baseline
-        run: rm -rf node_modules && bun install --no-cache --ignore-scripts --frozen-lockfile
+        run: bun install --ignore-scripts --frozen-lockfile
 
       - name: Generate baseline DOCX (HTML to DOCX conversion test)
         working-directory: baseline
@@ -59,7 +59,7 @@ jobs:
 
       - name: Install dependencies (current)
         working-directory: current
-        run: rm -rf node_modules && bun install --no-cache --ignore-scripts --frozen-lockfile
+        run: bun install --ignore-scripts --frozen-lockfile
 
       - name: Generate current DOCX (HTML to DOCX conversion test)
         working-directory: current

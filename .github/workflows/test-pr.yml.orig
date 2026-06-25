@@ -26,7 +26,7 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: rm -rf node_modules && bun install --no-cache --ignore-scripts --frozen-lockfile && bun pm trust --all # Clean install to ensure reproducible builds
+        run: bun install --ignore-scripts --frozen-lockfile && bun pm trust --all # Clean install to ensure reproducible builds
 
       - name: Run all tests
         # Runs: unit tests (Jest), integration tests, heading styles examples, and TypeScript tests

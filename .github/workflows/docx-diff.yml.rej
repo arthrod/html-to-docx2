@@ -1,0 +1,20 @@
+--- .github/workflows/docx-diff.yml
++++ .github/workflows/docx-diff.yml
+@@ -37,7 +37,7 @@
+
+       - name: Install dependencies (baseline)
+         working-directory: baseline
+-        run: bun install --frozen-lockfile
++        run: rm -rf node_modules && bun install --ignore-scripts --frozen-lockfile
+
+       - name: Generate baseline DOCX (HTML to DOCX conversion test)
+         working-directory: baseline
+@@ -59,7 +59,7 @@
+
+       - name: Install dependencies (current)
+         working-directory: current
+-        run: bun install --frozen-lockfile
++        run: rm -rf node_modules && bun install --ignore-scripts --frozen-lockfile
+
+       - name: Generate current DOCX (HTML to DOCX conversion test)
+         working-directory: current
