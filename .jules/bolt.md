@@ -9,3 +9,7 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+
+## YYYY-MM-DD - Optimize binary-to-base64 conversion with chunked String.fromCharCode
+**Learning:** In non-Node environments (where `Buffer` is unavailable), converting binary arrays to Base64 using a manual `for` loop character by character is extremely slow. A chunked `String.fromCharCode.apply` approach (with chunk size `0x8000`) is significantly faster and avoids "Maximum call stack size exceeded" errors.
+**Action:** Use a chunked approach with `String.fromCharCode.apply` and a `0x8000` chunk size for converting byte arrays to strings in Base64 conversion paths instead of appending one character at a time.

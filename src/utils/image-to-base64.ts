@@ -49,14 +49,19 @@ const toError = (error: CaughtError): Error => {
   return new Error(String(error ?? 'Unknown error'))
 }
 
-const toBase64 = (bytes: Uint8Array): string => {
+export const toBase64 = (bytes: Uint8Array): string => {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(bytes).toString('base64')
   }
 
   let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
+  // ⚡ Bolt: Chunked fromCharCode avoids call stack limits and significantly speeds up Base64 encoding in non-Node environments
+  const chunkSize = 0x8000
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(
+      null,
+      bytes.subarray(i, i + chunkSize) as unknown as number[]
+    )
   }
   return globalThis.btoa(binary)
 }
