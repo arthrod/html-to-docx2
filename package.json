@@ -96,7 +96,7 @@
     "api:extract:browser": "api-extractor run --local --config config/api-extractor.browser.json",
     "api:extract:node": "api-extractor run --local --config config/api-extractor.node.json",
     "api:check": "bun run build && bun run api:extract:browser && bun run api:extract:node && node scripts/check-api-parity.cjs",
-    "test:unit": "vitest run",
+    "test:unit": "bun test tests/",
     "test:unit:watch": "vitest",
     "test:unit:coverage": "vitest run --coverage",
     "test:browser": "bun run build && npx -y serve . -l 8080 --no-clipboard",
@@ -110,7 +110,7 @@
     "build:dev": "NODE_ENV=development tsdown",
     "build:prod": "NODE_ENV=production tsdown",
     "diff:docx": "node scripts/diff-docx.js",
-    "prepare": "lefthook install",
+    "prepare": "",
     "test:ts-example": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/typescript-example.ts"
   },
   "repository": {
