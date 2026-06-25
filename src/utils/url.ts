@@ -19,6 +19,7 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname === '[::1]' ||
+    hostname === '[::]' ||
     hostname === '0.0.0.0'
   ) {
     return true
@@ -26,8 +27,16 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
 
   if (hostname.endsWith('.localhost')) return true
 
+  if (/^\[f[cd][0-9a-f]{2}:/i.test(hostname)) return true
+  if (/^\[fe[89ab][0-9a-f]:/i.test(hostname)) return true
+
+  let targetHostname = hostname
+  if (targetHostname.startsWith('[::ffff:') && targetHostname.endsWith(']')) {
+    targetHostname = targetHostname.slice(8, -1)
+  }
+
   let parts: number[] = []
-  const stringParts = hostname.split('.')
+  const stringParts = targetHostname.split('.')
   if (stringParts.length <= 4 && stringParts.length > 0) {
     parts = stringParts.map((p) => {
       if (p.startsWith('0x') || p.startsWith('0X')) return Number.parseInt(p, 16)

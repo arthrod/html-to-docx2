@@ -28,6 +28,18 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  test('should reject IPv6 variations of private/local hosts', () => {
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:127.0.0.1]')).toBe(true)
+  })
+
+  test('should reject negative IP representations', () => {
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true)
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
