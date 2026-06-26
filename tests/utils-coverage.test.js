@@ -25,6 +25,14 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('169.254.169.254')).toBe(true)
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
+    // IPv6 edge cases and bypasses
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:127.0.0.1]')).toBe(true)
+    // Negative signed integer representations of large IPs
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true)
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true)
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
