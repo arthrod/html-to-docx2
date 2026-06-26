@@ -109,7 +109,7 @@
     "build": "tsdown",
     "build:dev": "NODE_ENV=development tsdown",
     "build:prod": "NODE_ENV=production tsdown",
-    "diff:docx": "node scripts/diff-docx.js",
+    "diff:docx": "node scripts/diff-docx.cjs",
     "prepare": "lefthook install",
     "test:ts-example": "bun run build && cross-env TS_NODE_PROJECT=tests/examples/typescript/tsconfig.json ts-node -r tsconfig-paths/register tests/examples/typescript/typescript-example.ts"
   },
