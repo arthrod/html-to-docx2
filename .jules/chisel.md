@@ -16,3 +16,6 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+## 2025-05-18 - Typing root node in justhtml
+**Learning:** When typing the root element of an HTML parser class (`JustHTML`), ensure that the type correctly refers to the custom AST node class (e.g., `import { Node } from './node.js'`) rather than implicitly falling back to the browser's global DOM `Node` interface, which has a different shape.
+**Action:** In custom parsers, always explicitly import local domain models when removing `any` for parsed nodes to avoid silent type mismatches with global definitions.

@@ -2,6 +2,7 @@ import { FragmentContext } from './context.js'
 import { decodeHTML } from './encoding.js'
 import { parseDocument } from './parser.js'
 import { TokenizerOpts } from './tokenizer.js'
+import { Node } from './node.js'
 
 export interface JustHTMLOptions {
   collectErrors?: boolean
@@ -46,7 +47,7 @@ export class JustHTML {
   errors: any[]
   fragmentContext: unknown
   iframeSrcdoc: boolean
-  root: any
+  root: Node
   strict: boolean
   constructor(input: string | ArrayBuffer | Uint8Array, options: JustHTMLOptions = {}) {
     const {
