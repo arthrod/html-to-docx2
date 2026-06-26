@@ -14,7 +14,7 @@ const {
   categorizeDifference,
   filesAreIdentical,
   isXMLFile,
-} = require('./diff-utils.cjs')
+} = require('./diff-utils')
 
 /**
  * @typedef {import('diff').Change} DiffChange
