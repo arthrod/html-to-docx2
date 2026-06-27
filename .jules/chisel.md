@@ -16,3 +16,7 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+
+## 2024-05-27 - Proper typing of legacy DOM Node implementations
+**Learning:** Legacy DOM Node implementations (like `justjshtml/node.ts`) heavily use `any` because `Node` structures are inherently recursive and dynamic in JS. Using precise types (`Node`, `Node[]`, `string | null`, `Record<string, string | null>`) provides massive type safety gains compared to `any`, particularly for recursive tree structures. We must make sure to handle `null` safely on `attrs` because boolean attributes might just have the property but not a string value.
+**Action:** When migrating recursive or DOM-like classes from JS to TS, prioritize typing `children`, `parent`, and node properties correctly to let inference propagate the `Node` type safely throughout traversing logic.

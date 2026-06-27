@@ -3,21 +3,21 @@ import { query } from './selector.js'
 import { toMarkdown } from './markdown.js'
 
 type NodeOptions = {
-  attrs?: Record<string, string> | null
+  attrs?: Record<string, string | null> | null
   data?: string | null
   namespace?: string | null
 }
 
 export class Node {
-  attrs: any
-  children: any
-  data: any
-  name: any
+  attrs: Record<string, string | null>
+  children: Node[]
+  data: string | null
+  name: string
   namespace: string | null
-  parent: any
-  templateContent: any
-  template_content: any
-  constructor(name: any, options: NodeOptions = {}) {
+  parent: Node | null
+  templateContent: Node | null
+  template_content: Node | null
+  constructor(name: string, options: NodeOptions = {}) {
     const { attrs = null, data = null, namespace = null } = options
     this.name = name
     this.namespace =
@@ -36,27 +36,27 @@ export class Node {
     this.template_content = this.templateContent
   }
 
-  appendChild(node: any) {
+  appendChild(node: Node) {
     this.children.push(node)
     node.parent = this
   }
 
-  append_child(node: any) {
+  append_child(node: Node) {
     this.appendChild(node)
   }
 
-  removeChild(node: any) {
+  removeChild(node: Node) {
     const idx = this.children.indexOf(node)
     if (idx === -1) throw new Error('Node is not a child of this node')
     this.children.splice(idx, 1)
     node.parent = null
   }
 
-  remove_child(node: any) {
+  remove_child(node: Node) {
     this.removeChild(node)
   }
 
-  insertBefore(node: any, referenceNode: any) {
+  insertBefore(node: Node, referenceNode: Node | null) {
     if (referenceNode == null) {
       this.appendChild(node)
       return
@@ -67,11 +67,11 @@ export class Node {
     node.parent = this
   }
 
-  insert_before(node: any, referenceNode: any) {
+  insert_before(node: Node, referenceNode: Node | null) {
     this.insertBefore(node, referenceNode)
   }
 
-  replaceChild(newNode: any, oldNode: any) {
+  replaceChild(newNode: Node, oldNode: Node) {
     const idx = this.children.indexOf(oldNode)
     if (idx === -1) throw new Error('Old node is not a child of this node')
     this.children[idx] = newNode
@@ -80,7 +80,7 @@ export class Node {
     return oldNode
   }
 
-  replace_child(newNode: any, oldNode: any) {
+  replace_child(newNode: Node, oldNode: Node) {
     return this.replaceChild(newNode, oldNode)
   }
 
