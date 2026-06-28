@@ -15,6 +15,7 @@ import { downloadAndCacheImage } from '../utils/image-to-base64'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
 import { vNodeHasChildren } from '../utils/vnode'
 import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
+import { escapeXml } from '../utils/xml-escape'
 // FIXME: remove the cyclic dependency
 // eslint-disable-next-line import/no-cycle -- FIXME: known cyclic dependency
 import * as xmlBuilder from './xml-builder'
@@ -190,7 +191,8 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
 const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
   const textNode = asVText(node)
   if (textNode) {
-    return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // ⚡ Bolt: Avoid chained regex replacements for text escaping; single-pass escapeXml is significantly faster in hot paths.
+    return escapeXml(String(textNode.text))
   }
 
   const vNode = asVNode(node)
@@ -211,11 +213,8 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
 
   Object.entries(attributes).forEach(([key, value]) => {
     if (value) {
-      const escapedValue = String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+      // ⚡ Bolt: Avoid chained regex replacements for attribute escaping; single-pass escapeXml is significantly faster in hot paths.
+      const escapedValue = escapeXml(String(value))
       svg += ` ${key}="${escapedValue}"`
     }
   })
