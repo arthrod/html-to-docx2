@@ -28,6 +28,16 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  test('should reject negative signed integer IP representations', () => {
+    // WHAT: Proves that negative signed 32-bit integers are correctly handled by the bitwise >>> operator.
+    // WHY: JavaScript bitwise operators convert signed 32-bit integers to unsigned 32-bit integers.
+    // If we only test positive integers (or hex/octal strings), we miss the edge case where an attacker
+    // submits a negative decimal string (e.g., -1062731519) which maps back to a private IP (192.168.1.1).
+    // This explicitly protects against SSRF bypasses via negative integer representations of IPs.
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true) // 169.254.169.254
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
