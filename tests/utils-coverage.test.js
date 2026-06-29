@@ -25,6 +25,15 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('169.254.169.254')).toBe(true)
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1 in signed 32-bit int
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true) // 169.254.169.254 in signed 32-bit int
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fd00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:127.0.0.1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:169.254.169.254]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:8.8.8.8]')).toBe(false)
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 

@@ -15,3 +15,9 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2025-05-17 - SSRF Vulnerability via IPv6 and Negative IPs
+
+**Vulnerability:** The `isPrivateOrLocalHost` function did not properly validate IPv6 representations or handle negative 32-bit signed integer strings. This allowed SSRF bypasses via IPv6 unspecified/link-local/unique-local ranges (e.g. `[::]`, `[fe80::1]`, `[fc00::1]`), IPv4-mapped IPv6 (e.g. `[::ffff:127.0.0.1]`), and negative integer strings representing private IPs (e.g. `-1062731519` for `192.168.1.1`).
+**Learning:** Checking explicit string matches or standard dotted-quad / positive octal formats is insufficient. Network stack behavior handles multiple representations of IPs, and the JavaScript bitwise right shift (`>>>`) converts negative string floats correctly for integer matching, but those strings must be validated alongside IPv6 variants.
+**Prevention:** Implement comprehensive regex checks for IPv6 (link-local, unique-local, IPv4-mapped) alongside existing IPv4 parsing in hostname validation, and ensure tests account for negative signed integer representations of internal IP ranges.
