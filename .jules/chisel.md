@@ -16,3 +16,7 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+## 2025-02-23 - Typed StrictModeError and JustHTML classes
+
+**Learning:** When removing `any`/`unknown` for objects used in exceptions, verify the properties actually read. Here `StrictModeError` read `.message` and `.code`. Finding the type that constructs it (`ParseError`) allowed a proper explicit type.
+**Action:** Identify constructor call sites or related types within the same domain space before falling back to `any`.
