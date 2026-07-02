@@ -1003,13 +1003,13 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
 
         const options: FormattingOptions = {}
         if (typedKey === 'color' || typedKey === 'backgroundColor' || typedKey === 'highlightColor') {
-          if (typeof value === 'string') { options.color = value }
+          options.color = value as string
         }
 
         if (typedKey === 'fontSize') {
-          if (typeof value === 'number') { options.fontSize = value }
+          options.fontSize = value as number
         } else if (typedKey === 'font') {
-          if (typeof value === 'string') { options.font = value }
+          options.font = value as string
         }
 
         const formattingFragment = buildFormatting(typedKey, options)
