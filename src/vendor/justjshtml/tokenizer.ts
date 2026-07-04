@@ -224,7 +224,7 @@ export class Tokenizer {
     this._commentToken = new CommentToken('')
   }
 
-  initialize(html: any) {
+  initialize(html: string) {
     let input = html || ''
     if (this.opts.discardBom && input && input[0] === '\ufeff') input = input.slice(1)
 
@@ -260,7 +260,7 @@ export class Tokenizer {
     else this.state = Tokenizer.DATA
   }
 
-  run(html: any) {
+  run(html: string) {
     this.initialize(html)
     // eslint-disable-next-line no-constant-condition
     while (true) {

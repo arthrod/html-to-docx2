@@ -62,7 +62,7 @@ export class JustHTML {
     this.errors = []
     this.fragmentContext = fragmentContext
 
-    let html = input
+    let html: string | ArrayBuffer | Uint8Array | null | undefined = input
     if (html == null) html = ''
 
     if (typeof html === 'string') {
