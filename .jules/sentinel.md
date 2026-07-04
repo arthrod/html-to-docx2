@@ -15,3 +15,9 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2025-05-17 - SSRF Vulnerability Via IPv6 Variations
+
+**Vulnerability:** The application used `isPrivateOrLocalHost` to block private/local IPv4 addresses and the IPv6 loopback `[::1]`, but failed to check other IPv6 addresses like the unspecified address `[::]`, link-local `[fe80::/10]`, unique-local `[fc00::/7]`, and IPv4-mapped IPv6 addresses (e.g. `[::ffff:127.0.0.1]`). This allowed SSRF bypasses via IPv6 routing to local or private networks.
+**Learning:** Checking only basic IPv4 representations and `[::1]` is insufficient, as network stacks will gladly map various IPv6 formats back to local internal networks (e.g. mapped IPv4s or link-local).
+**Prevention:** Always validate IPv6 inputs thoroughly for SSRF prevention. Explicitly block `[::]`, link-local (`[fe80::/10]`), and unique-local (`[fc00::/7]`). Furthermore, extract inner IPv4 addresses from mapped IPv6 addresses (`[::ffff:<ipv4>]`) and pass them through the existing robust IPv4 validation logic.
