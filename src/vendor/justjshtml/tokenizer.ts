@@ -72,15 +72,20 @@ const RAWTEXT_SWITCH_TAGS = new Set([
 ])
 
 export class TokenizerOpts {
-  discardBom: any
-  initialRawtextTag: any
-  initialState: any
-  xmlCoercion: any
+  discardBom: boolean
+  initialRawtextTag: string | null
+  initialState: number | null
+  xmlCoercion: boolean
   constructor({
     initialState = null,
     initialRawtextTag = null,
     discardBom = true,
     xmlCoercion = false,
+  }: {
+    initialState?: number | null
+    initialRawtextTag?: string | null
+    discardBom?: boolean
+    xmlCoercion?: boolean
   } = {}) {
     this.initialState = initialState
     this.initialRawtextTag = initialRawtextTag
