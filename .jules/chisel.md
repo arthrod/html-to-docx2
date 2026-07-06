@@ -16,3 +16,7 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+
+## 2024-05-18 - Replacing index signatures on ad-hoc types with structural type guards
+**Learning:** Legacy definitions like `type VNodeType = { [key: string]: string | number | ... }` are often created to allow unconstrained property access without triggering TypeScript errors, serving as a disguised `any`.
+**Action:** When a true structural definition exists (like `VNode`), remove the ad-hoc alias completely. You will see numerous unsafe type cast errors (`as VNodeType`). Do not just blindly swap the casts. Add explicit type guards (e.g. `isVNode()`) to safely narrow the type before accessing its properties, particularly when iterating through arrays or unions (like `VNode | VText`).
