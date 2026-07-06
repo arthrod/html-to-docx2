@@ -2890,7 +2890,8 @@ const buildTable = async (
 
   if (vNodeHasChildren(vNode)) {
     // First pass: emit tblGrid from colgroup if present
-    for (const childVNode of (vNode.children || [])) {
+    for (const childVNode of vNode.children || []) {
+      if (!isVNode(childVNode)) continue
       if (childVNode.tagName === 'colgroup' && !tblGridEmitted) {
         const tableGridFragment = buildTableGrid(childVNode, modifiedAttributes)
         tableFragment.import(tableGridFragment)
@@ -2900,7 +2901,8 @@ const buildTable = async (
 
     // If no colgroup, find first tr to build tblGrid from
     if (!tblGridEmitted) {
-      for (const childVNode of (vNode.children || [])) {
+      for (const childVNode of vNode.children || []) {
+      if (!isVNode(childVNode)) continue
         if (tblGridEmitted) break
         if (childVNode.tagName === 'tr') {
           const tableGridFragment = buildTableGridFromTableRow(
@@ -2910,7 +2912,8 @@ const buildTable = async (
           tableFragment.import(tableGridFragment)
           tblGridEmitted = true
         } else if (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
-          for (const grandChildVNode of (childVNode.children || [])) {
+          for (const grandChildVNode of childVNode.children || []) {
+            if (!isVNode(grandChildVNode)) continue
             if (grandChildVNode.tagName === 'tr') {
               const tableGridFragment = buildTableGridFromTableRow(
                 grandChildVNode,
@@ -2927,11 +2930,13 @@ const buildTable = async (
 
     // Second pass: emit all tr elements
     /* eslint-disable no-await-in-loop -- DOCX table rows must be built in document order */
-    for (const childVNode of (vNode.children || [])) {
+    for (const childVNode of vNode.children || []) {
+      if (!isVNode(childVNode)) continue
       if (childVNode.tagName === 'colgroup') {
         // Already handled above
       } else if (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
-        for (const grandChildVNode of (childVNode.children || [])) {
+        for (const grandChildVNode of childVNode.children || []) {
+            if (!isVNode(grandChildVNode)) continue
           if (grandChildVNode.tagName === 'tr') {
             const tableRowFragment = await buildTableRow(
               grandChildVNode,
