@@ -15,3 +15,9 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2026-07-06 - SSRF Bypass via FQDN Trailing Dots and IPv4-Mapped IPv6
+
+**Vulnerability:** The `isPrivateOrLocalHost` SSRF prevention check failed to handle URLs with a Fully Qualified Domain Name (FQDN) trailing dot (e.g., `127.0.0.1.`), case sensitivity (e.g., `LOCALHOST`), and IPv4-mapped IPv6 formats (e.g., `[::ffff:127.0.0.1]` and `[0:0:0:0:0:ffff:127.0.0.1]`). Node.js and Bun internally resolve these variations to the underlying private IP before dispatching the request, enabling an attacker to bypass the blocklist string checks and perform an SSRF attack against internal network endpoints.
+**Learning:** Network request agents (like `fetch`) are incredibly resilient and will parse anomalous or alternative IP representations (such as trailing FQDN dots and IPv4-mapped IPv6 pseudo-formats) that simple string comparisons miss.
+**Prevention:** Before validating an IP/hostname for SSRF, strictly normalize the string: convert it to lowercase, strip trailing dots (`.`), and explicitly check for common IPv4-mapped IPv6 prefixes (e.g., `[::ffff:` and `[0:0:0:0:0:ffff:`) to prevent basic bypassing. Consider using a dedicated IP parsing library when full strict canonicalization is required.

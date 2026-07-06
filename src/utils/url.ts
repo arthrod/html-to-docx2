@@ -15,6 +15,9 @@ const isValidUrl = (urlString: string | null | undefined): boolean => {
 }
 
 const isPrivateOrLocalHost = (hostname: string): boolean => {
+  if (hostname.endsWith('.')) hostname = hostname.slice(0, -1)
+  hostname = hostname.toLowerCase()
+
   if (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
@@ -25,6 +28,10 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
   }
 
   if (hostname.endsWith('.localhost')) return true
+
+  if (hostname.startsWith('[::ffff:') || hostname.startsWith('[0:0:0:0:0:ffff:')) {
+    return true
+  }
 
   let parts: number[] = []
   const stringParts = hostname.split('.')
