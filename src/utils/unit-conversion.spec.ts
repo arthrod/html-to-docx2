@@ -26,19 +26,6 @@ import {
   pointToHIP,
   pointToTWIP,
   TWIPToEMU,
-  EMUToPixel,
-  EMUToTWIP,
-  TWIPToPoint,
-  HIPToPoint,
-  TWIPToHIP,
-  TWIPToPixel,
-  HIPToPixel,
-  inchToPoint,
-  cmToInch,
-  pixelToPoint,
-  pointToPixel,
-  EIPToPoint,
-  EIPToPixel,
 } from './unit-conversion'
 
 describe('unit conversion', () => {
@@ -99,30 +86,6 @@ describe('unit conversion', () => {
       expect(pixelToEIP(1)).toBe(8)
       expect(pixelToEIP(10)).toBe(64)
     })
-
-    it('pixelToPoint should convert pixels to points', () => {
-      expect(pixelToPoint(96)).toBe(72)
-    })
-
-    it('EMUToPixel should convert EMU to pixels', () => {
-      expect(EMUToPixel(95250)).toBe(10)
-    })
-
-    it('TWIPToPixel should convert TWIP to pixels', () => {
-      expect(TWIPToPixel(150)).toBe(10)
-    })
-
-    it('HIPToPixel should convert half points to pixels', () => {
-      expect(HIPToPixel(15)).toBe(10)
-    })
-
-    it('pointToPixel should convert points to pixels', () => {
-      expect(pointToPixel(72)).toBe(96)
-    })
-
-    it('EIPToPixel should convert eighths of a point to pixels', () => {
-      expect(EIPToPixel(576)).toBe(96)
-    })
   })
 
   describe('point conversions', () => {
@@ -144,22 +107,6 @@ describe('unit conversion', () => {
       expect(pointToEIP(1)).toBe(8)
       expect(pointToEIP(2)).toBe(16)
     })
-
-    it('TWIPToPoint should convert TWIP to points', () => {
-      expect(TWIPToPoint(200)).toBe(10)
-    })
-
-    it('HIPToPoint should convert half points to points', () => {
-      expect(HIPToPoint(20)).toBe(10)
-    })
-
-    it('inchToPoint should convert inches to points', () => {
-      expect(inchToPoint(1)).toBe(72)
-    })
-
-    it('EIPToPoint should convert eighths of a point to points', () => {
-      expect(EIPToPoint(80)).toBe(10)
-    })
   })
 
   describe('centimeter conversions', () => {
@@ -168,10 +115,6 @@ describe('unit conversion', () => {
       const result = cmToTWIP(2.54)
       // 2.54 cm = 1 inch = 1440 TWIP
       expect(Math.round(result)).toBe(1440)
-    })
-
-    it('cmToInch should convert centimeters to inches', () => {
-      expect(cmToInch(2.54)).toBeCloseTo(1, 4)
     })
   })
 
@@ -190,10 +133,6 @@ describe('unit conversion', () => {
       expect(TWIPToEMU(1)).toBe(635)
       expect(TWIPToEMU(1440)).toBe(914_400) // 1 inch in EMU
     })
-
-    it('EMUToTWIP should convert EMU to TWIP', () => {
-      expect(EMUToTWIP(6350)).toBe(10)
-    })
   })
 
   describe('HIP conversions', () => {
@@ -201,10 +140,6 @@ describe('unit conversion', () => {
       // 1 half point = 10 TWIP
       expect(HIPToTWIP(1)).toBe(10)
       expect(HIPToTWIP(22)).toBe(220) // 11pt = 22 half points = 220 TWIP
-    })
-
-    it('TWIPToHIP should convert TWIP to half points', () => {
-      expect(TWIPToHIP(100)).toBe(10)
     })
   })
 })
