@@ -89,7 +89,12 @@ function nodeToTestFormat(node: any, indent: any, options: any) {
     templateContent
   ) {
     const sections = [line]
-    if (attributeLines.length) sections.push(...attributeLines)
+    if (attributeLines.length) {
+      // ⚡ Bolt: Avoid spread operator in Array.push to prevent 'Maximum call stack size exceeded' errors and improve performance
+      for (let i = 0; i < attributeLines.length; i++) {
+        sections.push(attributeLines[i])
+      }
+    }
     sections.push(`| ${' '.repeat(indent + 2)}content`)
     for (const child of templateContent.children || [])
       sections.push(nodeToTestFormat(child, indent + 4, options))
@@ -97,7 +102,12 @@ function nodeToTestFormat(node: any, indent: any, options: any) {
   }
 
   const sections = [line]
-  if (attributeLines.length) sections.push(...attributeLines)
+  if (attributeLines.length) {
+    // ⚡ Bolt: Avoid spread operator in Array.push to prevent 'Maximum call stack size exceeded' errors and improve performance
+    for (let i = 0; i < attributeLines.length; i++) {
+      sections.push(attributeLines[i])
+    }
+  }
   for (const child of node.children || [])
     sections.push(nodeToTestFormat(child, indent + 2, options))
   return sections.join('\n')
