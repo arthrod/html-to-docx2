@@ -2449,7 +2449,7 @@ const buildTableRow = async (
   const modifiedAttributes: TableRowAttributes = { ...attributes }
   if (isVNode(vNode) && vNode.properties) {
     // FIXME: find a better way to get row height from cell style
-    const firstChild = (vNode.children || [])[0]
+    const firstChild = (vNode.children || [])[0] | undefined
     if (
       vNode.properties.style?.height ||
       (firstChild &&
@@ -2917,7 +2917,7 @@ const buildTable = async (
           )
           tableFragment.import(tableGridFragment)
           tblGridEmitted = true
-        } else if (isVNode(childVNode) && (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody')) {
+        } else if (isVNode(childVNode) && childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
           for (const grandChildVNode of childVNode.children || []) {
             if (isVNode(grandChildVNode) && grandChildVNode.tagName === 'tr') {
               const tableGridFragment = buildTableGridFromTableRow(
@@ -2938,7 +2938,7 @@ const buildTable = async (
     for (const childVNode of vNode.children || []) {
       if (isVNode(childVNode) && childVNode.tagName === 'colgroup') {
         // Already handled above
-      } else if (isVNode(childVNode) && (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody')) {
+      } else if (isVNode(childVNode) && childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
         for (const grandChildVNode of childVNode.children || []) {
           if (isVNode(grandChildVNode) && grandChildVNode.tagName === 'tr') {
             const tableRowFragment = await buildTableRow(
