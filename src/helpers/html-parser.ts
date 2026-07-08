@@ -487,16 +487,31 @@ function normalizeDocumentRootNodes(
       normalizedNodes.push(bodyNode)
     }
 
+    // Optimization: Avoid Array.push(...items) in hot paths to prevent "Maximum call stack size exceeded"
+    // errors for deeply nested/wide DOM trees and to improve memory allocation speed.
+    // Performance impact: Speeds up merging by avoiding V8 argument spreading limits.
     if (!hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      if (bodyNode?.children) {
+        for (let i = 0, len = bodyNode.children.length; i < len; i++) {
+          normalizedNodes.push(bodyNode.children[i])
+        }
+      }
       return
     }
 
     if (hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      if (bodyNode?.children) {
+        for (let i = 0, len = bodyNode.children.length; i < len; i++) {
+          normalizedNodes.push(bodyNode.children[i])
+        }
+      }
     }
     if (hasExplicitBody && !hasExplicitHead) {
-      normalizedNodes.push(...(headNode?.children || []))
+      if (headNode?.children) {
+        for (let i = 0, len = headNode.children.length; i < len; i++) {
+          normalizedNodes.push(headNode.children[i])
+        }
+      }
     }
   })
 
