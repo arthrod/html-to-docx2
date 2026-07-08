@@ -28,6 +28,22 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  test('should reject signed negative integer representations (SSRF edge cases)', () => {
+    // Tests that bitwise operators (>>>) correctly parse negative IP integers
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true) // 169.254.169.254
+  })
+
+  test('should reject zero-based IP formats', () => {
+    expect(isPrivateOrLocalHost('0')).toBe(true)
+    expect(isPrivateOrLocalHost('0.1.2.3')).toBe(true)
+  })
+
+  test('should reject Class B private networks', () => {
+    expect(isPrivateOrLocalHost('172.16.0.1')).toBe(true) // 172.16.x.x
+    expect(isPrivateOrLocalHost('172.31.255.255')).toBe(true) // 172.31.x.x
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
