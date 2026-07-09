@@ -7,6 +7,7 @@ import {
   EOFToken,
   Tag,
   TokenSinkResult,
+  ParseError,
 } from './tokens.js'
 
 function isWhitespace(c: any) {
@@ -171,7 +172,7 @@ export class Tokenizer {
   currentTagKind: any
   currentTagName: any
   currentTagSelfClosing: any
-  errors: any
+  errors: ParseError[]
   ignoreLF: any
   lastStartTagName: any
   length: any

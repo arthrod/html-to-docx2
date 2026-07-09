@@ -2360,9 +2360,9 @@ const MODE_HANDLERS = [
 
 export class TreeBuilder {
   active_formatting: any
-  collect_errors: any
+  collect_errors: boolean
   document: any
-  errors: any
+  errors: ParseError[]
   form_element: any
   fragment_context: FragmentContext | null
   fragment_context_element: any
