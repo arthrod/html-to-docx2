@@ -26,6 +26,15 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
+
+    // SSRF bypass checks
+    expect(isPrivateOrLocalHost('localhost.')).toBe(true)
+    expect(isPrivateOrLocalHost('127.0.0.1.')).toBe(true)
+    expect(isPrivateOrLocalHost('LOCALHOST')).toBe(true)
+
+    // Negative integer IP bypass checks (for bitwise right shift logic)
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true) // 169.254.169.254
   })
 
   test('should validate http URLs', () => {
