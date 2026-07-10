@@ -28,6 +28,33 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  test('should correctly handle edge cases in isPrivateOrLocalHost', () => {
+    // Single-integer negative value tests for IP ranges
+    // WHAT: Testing negative integers that JS bitwise operators convert to valid IP boundaries.
+    // WHY: Attackers can bypass naive string-matching filters using negative integer formats
+    // to achieve SSRF (Server-Side Request Forgery) against local networks.
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1
+    expect(isPrivateOrLocalHost('-1442971138')).toBe(true) // 169.254.169.254
+    expect(isPrivateOrLocalHost('0')).toBe(true) // 0.0.0.0 (single part)
+
+    // Boundaries for multi-part IPs
+    expect(isPrivateOrLocalHost('172.15.255.255')).toBe(false)
+    expect(isPrivateOrLocalHost('172.16.0.0')).toBe(true)
+    expect(isPrivateOrLocalHost('172.31.255.255')).toBe(true)
+    expect(isPrivateOrLocalHost('172.32.0.0')).toBe(false)
+
+    // Boundaries for multi-part parts > 1 & incomplete
+    expect(isPrivateOrLocalHost('192.168')).toBe(true)
+    expect(isPrivateOrLocalHost('169.254')).toBe(true)
+    expect(isPrivateOrLocalHost('172.16')).toBe(true)
+    expect(isPrivateOrLocalHost('127.1')).toBe(true)
+    expect(isPrivateOrLocalHost('10.1')).toBe(true)
+    expect(isPrivateOrLocalHost('0.1')).toBe(true)
+
+    // Hostname ends with .localhost
+    expect(isPrivateOrLocalHost('test.localhost')).toBe(true)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
