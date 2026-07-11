@@ -16,3 +16,6 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+## 2024-05-23 - Typed parseDocument and Tokenizer HTML inputs
+**Learning:** Found that core HTML parser/tokenizer functions `parseDocument`, `Tokenizer.run`, and `Tokenizer.initialize` had the input `html: any`. However, checking how `justhtml.ts` uses them revealed that it does `ArrayBuffer`/`Uint8Array` decoding into `string` before passing them down, so the inputs to these lower-level functions are guaranteed strings.
+**Action:** Always follow the parameter up the stack (trace the value) before choosing a type, rather than just guessing.
