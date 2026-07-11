@@ -9,7 +9,7 @@ export interface ParseDocumentOptions {
   tokenizerOpts?: TokenizerOpts | Record<string, unknown> | null
 }
 
-export function parseDocument(html: any, options: ParseDocumentOptions = {}) {
+export function parseDocument(html: string, options: ParseDocumentOptions = {}) {
   const {
     fragmentContext = null,
     iframeSrcdoc = false,
