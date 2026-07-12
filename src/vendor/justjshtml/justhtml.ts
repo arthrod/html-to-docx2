@@ -2,6 +2,7 @@ import { FragmentContext } from './context.js'
 import { decodeHTML } from './encoding.js'
 import { parseDocument } from './parser.js'
 import { TokenizerOpts } from './tokenizer.js'
+import { ParseError } from './tokens.js'
 
 export interface JustHTMLOptions {
   collectErrors?: boolean
@@ -43,7 +44,7 @@ export interface ToHTMLOptions {
 export class JustHTML {
   collectErrors: boolean
   encoding: string | null
-  errors: any[]
+  errors: ParseError[]
   fragmentContext: unknown
   iframeSrcdoc: boolean
   root: any
