@@ -287,10 +287,7 @@ function generateContentTypesFragments(
   if (objects && Array.isArray(objects)) {
     objects.forEach((object) => {
       // Use 'in' operator to discriminate the type without unsafe assertions
-      const id =
-        'headerId' in object
-          ? object.headerId
-          : object.footerId
+      const id = 'headerId' in object ? object.headerId : object.footerId
       const contentTypesFragment = fragment({
         defaultNamespace: { ele: namespaces.contentTypes },
       })
@@ -380,7 +377,9 @@ async function generateSectionXML(
 
   const firstNode = XMLFragment.first().node
   const isElementNode = (node: unknown): node is { tagName: string } => {
-    return typeof node === 'object' && node !== null && 'nodeType' in node && node.nodeType === 1
+    return (
+      typeof node === 'object' && node !== null && 'nodeType' in node && node.nodeType === 1
+    )
   }
 
   if (
@@ -681,13 +680,10 @@ class DocxDocument {
     // xmlbuilder2 doesn't correctly preserve namespace prefixes when importing fragments
     // so we need to post-process the XML string to fix them
 
-    xmlString = xmlString.replace(
-      DRAWING_ELEMENTS_REGEX,
-      (match, prefix, el, suffix) => {
-        const isEnd = prefix.length === 4 // </w:
-        return `${isEnd ? '</' : '<'}${DRAWING_NAMESPACE_MAP[el]}:${el}${suffix}`
-      }
-    )
+    xmlString = xmlString.replace(DRAWING_ELEMENTS_REGEX, (match, prefix, el, suffix) => {
+      const isEnd = prefix.length === 4 // </w:
+      return `${isEnd ? '</' : '<'}${DRAWING_NAMESPACE_MAP[el]}:${el}${suffix}`
+    })
 
     xmlString = xmlString
       .replace(/<w:svgBlip([ />])/g, '<asvg:svgBlip$1')
