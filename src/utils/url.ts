@@ -14,7 +14,8 @@ const isValidUrl = (urlString: string | null | undefined): boolean => {
   }
 }
 
-const isPrivateOrLocalHost = (hostname: string): boolean => {
+const isPrivateOrLocalHost = (rawHostname: string): boolean => {
+  const hostname = rawHostname.toLowerCase().replace(/\.$/, '')
   if (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
