@@ -14,8 +14,8 @@ export interface JustHTMLOptions {
 }
 
 export class StrictModeError extends SyntaxError {
-  error: ParseError | (Error & { code?: string })
-  constructor(error: ParseError | (Error & { code?: string })) {
+  error: ParseError | (Error & { code?: string }) | null | undefined
+  constructor(error: ParseError | (Error & { code?: string }) | null | undefined) {
     super(error?.message || String(error?.code || 'parse-error'))
     this.error = error
   }
