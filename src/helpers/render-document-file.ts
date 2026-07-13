@@ -31,12 +31,12 @@ type VNodeProperties = {
   style?: Record<string, string>
 }
 
-type VNodeType = {
-  children?: (VNodeType | VTextType)[]
+type VNode = {
+  children?: (VNode | VText)[]
   properties?: VNodeProperties
   tagName?: string
   [key: string]:
-    | (VNodeType | VTextType)[]
+    | (VNode | VText)[]
     | VNodeProperties
     | string
     | number
@@ -45,12 +45,12 @@ type VNodeType = {
     | undefined
 }
 
-type VTextType = {
+type VText = {
   text: string
   [key: string]: string
 }
 
-type VTree = VNodeType | VTextType | (VNodeType | VTextType)[]
+type VTree = VNode | VText | (VNode | VText)[]
 
 const base64ToUint8Array = (base64: string): Uint8Array => {
   if (typeof Buffer !== 'undefined') {
@@ -137,22 +137,22 @@ const INLINE_ELEMENTS = [
   'code',
 ] as const
 
-const asVNode = (node: VNodeType | VTextType): VNodeType | null => {
+const asVNode = (node: VNode | VText): VNode | null => {
   if (typeof node !== 'object' || node === null || Array.isArray(node)) {
     return null
   }
-  return 'tagName' in node ? (node as VNodeType) : null
+  return 'tagName' in node ? node : null
 }
 
-const asVText = (node: VNodeType | VTextType): VTextType | null => {
+const asVText = (node: VNode | VText): VText | null => {
   if (typeof node !== 'object' || node === null || Array.isArray(node)) {
     return null
   }
-  return typeof (node as VTextType).text === 'string' ? (node as VTextType) : null
+  return typeof node.text === 'string' ? node : null
 }
 
 // Check if a vNode is an inline element
-const isInlineElement = (node: VNodeType | VTextType): boolean =>
+const isInlineElement = (node: VNode | VText): boolean =>
   isVText(node) || INLINE_ELEMENTS.includes(asVNode(node)?.tagName ?? '')
 
 // Elements that need special handling and should not be wrapped in inline grouping
@@ -177,7 +177,7 @@ const SPECIAL_BLOCK_ELEMENTS = [
 ] as const
 
 // Recursively check if a vNode contains any special block elements
-const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
+const containsSpecialElements = (node: VNode | VText): boolean => {
   const vNode = asVNode(node)
   if (!vNode) return false
   if (SPECIAL_BLOCK_ELEMENTS.includes(vNode.tagName || '')) return true
@@ -187,7 +187,7 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
   return false
 }
 
-const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
+const serializeVNodeToSVG = (node: VNode | VText, isRoot = false): string => {
   const textNode = asVText(node)
   if (textNode) {
     return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -307,7 +307,7 @@ export const getImageCacheStats = (
 
 export const buildImage = async (
   docxDocumentInstance: DocxDocumentInstance,
-  vNode: VNodeType,
+  vNode: VNode,
   maximumWidth: number | null = null
 ): Promise<XMLBuilderType | null> => {
   let response: MediaFileResponse | null = null
@@ -378,13 +378,13 @@ export const buildImage = async (
 
 type VNodeObject = {
   level: number
-  node: VNodeType | VTextType
+  node: VNode | VText
   numberingId: number
   type: string
 }
 
 export const buildList = async (
-  vNode: VNodeType,
+  vNode: VNode,
   docxDocumentInstance: DocxDocumentInstance,
   xmlFragment: XMLBuilderType,
   existingNumberingId: number | null = null,
@@ -410,7 +410,7 @@ export const buildList = async (
     if (
       isVText(tempVNodeObject.node) ||
       (isVNode(tempVNodeObject.node) &&
-        !['ul', 'ol', 'li'].includes((tempVNodeObject.node as VNodeType).tagName || ''))
+        !['ul', 'ol', 'li'].includes((tempVNodeObject.node ).tagName || ''))
     ) {
       const paragraphFragment = await xmlBuilder.buildParagraph(
         tempVNodeObject.node,
@@ -426,7 +426,7 @@ export const buildList = async (
       xmlFragment.import(paragraphFragment)
     }
 
-    const tempNode = tempVNodeObject.node as VNodeType
+    const tempNode = tempVNodeObject.node
     if (
       tempNode.children &&
       tempNode.children.length &&
@@ -434,7 +434,7 @@ export const buildList = async (
     ) {
       const tempVNodeObjects: VNodeObject[] = []
       for (const childVNode of tempNode.children) {
-        const childNode = childVNode as VNodeType
+        const childNode = childVNode
         if (['ul', 'ol'].includes(childNode.tagName || '')) {
           tempVNodeObjects.push({
             node: childVNode,
@@ -449,12 +449,12 @@ export const buildList = async (
           tempVNodeObjects.length > 0 &&
           isVNode(tempVNodeObjects[tempVNodeObjects.length - 1].node) &&
           (
-            (tempVNodeObjects[tempVNodeObjects.length - 1].node as VNodeType).tagName || ''
+            (tempVNodeObjects[tempVNodeObjects.length - 1].node ).tagName || ''
           ).toLowerCase() === 'p' &&
           // Don't append <li> elements to paragraphs - they need separate processing
           (childNode.tagName || '').toLowerCase() !== 'li'
         ) {
-          const lastNode = tempVNodeObjects[tempVNodeObjects.length - 1].node as VNodeType
+          const lastNode = tempVNodeObjects[tempVNodeObjects.length - 1].node
           if (lastNode.children) {
             lastNode.children.push(childVNode)
           }
@@ -491,21 +491,21 @@ export const buildList = async (
 }
 
 type ContentGroup = {
-  children?: (VNodeType | VTextType)[]
-  node?: VNodeType | VTextType
+  children?: (VNode | VText)[]
+  node?: VNode | VText
   type: 'block' | 'inline'
 }
 
 async function findXMLEquivalent(
   docxDocumentInstance: DocxDocumentInstance,
-  vNode: VNodeType,
+  vNode: VNode,
   xmlFragment: XMLBuilderType
 ): Promise<void> {
   // Check if this element contains list children (for paragraphs that wrap lists)
   const hasListChildren =
     vNodeHasChildren(vNode) &&
     (vNode.children || []).some(
-      (child) => isVNode(child) && ['ul', 'ol'].includes((child as VNodeType).tagName || '')
+      (child) => isVNode(child) && ['ul', 'ol'].includes(child.tagName || '')
     )
 
   // Reset list tracking for non-list elements to break consecutive list sequences
@@ -602,7 +602,7 @@ async function findXMLEquivalent(
 
       // Handle mixed content: group consecutive inline elements into paragraphs
       const groups: ContentGroup[] = []
-      let currentInlineGroup: (VNodeType | VTextType)[] = []
+      let currentInlineGroup: (VNode | VText)[] = []
 
       for (const child of vNode.children || []) {
         if (isInlineElement(child)) {
@@ -651,9 +651,9 @@ async function findXMLEquivalent(
     case 'h6': {
       // Check if the heading has a bookmark anchor (an <a> or <span> with id but no href)
       let bookmarkId: string | null = null
-      let headingVNode: VNodeType = vNode
+      let headingVNode: VNode = vNode
       if (vNodeHasChildren(vNode) && (vNode.children || []).length > 0) {
-        const firstChild = (vNode.children || [])[0] as VNodeType
+        const firstChild = (vNode.children || [])[0]
         // Check both properties.id and properties.attributes.id for the bookmark anchor
         const anchorId = firstChild.properties?.id || firstChild.properties?.attributes?.id
         const hasHref =
@@ -723,13 +723,13 @@ async function findXMLEquivalent(
       if (vNodeHasChildren(vNode)) {
         const listChildren = (vNode.children || []).filter(
           (child) =>
-            isVNode(child) && ['ul', 'ol'].includes((child as VNodeType).tagName || '')
+            isVNode(child) && ['ul', 'ol'].includes(child.tagName || '')
         )
         if (listChildren.length > 0) {
           // Process non-list children as paragraph content first
           const nonListChildren = (vNode.children || []).filter(
             (child) =>
-              !isVNode(child) || !['ul', 'ol'].includes((child as VNodeType).tagName || '')
+              !isVNode(child) || !['ul', 'ol'].includes(child.tagName || '')
           )
           if (nonListChildren.length > 0) {
             const modifiedVNode = new VNode(
@@ -750,7 +750,7 @@ async function findXMLEquivalent(
 
           /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
           for (const listChild of listChildren) {
-            const listNode = listChild as VNodeType
+            const listNode = listChild
             // Get existing numbering ID for this type+level, if any
             const { lastListNumberingId: existingId } = getListTracking(
               listNode.tagName || '',
@@ -805,9 +805,9 @@ async function findXMLEquivalent(
     case 'figure':
       if (vNodeHasChildren(vNode)) {
         // Helper to find and process img elements recursively
-        const processImageInNode = async (node: VNodeType | VTextType): Promise<void> => {
+        const processImageInNode = async (node: VNode | VText): Promise<void> => {
           if (!isVNode(node)) return
-          const vn = node as VNodeType
+          const vn = node
           if (vn.tagName === 'img') {
             const imageFragment = await buildImage(docxDocumentInstance, vn)
             if (imageFragment) {
@@ -826,7 +826,7 @@ async function findXMLEquivalent(
 
         /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
         for (let index = 0; index < (vNode.children || []).length; index++) {
-          const childVNode = (vNode.children || [])[index] as VNodeType
+          const childVNode = (vNode.children || [])[index]
           if (childVNode.tagName === 'table') {
             const tableFragment = await xmlBuilder.buildTable(
               childVNode,
@@ -859,7 +859,7 @@ async function findXMLEquivalent(
             // Also check for figcaption in the div
             if (vNodeHasChildren(childVNode)) {
               for (const divChild of childVNode.children || []) {
-                if (isVNode(divChild) && (divChild as VNodeType).tagName === 'figcaption') {
+                if (isVNode(divChild) && divChild.tagName === 'figcaption') {
                   const captionFragment = await xmlBuilder.buildParagraph(
                     divChild,
                     {},
@@ -938,7 +938,7 @@ async function findXMLEquivalent(
         return
       }
 
-      const svgString = serializeVNodeToSVG(sanitizedVNode as VNodeType, true)
+      const svgString = serializeVNodeToSVG(sanitizedVNode , true)
       if (!svgString.trim()) {
         return
       }
@@ -961,7 +961,7 @@ async function findXMLEquivalent(
           alt: vNode.properties?.attributes?.title || 'SVG image',
           src: `data:image/svg+xml;base64,${base64SVG}`,
         },
-      } as VNodeType
+      }
       const imageFragment = await buildImage(docxDocumentInstance, imageVNode)
       if (imageFragment) {
         xmlFragment.import(imageFragment)
@@ -1005,8 +1005,8 @@ let _lastIndentLevel = 0
 
 // Helper to extract indent level from vNode or parent paragraph
 function getIndentLevel(
-  vNode: VNodeType | null,
-  parentVNode: VNodeType | null = null
+  vNode: VNode | null,
+  parentVNode: VNode | null = null
 ): number {
   // Check margin-left style which indicates indent level
   const marginLeft =
@@ -1044,7 +1044,7 @@ export async function convertVTreeToXML(
     }
     /* eslint-enable no-await-in-loop */
   } else if (isVNode(vTree)) {
-    await findXMLEquivalent(docxDocumentInstance, vTree as VNodeType, xmlFragment)
+    await findXMLEquivalent(docxDocumentInstance, vTree , xmlFragment)
   } else if (isVText(vTree)) {
     const text = vTree.text
     if (!text || !text.trim()) {
