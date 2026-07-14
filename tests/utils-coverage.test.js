@@ -26,6 +26,10 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
+    // Edge cases for SSRF bypasses via hostname parsing
+    expect(isPrivateOrLocalHost('LOCALhost')).toBe(true)
+    expect(isPrivateOrLocalHost('localhost.')).toBe(true)
+    expect(isPrivateOrLocalHost('127.0.0.1.')).toBe(true)
   })
 
   test('should validate http URLs', () => {
