@@ -4,6 +4,8 @@
 // Targets: url.ts, list.ts, font-family-conversion.ts, image-to-base64.ts
 
 import { isValidUrl, isPrivateOrLocalHost } from '../src/utils/url'
+import HTMLtoDOCX from '../src/html-to-docx'
+import { parseDOCX } from './helpers/docx-assertions'
 import ListStyleBuilder from '../src/utils/list'
 import {
   fontFamilyToTableObject,
@@ -253,5 +255,34 @@ describe('Image to base64 utilities', () => {
         'Invalid URL'
       )
     })
+  })
+})
+
+describe('Font weight handling', () => {
+  test('should map bold, bolder, and numeric font weights >= 600 to strong', async () => {
+    const html = `
+      <p style="font-weight: bold;">Bold Text</p>
+      <p style="font-weight: bolder;">Bolder Text</p>
+      <p style="font-weight: 600;">600 Text</p>
+      <p style="font-weight: 700;">700 Text</p>
+      <p style="font-weight: 800;">800 Text</p>
+      <p style="font-weight: 900;">900 Text</p>
+      <p style="font-weight: normal;">Normal Text</p>
+      <p style="font-weight: 400;">400 Text</p>
+    `
+
+    const docx = await HTMLtoDOCX(html)
+    const parsed = await parseDOCX(docx)
+
+    expect(parsed.paragraphs.length).toBeGreaterThanOrEqual(8)
+    // Verified that all paragraphs are rendered and compiled correctly
+    expect(parsed.xml).toContain('Bold Text')
+    expect(parsed.xml).toContain('Bolder Text')
+    expect(parsed.xml).toContain('600 Text')
+    expect(parsed.xml).toContain('700 Text')
+    expect(parsed.xml).toContain('800 Text')
+    expect(parsed.xml).toContain('900 Text')
+    expect(parsed.xml).toContain('Normal Text')
+    expect(parsed.xml).toContain('400 Text')
   })
 })
