@@ -16,3 +16,7 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+
+## 2024-05-30 - VNode Union Redundancy and Safety
+**Learning:** When removing duplicate/dummy types like `VNodeType` in favor of real domain models like `VNode`, be very careful with array iterations containing union types (e.g., `(VNode | VText)[]`). Removing unsafe type assertions (`as VNode`) without adding runtime type guards (`if (!isVNode(node))`) will cause `tsc` errors and runtime failures if a `VText` node is encountered when a property like `.properties` is accessed.
+**Action:** When migrating away from dummy types and removing unsafe casts on union members inside array loops, always implement proper type narrowing (e.g., `isVNode(child)`) rather than just stripping the `as VNode` string.
