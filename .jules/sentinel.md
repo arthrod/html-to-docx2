@@ -15,3 +15,9 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2026-07-15 - SSRF Vulnerability via Hostname Trailing Dot Bypass
+
+**Vulnerability:** The `isPrivateOrLocalHost` check was comparing exact strings like `localhost` or `127.0.0.1`. Hostnames parsed from URLs that include a trailing dot (e.g. `http://localhost.` or `http://127.0.0.1.`) bypassed this strict string check, whilst still resolving correctly to local resources. Node's URL parser preserves the trailing dot.
+**Learning:** Exact string-matching filters for hostnames are insufficient due to trailing dot domain syntax, which is preserved by standard URL parsers and still resolves to the underlying local address.
+**Prevention:** Always normalize the hostname before executing security filters by converting it to lower case and explicitly stripping trailing dots (e.g., `hostname = hostname.toLowerCase().replace(/\.$/, '')`).
