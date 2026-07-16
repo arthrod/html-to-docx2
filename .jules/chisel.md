@@ -16,7 +16,3 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
-
-## 2024-05-18 - [Duplicate interface removal in JS->TS migration]
-**Learning:** Sometimes migration creates duplicate interfaces where one uses `unknown` and another might try to be more specific or imports correctly. In `justhtml.ts`, `JustHTMLOptions` had two definitions.
-**Action:** When typing `any` properties and verifying options, delete duplicate interfaces with less precise generic types (`unknown`) to prevent TypeScript merging conflicts and enforce strictness based on standard module exports.
