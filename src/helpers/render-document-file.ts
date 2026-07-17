@@ -402,7 +402,7 @@ export const buildList = async (
       xmlFragment.import(paragraphFragment)
     }
 
-    const tempNode = tempVNodeObject.node
+    const tempNode = tempVNodeObject.node as VNode
     if (
       tempNode.children &&
       tempNode.children.length &&
@@ -410,7 +410,7 @@ export const buildList = async (
     ) {
       const tempVNodeObjects: VNodeObject[] = []
       for (const childVNode of tempNode.children) {
-        const childNode = childVNode
+        const childNode = childVNode as VNode
         if (['ul', 'ol'].includes(childNode.tagName || '')) {
           tempVNodeObjects.push({
             node: childVNode,
@@ -430,7 +430,7 @@ export const buildList = async (
           // Don't append <li> elements to paragraphs - they need separate processing
           (childNode.tagName || '').toLowerCase() !== 'li'
         ) {
-          const lastNode = tempVNodeObjects[tempVNodeObjects.length - 1].node
+          const lastNode = tempVNodeObjects[tempVNodeObjects.length - 1].node as VNode
           if (lastNode.children) {
             lastNode.children.push(childVNode)
           }
@@ -629,7 +629,7 @@ async function findXMLEquivalent(
       let bookmarkId: string | null = null
       let headingVNode: VNode = vNode
       if (vNodeHasChildren(vNode) && (vNode.children || []).length > 0) {
-        const firstChild = (vNode.children || [])[0]
+        const firstChild = (vNode.children || [])[0] as VNode
         // Check both properties.id and properties.attributes.id for the bookmark anchor
         const anchorId = firstChild.properties?.id || firstChild.properties?.attributes?.id
         const hasHref =
@@ -726,7 +726,7 @@ async function findXMLEquivalent(
 
           /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
           for (const listChild of listChildren) {
-            const listNode = listChild
+            const listNode = listChild as VNode
             // Get existing numbering ID for this type+level, if any
             const { lastListNumberingId: existingId } = getListTracking(
               listNode.tagName || '',
@@ -802,7 +802,7 @@ async function findXMLEquivalent(
 
         /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
         for (let index = 0; index < (vNode.children || []).length; index++) {
-          const childVNode = (vNode.children || [])[index]
+          const childVNode = (vNode.children || [])[index] as VNode
           if (childVNode.tagName === 'table') {
             const tableFragment = await xmlBuilder.buildTable(
               childVNode,
@@ -914,7 +914,7 @@ async function findXMLEquivalent(
         return
       }
 
-      const svgString = serializeVNodeToSVG(sanitizedVNode, true)
+      const svgString = serializeVNodeToSVG(sanitizedVNode as VNode, true)
       if (!svgString.trim()) {
         return
       }
