@@ -488,15 +488,27 @@ function normalizeDocumentRootNodes(
     }
 
     if (!hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      // Use a for loop instead of spread operator to prevent call stack size errors in V8/Bun for large DOM trees
+      const children = bodyNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
       return
     }
 
     if (hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      // Use a for loop instead of spread operator to prevent call stack size errors in V8/Bun for large DOM trees
+      const children = bodyNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
     }
     if (hasExplicitBody && !hasExplicitHead) {
-      normalizedNodes.push(...(headNode?.children || []))
+      // Use a for loop instead of spread operator to prevent call stack size errors in V8/Bun for large DOM trees
+      const children = headNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
     }
   })
 
