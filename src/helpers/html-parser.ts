@@ -487,16 +487,27 @@ function normalizeDocumentRootNodes(
       normalizedNodes.push(bodyNode)
     }
 
+    // Note: Using a for loop instead of Array.push(...items) prevents "Maximum call stack size exceeded"
+    // errors with large/deeply nested HTML arrays in V8/Bun (~65k arg limit), and is significantly faster for large arrays.
     if (!hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      const children = bodyNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
       return
     }
 
     if (hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      const children = bodyNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
     }
     if (hasExplicitBody && !hasExplicitHead) {
-      normalizedNodes.push(...(headNode?.children || []))
+      const children = headNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
     }
   })
 
