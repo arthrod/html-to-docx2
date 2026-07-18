@@ -153,6 +153,71 @@ function createMinimalBMP(width = 48, height = 48) {
 
 describe('Image Dimensions', () => {
   describe('getImageDimensions', () => {
+    // WHAT: Verifies the fallback parsing of BMP image formats.
+    // WHY: Tests that the BITMAPINFOHEADER is respected explicitly. BMP parsing expects DIB header to be size 40, allowing us to successfully render legacy desktop screenshot assets into the DOCX.
+    it('should parse BMP dimensions (48x48)', () => {
+      // Memory note: BMP header parsing expects BITMAPINFOHEADER (size 40)
+      const data = new Uint8Array(54)
+      const dv = new DataView(data.buffer)
+      dv.setUint16(0, 0x4d42, true) // 'BM'
+      dv.setUint32(2, 54, true) // file size
+      dv.setUint32(10, 54, true) // pixel data offset
+      dv.setUint32(14, 40, true) // DIB header size (BITMAPINFOHEADER)
+      dv.setUint32(18, 48, true) // width
+      dv.setUint32(22, 48, true) // height
+
+      const result = getImageDimensions(data)
+      expect(result).toEqual({ width: 48, height: 48, type: 'bmp' })
+    })
+
+    // WHAT: Verifies the parser's ability to skip over non-essential JPEG markers.
+    // WHY: In modern JPEGs, APP0/APP1 markers (like EXIF data) often precede the SOF0 dimensions marker. Failing to skip these means valid JPEGs from modern cameras would render with corrupted default dimensions in our DOCX output.
+    it('should skip JPEG APP markers to find SOF0', () => {
+      // Create minimal JPEG with APP0 marker (JFIF) before SOF0
+      const result = getImageDimensions(
+        new Uint8Array([
+          0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01,
+          0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00,
+          0x40, 0x00, 0x40, 0x03, 0x01, 0x22, 0x00, 0x02, 0x11, 0x01, 0x03, 0x11, 0x01,
+        ])
+      )
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
+    })
+
+    // WHAT: Verifies that an abruptly truncated JPEG stream does not crash the parser.
+    // WHY: If a user imports a malformed image, the layout engine must gracefully fall back to default dimensions rather than throwing an error and crashing the entire document build process.
+    it('should fallback to default dimensions for malformed JPEG', () => {
+      const result = getImageDimensions(new Uint8Array([0xff, 0xd8, 0xff]))
+      expect(result).toEqual({ width: 100, height: 100, type: 'jpg' })
+    })
+
+    // WHAT: Verifies standard parsing of the older, lossy VP8 WebP format.
+    // WHY: While modern WebPs use VP8L (lossless) or VP8X (extended), legacy lossy VP8 is still heavily utilized online. Ensuring we correctly parse this ensures image preservation during HTML-to-DOCX conversions without requiring external libwebp compilation.
+    it('should parse standard WebP (VP8) format', () => {
+      const data = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, // RIFF ...
+        0x57, 0x45, 0x42, 0x50, // WEBP
+        0x56, 0x50, 0x38, 0x20, // VP8 (space)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // padding up to byte 26
+        0x18, 0x00, // width 24
+        0x18, 0x00, // height 24
+      ])
+      const result = getImageDimensions(data)
+      expect(result).toEqual({ width: 24, height: 24, type: 'webp' })
+    })
+
+    // WHAT: Verifies fallback handling for unsupported WebP chunks (like VP8X).
+    // WHY: If the parser encounters a WebP format chunk it doesn't support, it must fail safely with default dimensions rather than reading corrupted, out-of-bounds byte offsets.
+    it('should fallback to default dimensions for malformed WebP', () => {
+      const data = new Uint8Array([
+        0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+        0x57, 0x45, 0x42, 0x50,
+        0x56, 0x50, 0x38, 0x58, // VP8X (not handled, falls through to fallback)
+      ])
+      const result = getImageDimensions(data)
+      expect(result).toEqual({ width: 100, height: 100, type: 'webp' })
+    })
+
     it('should return default dimensions for empty buffer', () => {
       const result = getImageDimensions(new Uint8Array(0))
       expect(result).toEqual({ width: 100, height: 100, type: 'unknown' })

@@ -1,3 +1,6 @@
 ## 2024-05-24 - Unit Conversion Pure Functions
 **Learning:** Pure functions like the unit conversion utilities in `src/utils/unit-conversion.ts` are ideal for Tier 1 testing. They require zero mocking, run extremely fast, and are fundamental for preventing downstream regressions in complex calculations (like line heights or image dimensions).
 **Action:** Always prioritize finding and testing pure, math-heavy utilities before tackling complex, mock-heavy UI or network interactions, as they offer the highest signal-to-noise ratio in tests.
+## 2024-05-24 - Testing image dimension parsing fallbacks and format coverage
+**Learning:** Pure functions processing raw binary buffers are great targets for testing coverage. Using minimal synthetic `Uint8Array` buffers to represent the headers of images like JPEG, WebP, and BMP reduces the dependency on external file assets while fully exercising format parsing, marker skipping logic, and malformed data fallback logic (avoiding out of bound buffer reads).
+**Action:** When adding coverage for image/binary parsers, manually construct small `Uint8Array` fixtures using standard offset specifications (like the BMP DIB header size of 40) rather than keeping massive base64 strings or real image files in the test suite. Add missing WHAT/WHY comments to satisfy persona restrictions explicitly.
