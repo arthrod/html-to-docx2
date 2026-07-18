@@ -803,7 +803,7 @@ async function findXMLEquivalent(
         // Helper to find and process img elements recursively
         const processImageInNode = async (node: VTree): Promise<void> => {
           if (!isVNode(node)) return
-          const vn = node as VNode
+          const vn = node
           if (vn.tagName === 'img') {
             const imageFragment = await buildImage(docxDocumentInstance, vn)
             if (imageFragment) {
@@ -855,7 +855,7 @@ async function findXMLEquivalent(
             // Also check for figcaption in the div
             if (vNodeHasChildren(childVNode)) {
               for (const divChild of childVNode.children || []) {
-                if (isVNode(divChild) && (divChild as VNode).tagName === 'figcaption') {
+                if (isVNode(divChild) && divChild.tagName === 'figcaption') {
                   const captionFragment = await xmlBuilder.buildParagraph(
                     divChild,
                     {},
