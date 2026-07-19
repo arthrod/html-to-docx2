@@ -824,10 +824,10 @@ const modifiedStyleAttributesBuilder = (
   if (
     isVNode(vNode) &&
     vNode.properties &&
-    vNode.properties.style
+    vNode.properties!.style
   ) {
     const vn = vNode
-    const style = vn.properties.style!
+    const style = vn.properties!.style!
 
     if (style.color && !colorlessColors.includes(style.color)) {
       modifiedAttributes.color = fixupColorCode(style.color)
@@ -1155,7 +1155,7 @@ const buildRun = async (
 
   runFragment.import(runPropertiesFragment)
   if (isVText(vNode)) {
-    const textContent = (vNode).text
+    const textContent = (vNode as VText).text
 
     // Check for tracking tokens in text
     if (docxDocumentInstance && hasTrackingTokens(textContent)) {
@@ -1251,10 +1251,10 @@ const buildRunOrRuns = async (
   if (
     isVNode(vNode) &&
     vNode.properties &&
-    vNode.properties.attributes &&
-    vNode.properties.attributes['data-equation-omml']
+    vNode.properties!.attributes &&
+    vNode.properties!.attributes!['data-equation-omml']
   ) {
-    const ommlString = vNode.properties.attributes['data-equation-omml']
+    const ommlString = vNode.properties!.attributes!['data-equation-omml']
     try {
       // Parse the OMML string and create a fragment
       const ommlFragment = fragment().ele(ommlString)
@@ -2247,7 +2247,7 @@ const buildTableCell = async (
       if (isVNode(childVNode) && childVNode.tagName === 'img') {
         const imageFragment = await buildImage(
           docxDocumentInstance,
-          childVNode,
+          childVNode as VNode,
           modifiedAttributes.maximumWidth || null
         )
         if (imageFragment) {
@@ -2292,7 +2292,7 @@ const buildTableCell = async (
             if (isVNode(divChild) && divChild.tagName === 'img') {
               const imageFragment = await buildImage(
                 docxDocumentInstance,
-                divChild,
+                divChild as VNode,
                 modifiedAttributes.maximumWidth || null
               )
               if (imageFragment) {
