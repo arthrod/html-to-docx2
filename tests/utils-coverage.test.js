@@ -17,15 +17,53 @@ import {
 
 describe('URL utilities', () => {
   test('should reject private or local hosts', () => {
+    // WHAT: Proves that `isPrivateOrLocalHost` correctly identifies and blocks local loopback
+    // and private network IP ranges, including malicious obfuscations like signed integers.
+    // WHY: This is a critical security boundary to prevent SSRF (Server-Side Request Forgery) attacks
+    // by ensuring attackers cannot access internal infrastructure (like 169.254.x.x metadata services or
+    // 192.168.x.x internal servers) through standard or obfuscated hostname inputs.
+
+    // Standard explicit checks
     expect(isPrivateOrLocalHost('127.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('localhost')).toBe(true)
+    expect(isPrivateOrLocalHost('[::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('0.0.0.0')).toBe(true)
+
+    // .localhost suffix
+    expect(isPrivateOrLocalHost('test.localhost')).toBe(true)
+
+    // Various IP representations (hex, octal, decimal int)
     expect(isPrivateOrLocalHost('0x7f000001')).toBe(true)
     expect(isPrivateOrLocalHost('017700000001')).toBe(true)
-    expect(isPrivateOrLocalHost('2130706433')).toBe(true)
+    expect(isPrivateOrLocalHost('2130706433')).toBe(true) // 127.0.0.1
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1 (signed int bypass)
+
+    // 169.254.x.x (Link-local)
     expect(isPrivateOrLocalHost('169.254.169.254')).toBe(true)
+    expect(isPrivateOrLocalHost('169.254')).toBe(true)
+
+    // 192.168.x.x
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
+    expect(isPrivateOrLocalHost('192.168')).toBe(true)
+
+    // 10.x.x.x
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
+
+    // 172.16.x.x - 172.31.x.x
+    expect(isPrivateOrLocalHost('172.16.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('172.31.255.255')).toBe(true)
+    expect(isPrivateOrLocalHost('172.16')).toBe(true)
+    expect(isPrivateOrLocalHost('172.31')).toBe(true)
+
+    // 0.x.x.x network
+    expect(isPrivateOrLocalHost('0.255.255.255')).toBe(true)
+
+    // Public addresses
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
+    expect(isPrivateOrLocalHost('172.15.0.1')).toBe(false) // Outside 172 private range
+    expect(isPrivateOrLocalHost('172.32.0.1')).toBe(false) // Outside 172 private range
+    expect(isPrivateOrLocalHost('192.169.1.1')).toBe(false)
+    expect(isPrivateOrLocalHost('8.8.8.8')).toBe(false)
   })
 
   test('should validate http URLs', () => {
