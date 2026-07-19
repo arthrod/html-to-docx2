@@ -203,7 +203,7 @@ const URL_ATTRIBUTES = new Set([
   'filter',
   'clip-path',
   'mask',
-  'style',
+  'style'
 ])
 
 const DANGEROUS_ATTRIBUTES = /^on[a-z]/i
@@ -341,7 +341,10 @@ export const sanitizeSVGVNode = (
         return
       }
 
-      if (URL_ATTRIBUTES.has(lowerKey) && hasDangerousProtocol(value)) {
+      if (
+        URL_ATTRIBUTES.has(lowerKey) &&
+        hasDangerousProtocol(value)
+      ) {
         if (verboseLogging) {
           // eslint-disable-next-line no-console
           console.warn(`[SVG SANITIZER] Blocked dangerous protocol in ${key}: ${value}`)
