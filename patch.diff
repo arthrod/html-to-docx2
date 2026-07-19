@@ -1,0 +1,11 @@
+<<<<<<< SEARCH
+const isPrivateOrLocalHost = (hostname: string): boolean => {
+  if (
+    hostname === 'localhost' ||
+=======
+const isPrivateOrLocalHost = (inputHostname: string): boolean => {
+  const hostname = inputHostname.toLowerCase().replace(/\.$/, '')
+
+  if (
+    hostname === 'localhost' ||
+>>>>>>> REPLACE
