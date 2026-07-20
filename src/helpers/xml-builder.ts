@@ -518,22 +518,30 @@ const buildTextRunFragment = (
  *
  * Returns null if text has no tracking tokens (use normal processing).
  */
+
+// Type guard for TrackingDocumentInstance
+function isTrackingDocumentInstance(
+  instance: Partial<TrackingDocumentInstance>
+): instance is TrackingDocumentInstance {
+  return !!(
+    instance.ensureComment &&
+    instance.getCommentId &&
+    instance.getRevisionId &&
+    instance.comments &&
+    instance.commentIdMap &&
+    instance.lastCommentId !== undefined &&
+    instance.revisionIdMap &&
+    instance.lastRevisionId !== undefined
+  )
+}
+
 const buildRunsFromTextWithTokens = (
   text: string,
   attributes: RunAttributes,
   docxDocumentInstance: Partial<TrackingDocumentInstance>
 ): XMLBuilderType[] | null => {
   // Check if document instance has tracking support
-  if (
-    !docxDocumentInstance.ensureComment ||
-    !docxDocumentInstance.getCommentId ||
-    !docxDocumentInstance.getRevisionId ||
-    !docxDocumentInstance.comments ||
-    !docxDocumentInstance.commentIdMap ||
-    docxDocumentInstance.lastCommentId === undefined ||
-    !docxDocumentInstance.revisionIdMap ||
-    docxDocumentInstance.lastRevisionId === undefined
-  ) {
+  if (!isTrackingDocumentInstance(docxDocumentInstance)) {
     return null
   }
 
@@ -546,7 +554,7 @@ const buildRunsFromTextWithTokens = (
 
   const fragments: XMLBuilderType[] = []
   const trackingState = ensureTrackingState(
-    docxDocumentInstance as TrackingDocumentInstance
+    docxDocumentInstance
   )
 
   for (const part of parts) {
@@ -605,7 +613,7 @@ const buildRunsFromTextWithTokens = (
             trackingState.replyIdsByParent.set(data.id, existingReplies)
           }
 
-          const replyCommentId = docxDocumentInstance.ensureComment!(
+          const replyCommentId = docxDocumentInstance.ensureComment(
             {
               id: replyId,
               authorName: reply.authorName,
