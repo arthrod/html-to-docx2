@@ -214,8 +214,8 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
   Object.entries(attributes).forEach(([key, value]) => {
     if (value) {
       // Optimization: escapeXml single-pass serialization is 3-5x faster than chained regex replaces
-      // Always cast to String explicitly before passing to escapeXml
-      const escapedValue = escapeXml(String(value))
+      // We pass the value directly since escapeXml safely handles casting
+      const escapedValue = escapeXml(value as XmlEscapable)
       svg += ` ${key}="${escapedValue}"`
     }
   })
