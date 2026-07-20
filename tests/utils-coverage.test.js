@@ -28,6 +28,23 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  test('should reject edge case private or local hosts', () => {
+    // IPv6 loopback
+    expect(isPrivateOrLocalHost('[::1]')).toBe(true)
+    // Any IPv4 address
+    expect(isPrivateOrLocalHost('0.0.0.0')).toBe(true)
+    // .localhost TLD
+    expect(isPrivateOrLocalHost('test.localhost')).toBe(true)
+    // Negative integer representation of 192.168.1.1
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true)
+    // Class B 172.16.0.0/12 range
+    expect(isPrivateOrLocalHost('172.16.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('172.31.255.255')).toBe(true)
+    // Not private class B
+    expect(isPrivateOrLocalHost('172.15.0.1')).toBe(false)
+    expect(isPrivateOrLocalHost('172.32.0.1')).toBe(false)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
