@@ -16,3 +16,8 @@
 ## 2024-05-25 - Fix htmlString typing and remove `@ts-expect-error` in DocxDocument conversion
 **Learning:** The `@ts-expect-error` used when calling `convertVTreeToXML(this, ...)` masked a real type difference: the `DocxDocument` instances could hold `null` for `htmlString`, while the consuming `DocxDocumentInstance` type incorrectly required a strict `string`. This exposed a latent bug where `convertHTML` could potentially be called with a null argument.
 **Action:** Always ensure that interface declarations match the class instances they claim to represent. When `string | null` is discovered as the true shape, safely handle the null state (e.g. `htmlString || ''`) at the consumer instead of hiding the mismatch with a suppression comment.
+
+## 2024-05-18 - Replacing Duplicate Typedefs with Real Imports Requires Adding Missing Type Guards
+**Learning:** When migrating a codebase that relies on loosely defined local types (like `type VNodeType = { children?: (VNodeType | VTextType)[] }`) to use the actual imported class definitions (`VNode`, `VText`), the previously unchecked assumptions about union types are suddenly enforced by the TypeScript compiler. A variable typed as `VNode | VText` allows arbitrary property access in the relaxed/ad-hoc state, but strict TS validation correctly flags `.tagName` or `.properties` accesses unless guarded with `if (isVNode(node))`.
+
+**Action:** Whenever replacing local interface stubs with the real union types they represent, anticipate needing to wrap property access and downstream function calls in explicit type guards (e.g., `isVNode()`) to narrow the type correctly within loops or conditionals.
