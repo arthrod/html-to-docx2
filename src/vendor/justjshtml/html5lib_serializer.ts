@@ -1,6 +1,8 @@
 import { VOID_ELEMENTS } from './constants.js'
 
-function attrListToDict(attrs: any) {
+export type HTML5LibToken = any[] | null | undefined
+
+function attrListToDict(attrs: unknown) {
   if (!attrs) return {}
   if (!Array.isArray(attrs) && typeof attrs === 'object') return attrs
   if (!Array.isArray(attrs)) return {}
@@ -17,7 +19,7 @@ function attrListToDict(attrs: any) {
   return out
 }
 
-function escapeText(text: any) {
+function escapeText(text: string | null | undefined) {
   if (!text) return ''
   return String(text)
     .replaceAll('&', '&amp;')
@@ -25,7 +27,7 @@ function escapeText(text: any) {
     .replaceAll('>', '&gt;')
 }
 
-function escapeAttrValue(value: any, quoteChar: any, escapeLtInAttrs: any) {
+function escapeAttrValue(value: string | null | undefined, quoteChar: string | null, escapeLtInAttrs: boolean) {
   if (value == null) return ''
   let out = String(value).replaceAll('&', '&amp;')
   if (escapeLtInAttrs) out = out.replaceAll('<', '&lt;')
@@ -33,7 +35,7 @@ function escapeAttrValue(value: any, quoteChar: any, escapeLtInAttrs: any) {
   return out.replaceAll("'", '&#39;')
 }
 
-function chooseAttrQuote(value: any, forcedQuoteChar = null) {
+function chooseAttrQuote(value: string | null | undefined, forcedQuoteChar: string | null = null) {
   if (forcedQuoteChar === '"' || forcedQuoteChar === "'") return forcedQuoteChar
   if (value == null) return '"'
   const s = String(value)
@@ -41,7 +43,7 @@ function chooseAttrQuote(value: any, forcedQuoteChar = null) {
   return '"'
 }
 
-function canUnquoteAttrValue(value: any) {
+function canUnquoteAttrValue(value: string | null | undefined) {
   if (value == null) return false
   const s = String(value)
   for (const ch of s) {
@@ -52,7 +54,7 @@ function canUnquoteAttrValue(value: any) {
   return true
 }
 
-function shouldMinimizeAttrValue(name: any, value: any, minimizeBooleanAttributes: any) {
+function shouldMinimizeAttrValue(name: string, value: string | null | undefined, minimizeBooleanAttributes: boolean) {
   if (!minimizeBooleanAttributes) return false
   if (value == null || value === '') return true
   return String(value).toLowerCase() === String(name).toLowerCase()
@@ -71,10 +73,10 @@ export interface HTML5LibSerializerOptions {
 }
 
 function serializeStartTag(
-  name: any,
-  attrs: any,
+  name: string | null | undefined,
+  attrs: unknown,
   options: HTML5LibSerializerOptions,
-  isVoid: any
+  isVoid: boolean
 ) {
   const quoteAttrValues = Boolean(options.quote_attr_values)
   const minimizeBooleanAttributes =
@@ -128,7 +130,7 @@ function serializeStartTag(
   return parts.join('')
 }
 
-function stripWhitespace(text: any) {
+function stripWhitespace(text: string | null | undefined) {
   if (!text) return ''
   const out = []
   let lastSpace = false
@@ -146,7 +148,7 @@ function stripWhitespace(text: any) {
   return out.join('')
 }
 
-function updateMetaContentTypeCharset(content: any, encoding: any) {
+function updateMetaContentTypeCharset(content: string | null | undefined, encoding: string | null | undefined) {
   if (content == null) return null
   if (!encoding) return content
   const s = String(content)
@@ -172,7 +174,7 @@ function updateMetaContentTypeCharset(content: any, encoding: any) {
   return s.slice(0, start) + String(encoding) + s.slice(end)
 }
 
-function applyInjectMetaCharset(tokens: any, encoding: any) {
+function applyInjectMetaCharset(tokens: HTML5LibToken[], encoding: string | null | undefined) {
   if (!encoding) return []
 
   let sawHead = false
@@ -220,7 +222,7 @@ function applyInjectMetaCharset(tokens: any, encoding: any) {
   return processed
 }
 
-function tokName(tok: any) {
+function tokName(tok: HTML5LibToken) {
   if (!tok) return null
   const kind = tok[0]
   if (kind === 'StartTag') return tok[2]
@@ -229,11 +231,11 @@ function tokName(tok: any) {
   return null
 }
 
-function tokIsSpaceChars(tok: any) {
+function tokIsSpaceChars(tok: HTML5LibToken) {
   return tok != null && tok[0] === 'Characters' && String(tok[1] || '').startsWith(' ')
 }
 
-function shouldOmitStartTag(name: any, attrs: any, prevTok: any, nextTok: any) {
+function shouldOmitStartTag(name: string | null | undefined, attrs: unknown, prevTok: HTML5LibToken, nextTok: HTML5LibToken) {
   if (attrs && Object.keys(attrs).length) return false
 
   if (name === 'html') {
@@ -282,7 +284,7 @@ function shouldOmitStartTag(name: any, attrs: any, prevTok: any, nextTok: any) {
   return false
 }
 
-function shouldOmitEndTag(name: any, nextTok: any) {
+function shouldOmitEndTag(name: string | null | undefined, nextTok: HTML5LibToken) {
   if (name === 'html' || name === 'head' || name === 'body' || name === 'colgroup') {
     if (nextTok == null) return true
     if (nextTok[0] === 'Comment' || tokIsSpaceChars(nextTok)) return false
@@ -428,7 +430,7 @@ function shouldOmitEndTag(name: any, nextTok: any) {
   return false
 }
 
-export function serializeSerializerTokenStream(tokens: any, options: HTML5LibSerializerOptions = {}) {
+export function serializeSerializerTokenStream(tokens: HTML5LibToken[] | null | undefined, options: HTML5LibSerializerOptions = {}) {
   if (!Array.isArray(tokens)) return null
 
   let tokenStream = tokens
