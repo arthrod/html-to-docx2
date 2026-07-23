@@ -1,5 +1,6 @@
 import { decodeEntitiesInText } from './entities.js'
 import {
+  ParseError,
   CharacterToken,
   CommentToken,
   Doctype,
@@ -171,7 +172,7 @@ export class Tokenizer {
   currentTagKind: any
   currentTagName: any
   currentTagSelfClosing: any
-  errors: any
+  errors: ParseError[]
   ignoreLF: any
   lastStartTagName: any
   length: any
