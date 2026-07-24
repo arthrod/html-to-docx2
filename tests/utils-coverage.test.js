@@ -28,6 +28,29 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  /**
+   * WHAT: Tests edge-case SSRF payload handling for private/local IPs.
+   * WHY: Attackers may use alternative IP encodings (like integers) or partial IPs
+   * to bypass naive exact-string match filters.
+   */
+  test('should reject edge-case private IP formats (SSRF protection)', () => {
+    // Single integer IP representations of private ranges
+    expect(isPrivateOrLocalHost('167772161')).toBe(true) // 10.0.0.1
+    expect(isPrivateOrLocalHost('2851995649')).toBe(true) // 169.254.0.1
+    expect(isPrivateOrLocalHost('3232235521')).toBe(true) // 192.168.0.1
+    expect(isPrivateOrLocalHost('2886729729')).toBe(true) // 172.16.0.1
+    expect(isPrivateOrLocalHost('1')).toBe(true) // 0.0.0.1
+
+    // Signed integer formats (supported by utility bitwise shifts)
+    // -1062731775 >>> 24 = 192, 192.168.0.1 equivalent
+    expect(isPrivateOrLocalHost('-1062731775')).toBe(true)
+
+    // Multi-part IPs within private subnets
+    expect(isPrivateOrLocalHost('172.16.0.1')).toBe(true)
+    expect(isPrivateOrLocalHost('172.31.255.255')).toBe(true)
+    expect(isPrivateOrLocalHost('0.0.0.1')).toBe(true)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
