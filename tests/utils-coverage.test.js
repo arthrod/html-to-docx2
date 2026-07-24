@@ -19,6 +19,8 @@ describe('URL utilities', () => {
   test('should reject private or local hosts', () => {
     expect(isPrivateOrLocalHost('127.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('localhost')).toBe(true)
+    expect(isPrivateOrLocalHost('localhost.')).toBe(true)
+    expect(isPrivateOrLocalHost('LoCaLhOsT')).toBe(true)
     expect(isPrivateOrLocalHost('0x7f000001')).toBe(true)
     expect(isPrivateOrLocalHost('017700000001')).toBe(true)
     expect(isPrivateOrLocalHost('2130706433')).toBe(true)
