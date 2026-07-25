@@ -27,6 +27,7 @@ jobs:
       - name: Checkout base branch
         uses: actions/checkout@v6
         with:
+          submodules: false
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
 
