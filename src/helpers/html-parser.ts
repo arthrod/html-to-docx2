@@ -487,16 +487,27 @@ function normalizeDocumentRootNodes(
       normalizedNodes.push(bodyNode)
     }
 
+    // PERF: Using a standard for loop instead of Array.push(...items) to prevent
+    // 'Maximum call stack size exceeded' errors with large arrays and improve V8 performance in hot paths.
     if (!hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      const children = bodyNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
       return
     }
 
     if (hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      const children = bodyNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
     }
     if (hasExplicitBody && !hasExplicitHead) {
-      normalizedNodes.push(...(headNode?.children || []))
+      const children = headNode?.children || []
+      for (let i = 0; i < children.length; i++) {
+        normalizedNodes.push(children[i])
+      }
     }
   })
 
