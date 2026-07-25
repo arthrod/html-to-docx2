@@ -170,7 +170,7 @@
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-polyfill-node": "^0.13.0",
     "@rollup/plugin-terser": "^1.0.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.0",
     "standard-version": "^9.3.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
@@ -180,7 +180,7 @@
     "vitest": "^4.0.18"
   },
   "optionalDependencies": {
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.0"
   },
   "dependencies": {
     "color-name": "2.1.0",
