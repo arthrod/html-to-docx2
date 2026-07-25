@@ -28,6 +28,11 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  test('should reject private or local hosts with trailing dots', () => {
+    expect(isPrivateOrLocalHost('127.0.0.1.')).toBe(true)
+    expect(isPrivateOrLocalHost('localhost.')).toBe(true)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)
