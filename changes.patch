@@ -1,0 +1,34 @@
+diff --git a/src/helpers/html-parser.ts b/src/helpers/html-parser.ts
+index ad65fd5..9c126bb 100644
+--- a/src/helpers/html-parser.ts
++++ b/src/helpers/html-parser.ts
+@@ -488,15 +488,27 @@ function normalizeDocumentRootNodes(
+     }
+
+     if (!hasExplicitHead && !hasExplicitBody) {
+-      normalizedNodes.push(...(bodyNode?.children || []))
++      // ⚡ Bolt: Use a standard for loop instead of Array.push(...items) to prevent 'Maximum call stack size exceeded' errors with large DOM trees and improve V8 performance.
++      const children = bodyNode?.children || []
++      for (let i = 0; i < children.length; i += 1) {
++        normalizedNodes.push(children[i])
++      }
+       return
+     }
+
+     if (hasExplicitHead && !hasExplicitBody) {
+-      normalizedNodes.push(...(bodyNode?.children || []))
++      // ⚡ Bolt: Use a standard for loop instead of Array.push(...items) to prevent 'Maximum call stack size exceeded' errors with large DOM trees and improve V8 performance.
++      const children = bodyNode?.children || []
++      for (let i = 0; i < children.length; i += 1) {
++        normalizedNodes.push(children[i])
++      }
+     }
+     if (hasExplicitBody && !hasExplicitHead) {
+-      normalizedNodes.push(...(headNode?.children || []))
++      // ⚡ Bolt: Use a standard for loop instead of Array.push(...items) to prevent 'Maximum call stack size exceeded' errors with large DOM trees and improve V8 performance.
++      const children = headNode?.children || []
++      for (let i = 0; i < children.length; i += 1) {
++        normalizedNodes.push(children[i])
++      }
+     }
+   })
