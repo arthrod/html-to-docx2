@@ -13,6 +13,7 @@ import {
   guessMimeTypeFromBytes,
   parseDataUrl,
   imageToBase64,
+  downloadAndCacheImage,
 } from '../src/utils/image-to-base64'
 
 describe('URL utilities', () => {
@@ -252,6 +253,149 @@ describe('Image to base64 utilities', () => {
       await expect(imageToBase64('data:image/png;base64,abc')).rejects.toThrow(
         'Invalid URL'
       )
+    })
+  })
+
+  describe('downloadAndCacheImage', () => {
+    let mockDocxInstance
+    const mockPngBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+
+    beforeEach(() => {
+      vi.restoreAllMocks()
+      mockDocxInstance = {}
+    })
+
+    test('should successfully download, cache, and return data URI', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+        const buffer = Buffer.from(mockPngBase64, 'base64')
+        const arrayBuffer = buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.byteLength
+        )
+        return {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({ 'content-type': 'image/png' }),
+          arrayBuffer: async () => arrayBuffer,
+          blob: async () => new Blob([arrayBuffer]),
+        }
+      })
+
+      const imageUrl = 'https://example.com/image.png'
+      const result = await downloadAndCacheImage(mockDocxInstance, imageUrl)
+
+      expect(result).toBe(`data:image/png;base64,${mockPngBase64}`)
+      expect(mockDocxInstance._imageCache.get(imageUrl)).toBe(
+        `data:image/png;base64,${mockPngBase64}`
+      )
+      expect(mockDocxInstance._retryStats.totalAttempts).toBe(1)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+
+    test('should reuse cached image and not make another network request', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      mockDocxInstance._imageCache = new Map([
+        ['https://example.com/cached.png', 'data:image/png;base64,cached_data'],
+      ])
+
+      const result = await downloadAndCacheImage(
+        mockDocxInstance,
+        'https://example.com/cached.png'
+      )
+
+      expect(result).toBe('data:image/png;base64,cached_data')
+      expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    test('should return null immediately for previously failed image in cache', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      mockDocxInstance._imageCache = new Map([['https://example.com/failed.png', 'FAILED']])
+
+      const result = await downloadAndCacheImage(
+        mockDocxInstance,
+        'https://example.com/failed.png'
+      )
+
+      expect(result).toBeNull()
+      expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    test('should return null and cache FAILED when image format is WebP', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+        // webp magic bytes 'RIFF' and 'WEBP'
+        const buffer = Buffer.from([
+          0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+        ])
+        const arrayBuffer = buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.byteLength
+        )
+        return {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({ 'content-type': 'image/webp' }),
+          arrayBuffer: async () => arrayBuffer,
+          blob: async () => new Blob([arrayBuffer]),
+        }
+      })
+
+      const imageUrl = 'https://example.com/image.webp'
+      const result = await downloadAndCacheImage(mockDocxInstance, imageUrl)
+
+      expect(result).toBeNull()
+      expect(mockDocxInstance._imageCache.get(imageUrl)).toBe('FAILED')
+    })
+
+    test('should retry on failure and eventually succeed', async () => {
+      let attempts = 0
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+        attempts++
+        if (attempts === 1) {
+          throw new Error('Connection timeout')
+        }
+        const buffer = Buffer.from(mockPngBase64, 'base64')
+        const arrayBuffer = buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.byteLength
+        )
+        return {
+          ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers({ 'content-type': 'image/png' }),
+          arrayBuffer: async () => arrayBuffer,
+          blob: async () => new Blob([arrayBuffer]),
+        }
+      })
+
+      const imageUrl = 'https://example.com/retry.png'
+      const result = await downloadAndCacheImage(mockDocxInstance, imageUrl, {
+        retryDelayBase: 1, // Minimize wait time in test
+      })
+
+      expect(result).toBe(`data:image/png;base64,${mockPngBase64}`)
+      expect(mockDocxInstance._retryStats.totalAttempts).toBe(2)
+      expect(mockDocxInstance._retryStats.successAfterRetry).toBe(1)
+    })
+
+    test('should fail and cache FAILED after exceeding maxRetries', async () => {
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+        throw new Error('Always fail')
+      })
+
+      const imageUrl = 'https://example.com/always-fail.png'
+      const result = await downloadAndCacheImage(mockDocxInstance, imageUrl, {
+        maxRetries: 2,
+        retryDelayBase: 1,
+      })
+
+      expect(result).toBeNull()
+      expect(mockDocxInstance._imageCache.get(imageUrl)).toBe('FAILED')
+      expect(mockDocxInstance._retryStats.finalFailures).toBe(1)
+      expect(mockDocxInstance._retryStats.totalAttempts).toBe(2)
     })
   })
 })
