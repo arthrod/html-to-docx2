@@ -17,11 +17,25 @@ import {
 
 describe('URL utilities', () => {
   test('should reject private or local hosts', () => {
+    // 🧪 WHAT: Verifies string-based IPv4 detection for localhost, loopback, and private ranges
+    // 🎯 WHY: Bypassing these checks using integer or alternate encodings could allow Server-Side Request Forgery (SSRF)
     expect(isPrivateOrLocalHost('127.0.0.1')).toBe(true)
     expect(isPrivateOrLocalHost('localhost')).toBe(true)
-    expect(isPrivateOrLocalHost('0x7f000001')).toBe(true)
-    expect(isPrivateOrLocalHost('017700000001')).toBe(true)
-    expect(isPrivateOrLocalHost('2130706433')).toBe(true)
+    expect(isPrivateOrLocalHost('0x7f000001')).toBe(true) // 127.0.0.1 in hex
+    expect(isPrivateOrLocalHost('017700000001')).toBe(true) // 127.0.0.1 in octal
+
+    // Test Integer string representations
+    expect(isPrivateOrLocalHost('2130706433')).toBe(true) // 127.0.0.1
+    expect(isPrivateOrLocalHost('167772161')).toBe(true) // 10.0.0.1
+    expect(isPrivateOrLocalHost('3232235777')).toBe(true) // 192.168.1.1
+    expect(isPrivateOrLocalHost('2886729729')).toBe(true) // 172.16.0.1
+    expect(isPrivateOrLocalHost('2887778303')).toBe(true) // 172.31.255.255
+    expect(isPrivateOrLocalHost('2852039166')).toBe(true) // 169.254.169.254
+    expect(isPrivateOrLocalHost('0')).toBe(true) // 0.0.0.0
+
+    // Signed integer representation (JavaScript bitwise unsigned right shift parses it correctly)
+    expect(isPrivateOrLocalHost('-1062731519')).toBe(true) // 192.168.1.1
+
     expect(isPrivateOrLocalHost('169.254.169.254')).toBe(true)
     expect(isPrivateOrLocalHost('192.168.1.1')).toBe(true)
     expect(isPrivateOrLocalHost('10.0.0.1')).toBe(true)
