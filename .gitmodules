@@ -1,0 +1,3 @@
+[submodule "integrate_parser_ts/justjshtml"]
+	path = integrate_parser_ts/justjshtml
+	url = https://github.com/zedtux/justjshtml.git
