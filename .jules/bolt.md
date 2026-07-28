@@ -9,3 +9,7 @@
 ## 2026-05-31 - Avoid array spread operator in hot paths
 **Learning:** In V8/Bun hot paths, merging fragment arrays using `Array.push(...items)` introduces call stack size risks for large documents and is significantly slower (~3x) than using a standard `for` loop to push items individually.
 **Action:** Avoid `Array.push(...items)` in tight XML rendering loops (e.g., merging fragments in `src/helpers/xml-builder.ts`); use a standard `for` loop instead.
+
+## 2024-05-18 - Avoid array spread operator in HTML parsing hot paths
+**Learning:** In V8/Bun hot paths, merging node arrays in `src/helpers/html-parser.ts` using `Array.push(...items)` introduces severe call stack size risks for large/deep HTML documents (Maximum call stack size exceeded) and is slower than standard loops due to argument array allocation.
+**Action:** Always use standard `for` loops to push items individually when handling potentially massive DOM structures, strictly avoiding the array spread operator.
