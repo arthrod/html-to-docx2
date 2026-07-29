@@ -41,8 +41,6 @@ jobs:
 
       - name: Install bun
         uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.2.14
 
       - name: Python — ruff (lint + format check)
         run: |

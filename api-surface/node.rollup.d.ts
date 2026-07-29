@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { XMLBuilder } from 'xmlbuilder2/lib/interfaces.js';
+import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 
 /** Active suggestion state for nesting */
 export declare interface ActiveSuggestion {
