@@ -29,6 +29,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: baseline
+          submodules: false
 
       - name: Setup Bun for baseline
         uses: oven-sh/setup-bun@v2
@@ -51,6 +52,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: current
+          submodules: false
 
       - name: Setup Bun for current
         uses: oven-sh/setup-bun@v2
