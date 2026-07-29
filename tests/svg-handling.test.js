@@ -183,6 +183,34 @@ describe('SVG Handling', () => {
       expect(width).toBe(100)
       expect(height).toBe(200)
     })
+
+    test('should parse dimensions from viewBox only', () => {
+      expect(parseSVGDimensions('<svg viewBox="0 0 100 50"></svg>')).toEqual({
+        width: 100,
+        height: 50,
+      })
+    })
+
+    test('should parse dimensions from width and viewBox', () => {
+      expect(parseSVGDimensions('<svg width="100" viewBox="0 0 100 50"></svg>')).toEqual({
+        width: 100,
+        height: 50,
+      })
+    })
+
+    test('should parse dimensions from height and viewBox', () => {
+      expect(parseSVGDimensions('<svg height="50" viewBox="0 0 100 50"></svg>')).toEqual({
+        width: 100,
+        height: 50,
+      })
+    })
+
+    test('should parse dimensions from percentage width/height', () => {
+      expect(parseSVGDimensions('<svg width="100%" height="100%"></svg>')).toEqual({
+        width: 100,
+        height: 100,
+      })
+    })
   })
 
   describe('convertSVGtoPNG utility', () => {
