@@ -26,6 +26,38 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
 
   if (hostname.endsWith('.localhost')) return true
 
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    const ipStr = hostname.slice(1, -1).toLowerCase()
+
+    if (ipStr === '::' || ipStr === '::1') return true
+
+    // IPv4-mapped IPv6 addresses (e.g. normalized as ::ffff:127.0.0.1 or ::ffff:7f00:1)
+    if (ipStr.startsWith('::ffff:')) {
+      const ipv4Part = ipStr.substring(7)
+
+      if (ipv4Part.includes('.')) {
+        return isPrivateOrLocalHost(ipv4Part)
+      }
+
+      const firstGroup = ipv4Part.split(':')[0]
+      if (firstGroup) {
+        const val = Number.parseInt(firstGroup, 16)
+        const octet1 = (val >>> 8) & 255
+        const octet2 = val & 255
+        if (octet1 === 127 || octet1 === 10 || octet1 === 0) return true
+        if (octet1 === 192 && octet2 === 168) return true
+        if (octet1 === 169 && octet2 === 254) return true
+        if (octet1 === 172 && octet2 >= 16 && octet2 <= 31) return true
+      }
+    }
+
+    // Link-local (fe80::/10)
+    if (/^fe[89ab]/i.test(ipStr)) return true
+
+    // Unique local (fc00::/7)
+    if (/^f[cd]/i.test(ipStr)) return true
+  }
+
   let parts: number[] = []
   const stringParts = hostname.split('.')
   if (stringParts.length <= 4 && stringParts.length > 0) {

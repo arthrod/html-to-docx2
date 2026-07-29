@@ -15,3 +15,9 @@
 **Vulnerability:** Even when URL protocols were restricted to HTTP/HTTPS, image fetching functions did not validate the destination hostname. This allowed Server-Side Request Forgery (SSRF) against internal resources (e.g. `localhost`, `127.0.0.1`, `169.254.169.254`), including bypassed IP formats (like octal/hex).
 **Learning:** Checking for safe URL schemes isn't enough; the destination host itself must be verified to prevent SSRF against loopback addresses and private networks.
 **Prevention:** Implement an IP/hostname validator (like `isPrivateOrLocalHost`) before sending outbound requests to block known local and private IP ranges.
+
+## 2025-05-18 - SSRF IPv6 Normalization Bypass
+
+**Vulnerability:** The SSRF mitigation `isPrivateOrLocalHost` missed IPv6 private ranges and IPv4-mapped IPv6 addresses (e.g., `[::ffff:127.0.0.1]`).
+**Learning:** Standard WHATWG URL parsers (used in Node.js/Bun) normalize dotted-decimal mapped IPv6 addresses into a hex format (e.g. `[::ffff:7f00:1]`). If the string validation does not handle this specific normalization output, the check can be bypassed.
+**Prevention:** Explicitly parse and block IPv6 brackets `[ ]`. Inside the brackets, correctly identify the loopback `::1`, link-local `fe80::`, unique local `fc00::/7` spaces, and parse the hex components of the `::ffff:` mapped blocks to match against standard IPv4 private space bounds.
