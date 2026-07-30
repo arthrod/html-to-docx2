@@ -1,9 +1,9 @@
 import { FragmentContext } from './context.js'
 import { decodeHTML } from './encoding.js'
-import { Node } from './node.js'
 import { parseDocument } from './parser.js'
 import { TokenizerOpts } from './tokenizer.js'
 import { ParseError } from './tokens.js'
+import { Node } from './node.js'
 
 export interface JustHTMLOptions {
   collectErrors?: boolean
