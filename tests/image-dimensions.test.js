@@ -42,7 +42,7 @@ function createMinimalPNG(width = 32, height = 32) {
 
 // Minimal valid JPEG (64x64) using SOF0 marker
 function createMinimalJPEG(width = 64, height = 64) {
-  const sof0Data = new Uint8Array(19)
+  const sof0Data = new Uint8Array(20)
   const dv = new DataView(sof0Data.buffer)
 
   // SOI marker
@@ -58,6 +58,7 @@ function createMinimalJPEG(width = 64, height = 64) {
   dv.setUint16(15, 1, false) // Y density
   dv.setUint8(17, 0) // thumbnail width
   dv.setUint8(18, 0) // thumbnail height
+  dv.setUint8(19, 0) // padding to match 16-byte length
 
   // SOF0 marker
   const sof0 = new Uint8Array(15)
@@ -132,23 +133,23 @@ function createMinimalWebP(width = 24, height = 24) {
 
 // Minimal valid BMP (48x48)
 function createMinimalBMP(width = 48, height = 48) {
-  const data = new Uint8Array(26)
+  const data = new Uint8Array(54)
   const dv = new DataView(data.buffer)
 
   // BMP header
   dv.setUint16(0, 0x4D42, true) // 'BM'
-  dv.setUint32(2, 26, true) // file size
+  dv.setUint32(2, 54, true) // file size
   dv.setUint32(6, 0, true) // reserved
-  dv.setUint32(10, 26, true) // pixel data offset
+  dv.setUint32(10, 54, true) // pixel data offset
 
   // DIB header (BITMAPCOREHEADER)
-  dv.setUint32(14, 12, true) // header size
-  dv.setUint16(18, width, true) // width
-  dv.setUint16(20, height, true) // height
-  dv.setUint16(22, 1, true) // planes
-  dv.setUint16(24, 24, true) // bit count
+  dv.setUint32(14, 40, true) // header size
+  dv.setUint32(18, width, true) // width
+  dv.setUint32(22, height, true) // height
+  dv.setUint16(26, 1, true) // planes
+  dv.setUint16(28, 24, true) // bit count
 
-  return data.slice(0, 26)
+  return data.slice(0, 54)
 }
 
 describe('Image Dimensions', () => {
@@ -187,6 +188,18 @@ describe('Image Dimensions', () => {
     it('should parse WebP dimensions (24x24)', () => {
       const result = getImageDimensions(createMinimalWebP(24, 24))
       expect(result).toEqual({ width: 24, height: 24, type: 'webp' })
+    })
+
+
+    it('should parse BMP dimensions (48x48)', () => {
+      const result = getImageDimensions(createMinimalBMP(48, 48))
+      expect(result).toEqual({ width: 48, height: 48, type: 'bmp' })
+    })
+
+
+    it('should parse JPEG dimensions (64x64)', () => {
+      const result = getImageDimensions(createMinimalJPEG(64, 64))
+      expect(result).toEqual({ width: 64, height: 64, type: 'jpg' })
     })
 
     it('should handle Buffer (Node.js) input', () => {
