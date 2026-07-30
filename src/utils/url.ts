@@ -26,6 +26,24 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
 
   if (hostname.endsWith('.localhost')) return true
 
+  if (hostname === '[::]') return true
+
+  if (hostname.startsWith('[') && hostname.endsWith(']')) {
+    const inner = hostname.slice(1, -1)
+    const match = inner.match(/^(?:::ffff:|::)([0-9a-fA-F]{1,4}):([0-9a-fA-F]{1,4})$/i)
+    if (match) {
+      const p1 = Number.parseInt(match[1], 16)
+      const p2 = Number.parseInt(match[2], 16)
+      hostname = `${(p1 >> 8) & 255}.${p1 & 255}.${(p2 >> 8) & 255}.${p2 & 255}`
+    } else {
+      const firstHex = Number.parseInt(inner.split(':')[0], 16)
+      if (!isNaN(firstHex)) {
+        if ((firstHex & 0xfe00) === 0xfc00) return true
+        if ((firstHex & 0xffc0) === 0xfe80) return true
+      }
+    }
+  }
+
   let parts: number[] = []
   const stringParts = hostname.split('.')
   if (stringParts.length <= 4 && stringParts.length > 0) {
