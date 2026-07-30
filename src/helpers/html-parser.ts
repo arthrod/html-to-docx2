@@ -488,15 +488,24 @@ function normalizeDocumentRootNodes(
     }
 
     if (!hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      // Avoid spread operator in hot paths to prevent call stack limits and improve perf
+      for (const child of bodyNode?.children || []) {
+        normalizedNodes.push(child)
+      }
       return
     }
 
     if (hasExplicitHead && !hasExplicitBody) {
-      normalizedNodes.push(...(bodyNode?.children || []))
+      // Avoid spread operator in hot paths to prevent call stack limits and improve perf
+      for (const child of bodyNode?.children || []) {
+        normalizedNodes.push(child)
+      }
     }
     if (hasExplicitBody && !hasExplicitHead) {
-      normalizedNodes.push(...(headNode?.children || []))
+      // Avoid spread operator in hot paths to prevent call stack limits and improve perf
+      for (const child of headNode?.children || []) {
+        normalizedNodes.push(child)
+      }
     }
   })
 
