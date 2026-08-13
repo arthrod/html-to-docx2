@@ -171,7 +171,7 @@
     "rollup-plugin-polyfill-node": "^0.13.0",
     "@rollup/plugin-terser": "^1.0.0",
     "sharp": "^0.35.0",
-    "standard-version": "^9.3.1",
+    "commit-and-tag-version": "^9.3.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tsdown": "^0.21.0",
