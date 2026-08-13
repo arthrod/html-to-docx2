@@ -5,7 +5,7 @@
 /* biome-ignore-all lint/style/useForOf: legacy code */
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
-import { isVNode, isVText, VNode, VText } from '../vdom/index'
+import { isVNode, isVText } from '../vdom/index'
 
 type XMLBuilderType = XMLBuilder
 
@@ -155,7 +155,15 @@ type VNodeProperties = {
   style?: Record<string, string>
 }
 
+type VNodeType = {
+  children?: (VNodeType | VTextType)[]
+  properties?: VNodeProperties
+  tagName?: string
+}
 
+type VTextType = {
+  text: string
+}
 
 // Types for DocxDocumentInstance
 type MediaFileResponse = {
@@ -826,7 +834,7 @@ type ModifiedAttributesBuilderOptions = {
 
 const modifiedStyleAttributesBuilder = (
   docxDocumentInstance: DocxDocumentInstance | undefined,
-  vNode: VNode | VText | null,
+  vNode: VNodeType | VTextType | null,
   attributes: ParagraphAttributes,
   options?: ModifiedAttributesBuilderOptions
 ): ParagraphAttributes => {
@@ -835,11 +843,11 @@ const modifiedStyleAttributesBuilder = (
   // styles
   if (
     isVNode(vNode) &&
-    (vNode).properties &&
-    (vNode).properties.style
+    (vNode as VNodeType).properties &&
+    (vNode as VNodeType).properties!.style
   ) {
-    const vn = vNode
-    const style = vn.properties.style!
+    const vn = vNode as VNodeType
+    const style = vn.properties!.style!
 
     if (style.color && !colorlessColors.includes(style.color)) {
       modifiedAttributes.color = fixupColorCode(style.color)
@@ -909,12 +917,12 @@ const modifiedStyleAttributesBuilder = (
 
   // paragraph only
   if (options?.isParagraph) {
-    if (isVNode(vNode) && (vNode).tagName === 'blockquote') {
+    if (isVNode(vNode) && (vNode as VNodeType).tagName === 'blockquote') {
       modifiedAttributes.indentation = { left: 284 }
       modifiedAttributes.blockquoteBorder = true
-    } else if (isVNode(vNode) && (vNode).tagName === 'code') {
+    } else if (isVNode(vNode) && (vNode as VNodeType).tagName === 'code') {
       modifiedAttributes.highlightColor = 'lightGray'
-    } else if (isVNode(vNode) && (vNode).tagName === 'pre') {
+    } else if (isVNode(vNode) && (vNode as VNodeType).tagName === 'pre') {
       modifiedAttributes.font = 'Courier'
     }
   }
@@ -1017,7 +1025,7 @@ const buildRunProperties = (attributes: RunAttributes | undefined): XMLBuilderTy
 }
 
 const buildRun = async (
-  vNode: VNode | VText | null,
+  vNode: VNodeType | VTextType | null,
   attributes: ParagraphAttributes,
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
@@ -1025,17 +1033,17 @@ const buildRun = async (
   const runPropertiesFragment = buildRunProperties(attributes)
 
   // case where we have recursive spans representing font changes
-  if (isVNode(vNode) && (vNode).tagName === 'span') {
-    return buildRunOrRuns(vNode, attributes, docxDocumentInstance)
+  if (isVNode(vNode) && (vNode as VNodeType).tagName === 'span') {
+    return buildRunOrRuns(vNode as VNodeType, attributes, docxDocumentInstance)
   }
 
   if (
     isVNode(vNode) &&
-    RUN_TAGS.has((vNode).tagName || '')
+    RUN_TAGS.has((vNode as VNodeType).tagName || '')
   ) {
     const runFragmentsArray: XMLBuilderType[] = []
 
-    let vNodes: (VNode | VText)[] = [vNode]
+    let vNodes: (VNodeType | VTextType)[] = [vNode as VNodeType]
     // create temp run fragments to split the paragraph into different runs
     let baseAttributes: ParagraphAttributes = attributes
     let tempAttributes: RunAttributes = { ...baseAttributes }
@@ -1044,7 +1052,7 @@ const buildRun = async (
     while (vNodes.length) {
       const tempVNode = vNodes.shift()!
       if (isVText(tempVNode)) {
-        const textContent = (tempVNode).text
+        const textContent = (tempVNode as VTextType).text
         const mergedAttributes = { ...baseAttributes, ...tempAttributes }
 
         // Check for tracking tokens in text
@@ -1079,7 +1087,7 @@ const buildRun = async (
         tempAttributes = { ...baseAttributes }
         tempRunFragment = fragment({ namespaceAlias: { w: namespaces.w } }).ele('@w', 'r')
       } else if (isVNode(tempVNode)) {
-        const tempVn = tempVNode
+        const tempVn = tempVNode as VNodeType
         if (
           TEMP_RUN_TAGS.has(tempVn.tagName || '')
         ) {
@@ -1150,7 +1158,7 @@ const buildRun = async (
         }
       }
 
-      const tempVn = tempVNode
+      const tempVn = tempVNode as VNodeType
       if (tempVn.children?.length) {
         if (tempVn.children.length > 1) {
           baseAttributes = Object.assign({}, baseAttributes, tempAttributes)
@@ -1167,7 +1175,7 @@ const buildRun = async (
 
   runFragment.import(runPropertiesFragment)
   if (isVText(vNode)) {
-    const textContent = (vNode).text
+    const textContent = (vNode as VTextType).text
 
     // Check for tracking tokens in text
     if (docxDocumentInstance && hasTrackingTokens(textContent)) {
@@ -1187,7 +1195,7 @@ const buildRun = async (
   } else if (attributes && attributes.type === 'picture') {
     let response: MediaFileResponse | null = null
 
-    const vn = vNode
+    const vn = vNode as VNodeType
     let mediaSource = decodeURIComponent(vn.properties?.src || '')
 
     if (
@@ -1245,7 +1253,7 @@ const buildRun = async (
       otherAttributes as DrawingAttributes
     )
     runFragment.import(imageFragment)
-  } else if (isVNode(vNode) && (vNode).tagName === 'br') {
+  } else if (isVNode(vNode) && (vNode as VNodeType).tagName === 'br') {
     const lineBreakFragment = buildLineBreak()
     runFragment.import(lineBreakFragment)
   }
@@ -1255,18 +1263,18 @@ const buildRun = async (
 }
 
 const buildRunOrRuns = async (
-  vNode: VNode | VText | null,
+  vNode: VNodeType | VTextType | null,
   attributes: ParagraphAttributes,
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
   // Check for OMML equation data attribute
   if (
     isVNode(vNode) &&
-    (vNode).properties &&
-    (vNode).properties.attributes &&
-    (vNode).properties.attributes['data-equation-omml']
+    (vNode as VNodeType).properties &&
+    (vNode as VNodeType).properties!.attributes &&
+    (vNode as VNodeType).properties!.attributes!['data-equation-omml']
   ) {
-    const ommlString = (vNode).properties.attributes['data-equation-omml']
+    const ommlString = (vNode as VNodeType).properties!.attributes!['data-equation-omml']
     try {
       // Parse the OMML string and create a fragment
       const ommlFragment = fragment().ele(ommlString)
@@ -1277,9 +1285,9 @@ const buildRunOrRuns = async (
     }
   }
 
-  if (isVNode(vNode) && (vNode).tagName === 'span') {
+  if (isVNode(vNode) && (vNode as VNodeType).tagName === 'span') {
     let runFragments: XMLBuilderType[] = []
-    const vn = vNode
+    const vn = vNode as VNodeType
 
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     for (let index = 0; index < (vn.children || []).length; index++) {
@@ -1307,12 +1315,12 @@ const buildRunOrRuns = async (
 }
 
 const buildRunOrHyperLink = async (
-  vNode: VNode | VText | null,
+  vNode: VNodeType | VTextType | null,
   attributes: ParagraphAttributes,
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilderType | XMLBuilderType[]> => {
-  if (isVNode(vNode) && (vNode).tagName === 'a') {
-    const vn = vNode
+  if (isVNode(vNode) && (vNode as VNodeType).tagName === 'a') {
+    const vn = vNode as VNodeType
     const href = vn.properties?.href ? vn.properties.href : ''
 
     // Check if this is an internal link (starts with #)
@@ -1567,7 +1575,7 @@ type ImageDimensionAttributes = {
 }
 
 const computeImageDimensions = (
-  vNode: VNode,
+  vNode: VNodeType,
   attributes: ImageDimensionAttributes
 ): void => {
   const { maximumWidth, originalWidth, originalHeight } = attributes
@@ -1687,7 +1695,7 @@ type ProcessImageSourceResult = {
  */
 const processImageSource = async (
   docxDocumentInstance: DocxDocumentInstance,
-  vNode: VNode,
+  vNode: VNodeType,
   imageSource: string,
   _logContext = 'XML-BUILDER'
 ): Promise<ProcessImageSourceResult | null> => {
@@ -1748,7 +1756,7 @@ const processImageSource = async (
 let globalBookmarkIdCounter = 0
 
 const buildParagraph = async (
-  vNode: VNode | VText | null,
+  vNode: VNodeType | VTextType | null,
   attributes: ParagraphAttributes,
   docxDocumentInstance?: DocxDocumentInstance
 ): Promise<XMLBuilder> => {
@@ -1780,8 +1788,8 @@ const buildParagraph = async (
       .up()
     paragraphFragment.import(bookmarkStartFragment)
   }
-  if (isVNode(vNode) && vNodeHasChildren(vNode)) {
-    const vn = vNode
+  if (isVNode(vNode) && vNodeHasChildren(vNode as VNodeType)) {
+    const vn = vNode as VNodeType
     if (
       PARAGRAPH_TAGS.has(vn.tagName || '')
     ) {
@@ -1815,7 +1823,7 @@ const buildParagraph = async (
     } else {
       /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
       for (let index = 0; index < (vn.children || []).length; index++) {
-        const childVNode = (vn.children || [])[index]
+        const childVNode = (vn.children || [])[index] as VNodeType
         if (childVNode.tagName === 'img') {
           const imageSource = childVNode.properties?.src
 
@@ -1894,8 +1902,8 @@ const buildParagraph = async (
   } else {
     // In case paragraphs has to be rendered where vText is present. Eg. table-cell
     // Or in case the vNode is something like img
-    if (isVNode(vNode) && (vNode).tagName === 'img') {
-      const vn = vNode
+    if (isVNode(vNode) && (vNode as VNodeType).tagName === 'img') {
+      const vn = vNode as VNodeType
       const imageSource = vn.properties?.src
 
       // Skip WebP images - Word doesn't support WebP format
@@ -2107,7 +2115,7 @@ const buildTableCellProperties = (
   return tableCellPropertiesFragment
 }
 
-const fixupTableCellBorder = (vNode: VNode, attributes: TableCellAttributes): void => {
+const fixupTableCellBorder = (vNode: VNodeType, attributes: TableCellAttributes): void => {
   const style = vNode.properties?.style
   if (!style) return
 
@@ -2195,7 +2203,7 @@ type ColumnIndex = {
 }
 
 const buildTableCell = async (
-  vNode: VNode | VText,
+  vNode: VNodeType | VTextType,
   attributes: TableCellAttributes,
   rowSpanMap: Map<number, RowSpanInfo>,
   columnIndex: ColumnIndex,
@@ -2206,8 +2214,8 @@ const buildTableCell = async (
   }).ele('@w', 'tc')
 
   let modifiedAttributes: TableCellAttributes = { ...attributes }
-  if (isVNode(vNode) && (vNode).properties) {
-    const vn = vNode
+  if (isVNode(vNode) && (vNode as VNodeType).properties) {
+    const vn = vNode as VNodeType
     if (vn.properties?.rowSpan) {
       rowSpanMap.set(columnIndex.index, {
         rowSpan: vn.properties.rowSpan - 1,
@@ -2251,30 +2259,30 @@ const buildTableCell = async (
   const paragraphAttributes = { ...modifiedAttributes }
   paragraphAttributes.backgroundColor = undefined
 
-  if (vNodeHasChildren(vNode)) {
-    const vn = vNode
+  if (vNodeHasChildren(vNode as VNodeType)) {
+    const vn = vNode as VNodeType
     /* eslint-disable no-await-in-loop -- DOCX XML fragments must be built in document order */
     for (let index = 0; index < (vn.children || []).length; index++) {
       const childVNode = (vn.children || [])[index]
-      if (isVNode(childVNode) && (childVNode).tagName === 'img') {
+      if (isVNode(childVNode) && (childVNode as VNodeType).tagName === 'img') {
         const imageFragment = await buildImage(
           docxDocumentInstance,
-          childVNode,
+          childVNode as VNodeType,
           modifiedAttributes.maximumWidth || null
         )
         if (imageFragment) {
           tableCellFragment.import(imageFragment)
         }
-      } else if (isVNode(childVNode) && (childVNode).tagName === 'figure') {
-        const figureVn = childVNode
+      } else if (isVNode(childVNode) && (childVNode as VNodeType).tagName === 'figure') {
+        const figureVn = childVNode as VNodeType
         if (vNodeHasChildren(figureVn)) {
           for (
             let iteratorIndex = 0;
             iteratorIndex < (figureVn.children || []).length;
             iteratorIndex++
           ) {
-            const grandChildVNode = (figureVn.children || [])[iteratorIndex]
-            if (isVNode(grandChildVNode) && grandChildVNode.tagName === 'img') {
+            const grandChildVNode = (figureVn.children || [])[iteratorIndex] as VNodeType
+            if (grandChildVNode.tagName === 'img') {
               const imageFragment = await buildImage(
                 docxDocumentInstance,
                 grandChildVNode,
@@ -2288,23 +2296,23 @@ const buildTableCell = async (
         }
       } else if (
         isVNode(childVNode) &&
-        LIST_TAGS.has((childVNode).tagName || '')
+        LIST_TAGS.has((childVNode as VNodeType).tagName || '')
       ) {
         // render list in table
-        const listVn = childVNode
+        const listVn = childVNode as VNodeType
         if (vNodeHasChildren(listVn)) {
           await buildList(listVn, docxDocumentInstance, tableCellFragment)
         }
-      } else if (isVNode(childVNode) && (childVNode).tagName === 'div') {
+      } else if (isVNode(childVNode) && (childVNode as VNodeType).tagName === 'div') {
         // Handle div wrapper - process its children instead
-        const divVn = childVNode
+        const divVn = childVNode as VNodeType
         if (vNodeHasChildren(divVn)) {
           for (let divIndex = 0; divIndex < (divVn.children || []).length; divIndex++) {
             const divChild = (divVn.children || [])[divIndex]
-            if (isVNode(divChild) && (divChild).tagName === 'img') {
+            if (isVNode(divChild) && (divChild as VNodeType).tagName === 'img') {
               const imageFragment = await buildImage(
                 docxDocumentInstance,
-                divChild,
+                divChild as VNodeType,
                 modifiedAttributes.maximumWidth || null
               )
               if (imageFragment) {
@@ -2312,9 +2320,9 @@ const buildTableCell = async (
               }
             } else if (
               isVNode(divChild) &&
-              LIST_TAGS.has((divChild).tagName || '')
+              LIST_TAGS.has((divChild as VNodeType).tagName || '')
             ) {
-              const listVn = divChild
+              const listVn = divChild as VNodeType
               if (vNodeHasChildren(listVn)) {
                 await buildList(listVn, docxDocumentInstance, tableCellFragment)
               }
@@ -2436,7 +2444,7 @@ const buildTableRowProperties = (
 }
 
 const buildTableRow = async (
-  vNode: VNode,
+  vNode: VNodeType,
   attributes: TableRowAttributes,
   rowSpanMap: Map<number, RowSpanInfo>,
   docxDocumentInstance: DocxDocumentInstance
@@ -2447,7 +2455,7 @@ const buildTableRow = async (
   const modifiedAttributes: TableRowAttributes = { ...attributes }
   if (isVNode(vNode) && vNode.properties) {
     // FIXME: find a better way to get row height from cell style
-    const firstChild = (vNode.children || [])[0]
+    const firstChild = (vNode.children || [])[0] as VNodeType | undefined
     if (
       vNode.properties.style?.height ||
       (firstChild &&
@@ -2479,7 +2487,7 @@ const buildTableRow = async (
 
   if (vNodeHasChildren(vNode)) {
     const tableColumns = (vNode.children || []).filter((childVNode) =>
-      TABLE_CELL_TAGS.has(childVNode.tagName || '')
+      TABLE_CELL_TAGS.has((childVNode as VNodeType).tagName || '')
     )
     const maximumColumnWidth =
       docxDocumentInstance.availableDocumentSpace / tableColumns.length
@@ -2545,13 +2553,13 @@ const buildTableGridCol = (gridWidth: number): XMLBuilderType =>
     .ele('@w', 'gridCol')
     .att('@w', 'w', String(gridWidth))
 
-const buildTableGrid = (vNode: VNode, attributes: TableAttributes): XMLBuilderType => {
+const buildTableGrid = (vNode: VNodeType, attributes: TableAttributes): XMLBuilderType => {
   const tableGridFragment = fragment({
     namespaceAlias: { w: namespaces.w },
   }).ele('@w', 'tblGrid')
   if (vNodeHasChildren(vNode)) {
     const gridColumns = (vNode.children || []).filter(
-      (childVNode) => childVNode.tagName === 'col'
+      (childVNode) => (childVNode as VNodeType).tagName === 'col'
     )
     const gridWidth = (attributes.maximumWidth || 0) / gridColumns.length
 
@@ -2566,7 +2574,7 @@ const buildTableGrid = (vNode: VNode, attributes: TableAttributes): XMLBuilderTy
 }
 
 const buildTableGridFromTableRow = (
-  vNode: VNode,
+  vNode: VNodeType,
   attributes: TableAttributes
 ): XMLBuilderType => {
   const tableGridFragment = fragment({
@@ -2575,7 +2583,7 @@ const buildTableGridFromTableRow = (
   if (vNodeHasChildren(vNode)) {
     let numberOfGridColumns = 0
     for (const childVNode of vNode.children || []) {
-      const child = childVNode
+      const child = childVNode as VNodeType
       const colSpan = child.properties?.colSpan || child.properties?.style?.['column-span']
 
       numberOfGridColumns += colSpan ? Number.parseInt(String(colSpan), 10) : 1
@@ -2757,7 +2765,7 @@ const cssBorderParser = (borderString: string): [number, string, string] => {
 }
 
 const buildTable = async (
-  vNode: VNode,
+  vNode: VNodeType,
   attributes: TableAttributes,
   docxDocumentInstance: DocxDocumentInstance
 ): Promise<XMLBuilder> => {
@@ -2896,8 +2904,8 @@ const buildTable = async (
 
   if (vNodeHasChildren(vNode)) {
     // First pass: emit tblGrid from colgroup if present
-    for (const childVNode of (vNode.children || [])) {
-      if (isVNode(childVNode) && childVNode.tagName === 'colgroup' && !tblGridEmitted) {
+    for (const childVNode of (vNode.children || []) as VNodeType[]) {
+      if (childVNode.tagName === 'colgroup' && !tblGridEmitted) {
         const tableGridFragment = buildTableGrid(childVNode, modifiedAttributes)
         tableFragment.import(tableGridFragment)
         tblGridEmitted = true
@@ -2906,18 +2914,18 @@ const buildTable = async (
 
     // If no colgroup, find first tr to build tblGrid from
     if (!tblGridEmitted) {
-      for (const childVNode of (vNode.children || [])) {
+      for (const childVNode of (vNode.children || []) as VNodeType[]) {
         if (tblGridEmitted) break
-        if (isVNode(childVNode) && childVNode.tagName === 'tr') {
+        if (childVNode.tagName === 'tr') {
           const tableGridFragment = buildTableGridFromTableRow(
             childVNode,
             modifiedAttributes
           )
           tableFragment.import(tableGridFragment)
           tblGridEmitted = true
-        } else if (isVNode(childVNode) && (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody')) {
-          for (const grandChildVNode of (childVNode.children || [])) {
-            if (isVNode(grandChildVNode) && grandChildVNode.tagName === 'tr') {
+        } else if (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
+          for (const grandChildVNode of (childVNode.children || []) as VNodeType[]) {
+            if (grandChildVNode.tagName === 'tr') {
               const tableGridFragment = buildTableGridFromTableRow(
                 grandChildVNode,
                 modifiedAttributes
@@ -2933,12 +2941,12 @@ const buildTable = async (
 
     // Second pass: emit all tr elements
     /* eslint-disable no-await-in-loop -- DOCX table rows must be built in document order */
-    for (const childVNode of (vNode.children || [])) {
-      if (isVNode(childVNode) && childVNode.tagName === 'colgroup') {
+    for (const childVNode of (vNode.children || []) as VNodeType[]) {
+      if (childVNode.tagName === 'colgroup') {
         // Already handled above
-      } else if (isVNode(childVNode) && (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody')) {
-        for (const grandChildVNode of (childVNode.children || [])) {
-          if (isVNode(grandChildVNode) && grandChildVNode.tagName === 'tr') {
+      } else if (childVNode.tagName === 'thead' || childVNode.tagName === 'tbody') {
+        for (const grandChildVNode of (childVNode.children || []) as VNodeType[]) {
+          if (grandChildVNode.tagName === 'tr') {
             const tableRowFragment = await buildTableRow(
               grandChildVNode,
               modifiedAttributes,
@@ -2948,7 +2956,7 @@ const buildTable = async (
             tableFragment.import(tableRowFragment)
           }
         }
-      } else if (isVNode(childVNode) && childVNode.tagName === 'tr') {
+      } else if (childVNode.tagName === 'tr') {
         const tableRowFragment = await buildTableRow(
           childVNode,
           modifiedAttributes,
@@ -3246,7 +3254,7 @@ const buildWrapSquare = (): XMLBuilderType =>
     .att('distR', '228600')
     .up()
 
-const buildWrapNone = (): XMLBuilderType =>
+const _buildWrapNone = (): XMLBuilderType =>
   fragment({ namespaceAlias: drawingNamespaces }).ele(namespaces.wp, 'wrapNone').up()
 
 const buildEffectExtentFragment = (): XMLBuilderType =>
