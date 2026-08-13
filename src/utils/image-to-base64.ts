@@ -49,14 +49,16 @@ const toError = (error: CaughtError): Error => {
   return new Error(String(error ?? 'Unknown error'))
 }
 
-const toBase64 = (bytes: Uint8Array): string => {
+const CHUNK_SIZE = 0x8000
+
+export const toBase64 = (bytes: Uint8Array): string => {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(bytes).toString('base64')
   }
 
   let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    binary += String.fromCharCode(...Array.from(bytes.subarray(i, i + CHUNK_SIZE)))
   }
   return globalThis.btoa(binary)
 }
