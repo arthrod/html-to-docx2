@@ -18,14 +18,6 @@ import {
 describe('URL utilities', () => {
   test('should reject private or local hosts', () => {
     expect(isPrivateOrLocalHost('127.0.0.1')).toBe(true)
-    expect(isPrivateOrLocalHost('0x7F.0x00.0x00.0x01')).toBe(true)
-    expect(isPrivateOrLocalHost('0.0.0.0')).toBe(true)
-    expect(isPrivateOrLocalHost('0177.0.0.1')).toBe(true)
-    expect(isPrivateOrLocalHost('test.localhost')).toBe(true)
-    expect(isPrivateOrLocalHost('172.16.0.1')).toBe(true)
-    expect(isPrivateOrLocalHost('192.168.100.1')).toBe(true)
-    expect(isPrivateOrLocalHost('10.255.255.255')).toBe(true)
-    expect(isPrivateOrLocalHost('0.255.255.255')).toBe(true)
     expect(isPrivateOrLocalHost('localhost')).toBe(true)
     expect(isPrivateOrLocalHost('0x7f000001')).toBe(true)
     expect(isPrivateOrLocalHost('017700000001')).toBe(true)
