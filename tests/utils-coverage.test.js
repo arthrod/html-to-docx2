@@ -28,6 +28,23 @@ describe('URL utilities', () => {
     expect(isPrivateOrLocalHost('google.com')).toBe(false)
   })
 
+  // Union of #772 (IPv6/ULA/mapped) + #756 (trailing-dot / case) SSRF bypasses
+  test('should reject trailing-dot and case-variant loopback hosts', () => {
+    expect(isPrivateOrLocalHost('127.0.0.1.')).toBe(true)
+    expect(isPrivateOrLocalHost('localhost.')).toBe(true)
+    expect(isPrivateOrLocalHost('LocalHost')).toBe(true)
+    expect(isPrivateOrLocalHost('LOCALHOST.')).toBe(true)
+  })
+
+  test('should reject IPv4-mapped IPv6, unspecified, ULA, and link-local hosts', () => {
+    expect(isPrivateOrLocalHost('[::ffff:7f00:1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::ffff:c0a8:101]')).toBe(true)
+    expect(isPrivateOrLocalHost('[::]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fc00::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[fe80::1]')).toBe(true)
+    expect(isPrivateOrLocalHost('[2001:4860:4860::8888]')).toBe(false)
+  })
+
   test('should validate http URLs', () => {
     expect(isValidUrl('http://example.com')).toBe(true)
     expect(isValidUrl('https://example.com')).toBe(true)

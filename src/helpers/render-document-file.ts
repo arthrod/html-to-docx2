@@ -12,8 +12,10 @@ import { defaultDocumentOptions, imageType, internalRelationship } from '../cons
 import namespaces from '../namespaces'
 import { getImageDimensions } from '../utils/image-dimensions'
 import { downloadAndCacheImage } from '../utils/image-to-base64'
+import { validateOMMLString } from '../utils/omml-sanitizer'
 import { sanitizeSVGVNode, validateSVGString } from '../utils/svg-sanitizer'
 import { vNodeHasChildren } from '../utils/vnode'
+import { escapeXml } from '../utils/xml-escape'
 import { reportUnmappedType, type UnmappedTypeHandling } from './unmapped-type-reporter'
 // FIXME: remove the cyclic dependency
 // eslint-disable-next-line import/no-cycle -- FIXME: known cyclic dependency
@@ -190,7 +192,7 @@ const containsSpecialElements = (node: VNodeType | VTextType): boolean => {
 const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): string => {
   const textNode = asVText(node)
   if (textNode) {
-    return textNode.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return escapeXml(String(textNode.text))
   }
 
   const vNode = asVNode(node)
@@ -211,11 +213,7 @@ const serializeVNodeToSVG = (node: VNodeType | VTextType, isRoot = false): strin
 
   Object.entries(attributes).forEach(([key, value]) => {
     if (value) {
-      const escapedValue = String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+      const escapedValue = escapeXml(String(value))
       svg += ` ${key}="${escapedValue}"`
     }
   })
@@ -551,26 +549,29 @@ async function findXMLEquivalent(
     vNode.properties.attributes['data-equation-omml']
   ) {
     const ommlString = vNode.properties.attributes['data-equation-omml']
-    try {
-      // Create a paragraph containing the OMML
-      const paragraphFragment = fragment({
-        namespaceAlias: { w: namespaces.w },
-      })
-        .ele('@w', 'p')
-        .ele('@w', 'pPr')
-        .ele('@w', 'jc')
-        .att('@w', 'val', 'center')
-        .up()
-        .up()
-      // Parse and import the OMML
-      const ommlFragment = fragment().ele(ommlString)
-      paragraphFragment.first().import(ommlFragment)
-      paragraphFragment.first().up()
+    const ommlCheck = validateOMMLString(ommlString)
+    if (!ommlCheck.valid) {
+      console.warn('Invalid or dangerous OMML detected', ommlCheck.reason)
+    } else {
+      try {
+        const paragraphFragment = fragment({
+          namespaceAlias: { w: namespaces.w },
+        })
+          .ele('@w', 'p')
+          .ele('@w', 'pPr')
+          .ele('@w', 'jc')
+          .att('@w', 'val', 'center')
+          .up()
+          .up()
+        const ommlFragment = fragment().ele(ommlString)
+        paragraphFragment.first().import(ommlFragment)
+        paragraphFragment.first().up()
 
-      xmlFragment.import(paragraphFragment)
-      return
-    } catch (ommlError: unknown) {
-      console.warn('Failed to parse OMML for block equation', ommlError)
+        xmlFragment.import(paragraphFragment)
+        return
+      } catch (ommlError: unknown) {
+        console.warn('Failed to parse OMML for block equation', ommlError)
+      }
     }
   }
 

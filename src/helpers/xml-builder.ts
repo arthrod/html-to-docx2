@@ -6,6 +6,7 @@
 import { fragment, type XMLBuilder } from '../utils/xmlbuilder2'
 
 import { isVNode, isVText } from '../vdom/index'
+import { validateOMMLString } from '../utils/omml-sanitizer'
 
 type XMLBuilderType = XMLBuilder
 
@@ -828,6 +829,15 @@ const fixupMargin = (marginString: string): number | undefined => {
   return
 }
 
+const BOLD_WEIGHT_NAMES = new Set(['bold', 'bolder', 'semibold', 'semi-bold'])
+
+export const isBoldFontWeight = (value: string): boolean => {
+  const fontWeight = value.trim().toLowerCase()
+  if (BOLD_WEIGHT_NAMES.has(fontWeight)) return true
+  const numericWeight = Number.parseInt(fontWeight, 10)
+  return !Number.isNaN(numericWeight) && numericWeight >= 600
+}
+
 type ModifiedAttributesBuilderOptions = {
   isParagraph?: boolean
 }
@@ -872,8 +882,7 @@ const modifiedStyleAttributesBuilder = (
       modifiedAttributes.textAlign = style['text-align']
     }
 
-    // FIXME: remove bold check when other font weights are handled.
-    if (style['font-weight'] && style['font-weight'] === 'bold') {
+    if (style['font-weight'] && isBoldFontWeight(style['font-weight'])) {
       modifiedAttributes.strong = style['font-weight']
     }
     if (style['font-family'] && docxDocumentInstance) {
@@ -1275,13 +1284,16 @@ const buildRunOrRuns = async (
     (vNode as VNodeType).properties!.attributes!['data-equation-omml']
   ) {
     const ommlString = (vNode as VNodeType).properties!.attributes!['data-equation-omml']
-    try {
-      // Parse the OMML string and create a fragment
-      const ommlFragment = fragment().ele(ommlString)
-      return ommlFragment
-    } catch {
-      // If parsing fails, fall through to normal text handling
-      console.warn('Failed to parse OMML, falling back to text')
+    const ommlCheck = validateOMMLString(ommlString)
+    if (!ommlCheck.valid) {
+      console.warn('Invalid or dangerous OMML detected', ommlCheck.reason)
+    } else {
+      try {
+        const ommlFragment = fragment().ele(ommlString)
+        return ommlFragment
+      } catch {
+        console.warn('Failed to parse OMML, falling back to text')
+      }
     }
   }
 

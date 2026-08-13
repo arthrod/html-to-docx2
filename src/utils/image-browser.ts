@@ -5,6 +5,7 @@ import {
   guessMimeTypeFromBytes,
   imageToBase64,
   parseDataUrl,
+  toBase64,
 } from './image-to-base64'
 
 type ImageMimeType =
@@ -245,15 +246,7 @@ const convertSVGtoPNGCanvas = async (
     const pngBlob = await canvas.convertToBlob({ type: 'image/png' })
     const arrayBuffer = await pngBlob.arrayBuffer()
 
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(arrayBuffer).toString('base64')
-    }
-    const bytes = new Uint8Array(arrayBuffer)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i += 1) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return globalThis.btoa(binary)
+    return toBase64(new Uint8Array(arrayBuffer))
   } catch {
     return null
   }
@@ -316,16 +309,7 @@ export const downloadImageToBase64 = async (
 
     const arrayBuffer = await blob.arrayBuffer()
 
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(arrayBuffer).toString('base64')
-    }
-
-    const bytes = new Uint8Array(arrayBuffer)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i += 1) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return globalThis.btoa(binary)
+    return toBase64(new Uint8Array(arrayBuffer))
   } catch (error) {
     const normalizedError = toError(error)
     if (normalizedError.name === 'AbortError') {
