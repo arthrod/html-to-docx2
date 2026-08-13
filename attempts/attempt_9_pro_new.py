@@ -4,6 +4,7 @@
 # dependencies = [
 #   "typer",
 #   "loguru",
+#   "defusedxml",
 # ]
 # ///
 """Enhanced stdlib-only docx redline comparison tool - FIXED formatting changes.
@@ -29,7 +30,6 @@ Usage:
 
 from __future__ import annotations
 
-import argparse
 import copy
 import datetime as dt
 import re
@@ -37,6 +37,8 @@ import sys
 import uuid
 import xml.etree.ElementTree as ET
 import zipfile
+
+from defusedxml.ElementTree import fromstring as safe_fromstring
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Optional
@@ -96,12 +98,8 @@ def qn(tag: str) -> str:
 
 
 def now_iso() -> str:
-    """Return current UTC time in ISO format with Z suffix.
-
-    Returns:
-        ISO formatted timestamp string (e.g., '2025-10-10T12:00:00Z')
-    """
-    return dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat() + 'Z'
+    """Return current UTC time as a WordprocessingML xsd:dateTime (Zulu)."""
+    return dt.datetime.now(dt.UTC).replace(microsecond=0).strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def read_docx_xml_parts(path: Path) -> dict[str, bytes]:
@@ -163,7 +161,7 @@ def parse_xml(data: bytes) -> ET.Element:
         ET.ParseError: If XML is malformed
     """
     try:
-        return ET.fromstring(data)
+        return safe_fromstring(data)
     except ET.ParseError as e:
         logger.error(f"Failed to parse XML: {e}")
         raise
@@ -257,6 +255,24 @@ def block_iter(body: ET.Element):
             yield child, 'other'
 
 
+_RUN_CONTAINERS = frozenset(
+    {'hyperlink', 'sdt', 'smartTag', 'fldSimple', 'ins', 'del', 'moveFrom', 'moveTo'}
+)
+
+
+def _local_name(tag: str) -> str:
+    return tag.rsplit('}', 1)[-1]
+
+
+def _iter_paragraph_runs(elem: ET.Element):
+    """Yield w:r descendants that Word nests under hyperlink/sdt/etc."""
+    for child in list(elem):
+        if _local_name(child.tag) == 'r':
+            yield child
+        elif _local_name(child.tag) in _RUN_CONTAINERS:
+            yield from _iter_paragraph_runs(child)
+
+
 def paragraph_runs_tokens(p: ET.Element) -> list[dict]:
     """Convert paragraph to list of run tokens.
 
@@ -273,7 +289,7 @@ def paragraph_runs_tokens(p: ET.Element) -> list[dict]:
         List of token dictionaries
     """
     tokens = []
-    for r in p.findall('./w:r', NS):
+    for r in _iter_paragraph_runs(p):
         rPr = r.find(qn('w:rPr'))
         rPr_copy = copy.deepcopy(rPr) if rPr is not None else None
 
@@ -362,13 +378,12 @@ def clone_r_with_text(text: str, rPr: Optional[ET.Element], *, deleted: bool = F
     return r
 
 
-def clone_r_special(kind: str, rPr: Optional[ET.Element], *, deleted: bool = False) -> ET.Element:
+def clone_r_special(kind: str, rPr: Optional[ET.Element]) -> ET.Element:
     """Create <w:r> with <w:tab/> or <w:br/>.
 
     Args:
         kind: 'tab' or 'br'
         rPr: Run properties
-        deleted: Currently unused (tabs/breaks same for insert/delete)
 
     Returns:
         Created run element
@@ -623,7 +638,7 @@ def build_paragraph_with_diffs(
                 if o['kind'] == 'text':
                     de.append(clone_r_with_text(o['text'], o['rPr'], deleted=True))
                 elif o['kind'] in {'tab', 'br'}:
-                    de.append(clone_r_special(o['kind'], o['rPr'], deleted=True))
+                    de.append(clone_r_special(o['kind'], o['rPr']))
                 else:
                     de.append(copy.deepcopy(o['run_xml']))
             out_p.append(de)
@@ -636,7 +651,7 @@ def build_paragraph_with_diffs(
                 if n['kind'] == 'text':
                     ins.append(clone_r_with_text(n['text'], n['rPr'], deleted=False))
                 elif n['kind'] in {'tab', 'br'}:
-                    ins.append(clone_r_special(n['kind'], n['rPr'], deleted=False))
+                    ins.append(clone_r_special(n['kind'], n['rPr']))
                 else:
                     ins.append(copy.deepcopy(n['run_xml']))
             out_p.append(ins)
@@ -660,7 +675,7 @@ def build_paragraph_with_diffs(
                         if o['kind'] == 'text':
                             de.append(clone_r_with_text(o['text'], o['rPr'], deleted=True))
                         elif o['kind'] in {'tab', 'br'}:
-                            de.append(clone_r_special(o['kind'], o['rPr'], deleted=True))
+                            de.append(clone_r_special(o['kind'], o['rPr']))
                         else:
                             de.append(copy.deepcopy(o['run_xml']))
                     out_p.append(de)
@@ -670,7 +685,7 @@ def build_paragraph_with_diffs(
                         if n['kind'] == 'text':
                             ins.append(clone_r_with_text(n['text'], n['rPr'], deleted=False))
                         elif n['kind'] in {'tab', 'br'}:
-                            ins.append(clone_r_special(n['kind'], n['rPr'], deleted=False))
+                            ins.append(clone_r_special(n['kind'], n['rPr']))
                         else:
                             ins.append(copy.deepcopy(n['run_xml']))
                     out_p.append(ins)
@@ -707,6 +722,41 @@ def _ensure_pPr_rPr(para: ET.Element) -> ET.Element:
     return rPr
 
 
+def _replace_table_paragraphs(
+    tbl: ET.Element,
+    rewriter,
+) -> None:
+    for tr in tbl.findall(qn('w:tr')):
+        for tc in tr.findall(qn('w:tc')):
+            rewritten = [
+                rewriter(child) if child.tag == qn('w:p') else child for child in list(tc)
+            ]
+            for child in list(tc):
+                tc.remove(child)
+            for child in rewritten:
+                tc.append(child)
+
+
+def mark_block_revision(
+    elem: ET.Element,
+    kind: str,
+    author: str,
+    date_iso: str,
+    cidgen: ChangeIdGen,
+) -> ET.Element:
+    """Revise a non-paragraph body child without wrapping it in run-level ins/del."""
+    clone = copy.deepcopy(elem)
+    if clone.tag != qn('w:tbl'):
+        return clone
+    rewriter = (
+        (lambda p: mark_paragraph_delete(p, author, date_iso, cidgen))
+        if kind == 'del'
+        else (lambda p: mark_paragraph_insert(p, author, date_iso, cidgen))
+    )
+    _replace_table_paragraphs(clone, rewriter)
+    return clone
+
+
 def mark_paragraph_insert(new_p: ET.Element, author: str, date_iso: str, cidgen: ChangeIdGen) -> ET.Element:
     para = copy.deepcopy(new_p)
     rPr = _ensure_pPr_rPr(para)
@@ -725,8 +775,9 @@ def mark_paragraph_insert(new_p: ET.Element, author: str, date_iso: str, cidgen:
 def mark_paragraph_delete(old_p: ET.Element, author: str, date_iso: str, cidgen: ChangeIdGen) -> ET.Element:
     para = copy.deepcopy(old_p)
     rPr = _ensure_pPr_rPr(para)
+    cid = cidgen.next()
     marker = ET.Element(qn('w:del'))
-    marker.set(qn('w:id'), str(cidgen.next()))
+    marker.set(qn('w:id'), str(cid))
     if author:
         marker.set(qn('w:author'), author)
     if date_iso:
@@ -740,12 +791,12 @@ def mark_paragraph_delete(old_p: ET.Element, author: str, date_iso: str, cidgen:
         if child.tag != qn('w:pPr'):
             para.remove(child)
 
-    content_del = make_del_container(author, date_iso, cidgen.next())
+    content_del = make_del_container(author, date_iso, cid)
     for tok in paragraph_runs_tokens(old_p):
         if tok['kind'] == 'text':
             content_del.append(clone_r_with_text(tok['text'], tok['rPr'], deleted=True))
         elif tok['kind'] in {'tab', 'br'}:
-            content_del.append(clone_r_special(tok['kind'], tok['rPr'], deleted=True))
+            content_del.append(clone_r_special(tok['kind'], tok['rPr']))
         else:
             content_del.append(copy.deepcopy(tok['run_xml']))
     para.append(content_del)
@@ -807,9 +858,7 @@ def build_body_with_diffs(
                 if ok == 'p':
                     body.append(mark_paragraph_delete(oe, author, date_iso, cidgen))
                 else:
-                    de = make_del_container(author, date_iso, cidgen.next())
-                    de.append(copy.deepcopy(oe))
-                    body.append(de)
+                    body.append(mark_block_revision(oe, 'del', author, date_iso, cidgen))
                 changes += 1
 
         elif tag == 'insert':
@@ -817,9 +866,7 @@ def build_body_with_diffs(
                 if nk == 'p':
                     body.append(mark_paragraph_insert(ne, author, date_iso, cidgen))
                 else:
-                    ins = make_ins_container(author, date_iso, cidgen.next())
-                    ins.append(copy.deepcopy(ne))
-                    body.append(ins)
+                    body.append(mark_block_revision(ne, 'ins', author, date_iso, cidgen))
                 changes += 1
 
         elif tag == 'replace':
@@ -829,14 +876,16 @@ def build_body_with_diffs(
                 changes += 1
             else:
                 for oe, ok in old_slice:
-                    de = make_del_container(author, date_iso, cidgen.next())
-                    de.append(copy.deepcopy(oe))
-                    body.append(de)
+                    if ok == 'p':
+                        body.append(mark_paragraph_delete(oe, author, date_iso, cidgen))
+                    else:
+                        body.append(mark_block_revision(oe, 'del', author, date_iso, cidgen))
                     changes += 1
                 for ne, nk in new_slice:
-                    ins = make_ins_container(author, date_iso, cidgen.next())
-                    ins.append(copy.deepcopy(ne))
-                    body.append(ins)
+                    if nk == 'p':
+                        body.append(mark_paragraph_insert(ne, author, date_iso, cidgen))
+                    else:
+                        body.append(mark_block_revision(ne, 'ins', author, date_iso, cidgen))
                     changes += 1
 
     # Append sectPr from new body
