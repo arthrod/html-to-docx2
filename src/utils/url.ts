@@ -29,17 +29,30 @@ const isPrivateOrLocalHost = (hostname: string): boolean => {
   if (hostname === '[::]') return true
 
   if (hostname.startsWith('[') && hostname.endsWith(']')) {
-    const inner = hostname.slice(1, -1)
-    const match = inner.match(/^(?:::ffff:|::)([0-9a-fA-F]{1,4}):([0-9a-fA-F]{1,4})$/i)
-    if (match) {
-      const p1 = Number.parseInt(match[1], 16)
-      const p2 = Number.parseInt(match[2], 16)
-      hostname = `${(p1 >> 8) & 255}.${p1 & 255}.${(p2 >> 8) & 255}.${p2 & 255}`
+    const inner = hostname.slice(1, -1).toLowerCase()
+    if (inner === '::1' || inner === '::') return true
+
+    const isMapped = inner.startsWith('::ffff:') || inner.startsWith('0:0:0:0:0:ffff:')
+    if (isMapped) {
+      const lastPart = inner.split(':').pop() || ''
+      if (lastPart.includes('.')) {
+        hostname = lastPart
+      } else {
+        const match = inner.match(/^(?:::ffff:|0:0:0:0:0:ffff:)([0-9a-f]+):([0-9a-f]+)$/)
+        if (match) {
+          const p1 = parseInt(match[1], 16)
+          const p2 = parseInt(match[2], 16)
+          hostname = `${(p1 >> 8) & 255}.${p1 & 255}.${(p2 >> 8) & 255}.${p2 & 255}`
+        }
+      }
     } else {
-      const firstHex = Number.parseInt(inner.split(':')[0], 16)
-      if (!isNaN(firstHex)) {
-        if ((firstHex & 0xfe00) === 0xfc00) return true
-        if ((firstHex & 0xffc0) === 0xfe80) return true
+      const firstHexStr = inner.split(':')[0]
+      if (firstHexStr) {
+        const firstHex = parseInt(firstHexStr, 16)
+        if (!isNaN(firstHex)) {
+          if ((firstHex & 0xfe00) === 0xfc00) return true
+          if ((firstHex & 0xffc0) === 0xfe80) return true
+        }
       }
     }
   }
