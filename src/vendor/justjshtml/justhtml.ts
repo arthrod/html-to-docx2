@@ -1,5 +1,3 @@
-import { Node } from './node.js'
-import { ParseError } from './tokens.js'
 import { FragmentContext } from './context.js'
 import { decodeHTML } from './encoding.js'
 import { parseDocument } from './parser.js'
@@ -15,8 +13,8 @@ export interface JustHTMLOptions {
 }
 
 export class StrictModeError extends SyntaxError {
-  error: ParseError
-  constructor(error: ParseError) {
+  error: any
+  constructor(error: any) {
     super(error?.message || String(error?.code || 'parse-error'))
     this.error = error
   }
@@ -45,10 +43,10 @@ export interface ToHTMLOptions {
 export class JustHTML {
   collectErrors: boolean
   encoding: string | null
-  errors: ParseError[]
+  errors: any[]
   fragmentContext: unknown
   iframeSrcdoc: boolean
-  root: Node
+  root: any
   strict: boolean
   constructor(input: string | ArrayBuffer | Uint8Array, options: JustHTMLOptions = {}) {
     const {
